@@ -1,0 +1,11 @@
+# Sensory encoding / motor decoding constants (SPEC §4.1). All of these are hand-made assumptions
+# and are registered in docs/ENGINEERED.md. They may change only before preregistration.
+
+t_sim_ms: 500.0    # trial window (SPEC §4.1)
+
+# E1 (provisional, M1): Poisson rate at stimulus strength 1.0. The authors' materials drive sugar
+# GRNs at 100-200 Hz (model.py default 150 Hz; example.ipynb text says 200 Hz, its second
+# experiment uses 100 Hz). 200 Hz is the top of that range. G6 perturbs it by +-50%.
+r_max_hz: 200.0
+
+alpha: null        # hunger gain on the sugar channel — to be set at M3

@@ -4,8 +4,12 @@ Read on **2026-09-19** from the official sources listed at the bottom. Nothing h
 every statement is marked with its source page, and anything the documentation does not say is
 listed under [Not documented](#not-documented). Quoted text is verbatim.
 
-Status: **verified against the live API on 2026-09-19** through OpenRouter (§1a, §11). The direct
-TypeSafe path (§1) is documented but untested: access there is invite-only and we have no key.
+Status: **verified against the live API** through OpenRouter (§1a, §11).
+
+> **Scope after decisions D10–D13 (2026-09-20):** OpenRouter Decisions (§1a) is the project's only
+> access path; the model is pinned to `typesafe/jev-1.13`; only client-side `t_wall` is measured.
+> §1 (TypeSafe direct, Cloudflare), §5 (server time) and the connect / first-byte findings are
+> kept below as a record of what was read, **not** as things the project uses.
 
 ## 1a. Third path, the one we use: OpenRouter Decisions (alpha)
 
@@ -227,18 +231,19 @@ tuning toward a result), but the human should decide knowingly; see open questio
 [blog]: "End-to-end response time is 70ms-500ms"; compared with LLMs at "3 to 329 seconds";
 "40x-200x faster". These are claims relative to LLMs.
 
-## 10. Client decisions taken at M0
+## 10. Client decisions (current)
 
 | Decision | Why |
 |---|---|
-| Own `httpx` client, not `typesafe-sdk` | SDK retries by default; a retried call would count as one latency sample. We need one HTTP exchange per sample and direct access to transport trace hooks. |
-| Two backends behind one `JevClient` (`JevBackend`) | Same request body on both paths; they differ only in URL, model name, key variable and request-id header. |
-| **No retries** in `JevClient` | Same reason. Errors surface as `JevHTTPError`; retry policy for table building belongs to the caller (M4) and retried samples are excluded from latency. |
-| One `httpx.Client` per `JevClient` | Keep-alive session (SPEC §4.3). |
-| Trace hook → `connect_ns`, `ttfb_ns`, `total_ns` | httpcore events `connect_tcp.started` → `start_tls.complete`, and `receive_response_headers.complete`. `connect_ns is None` ⇔ connection reused. |
-| Canonical JSON body (`sort_keys`, compact) | Byte-stable → usable as cache key; `request_bytes` logged (SPEC §4.3). |
-| `CallBudget` counts attempts | A failed request may still be billed. In-process only for now; a persistent cross-run ledger is needed by M4. |
-| `MockJevClient` busy-waits instead of `time.sleep` | On the target Mac `sleep(10 ms)` was measured at up to 110 ms (macOS timer coalescing); busy-wait overshoots by < 30 µs. |
+| Own `httpx` client, no SDK | SDKs retry by default; a retried call would count as one latency sample |
+| **No retries** in `JevClient` | One latency sample = one HTTP exchange. Retry policy for table building belongs to the caller (M4); retried samples are excluded from latency |
+| One `httpx.Client` per `JevClient` | Keep-alive session (SPEC §4.3) |
+| **Single timer**: `t_wall_ns` around the HTTP exchange | D10. No trace hooks, no server or gateway time |
+| `X-OpenRouter-Cache: false` on every request | D15: a timed call can never be served from a cache |
+| Model pinned to the `typesafe/jev-1.13` family, checked on every response | D13 |
+| Canonical JSON body (`sort_keys`, compact) | Byte-stable; `request_bytes` logged (SPEC §4.3) |
+| `CallBudget` counts attempts | A failed request may still be billed. In-process for now; a cross-run ledger is due at M4 (D8) |
+| `MockJevClient` busy-waits instead of `time.sleep` | `sleep(10 ms)` was measured at up to 110 ms on this Mac; busy-wait overshoots by < 30 µs |
 
 ## 11. Live findings, 2026-09-19 (`fob jev smoke --n 20`, OpenRouter backend)
 

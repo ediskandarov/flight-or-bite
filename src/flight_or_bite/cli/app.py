@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 from enum import StrEnum
+from pathlib import Path
 
+import httpx
 import typer
 from dotenv import find_dotenv, load_dotenv
 from rich.console import Console
+from rich.progress import BarColumn, DownloadColumn, Progress, TextColumn, TransferSpeedColumn
 from rich.table import Table
 
 from flight_or_bite import __version__, sysinfo
@@ -18,8 +21,8 @@ from flight_or_bite.arbiters.jev_client import (
     JevClientProtocol,
     JevError,
     MockJevClient,
-    resolve_backend,
 )
+from flight_or_bite.lif import data as lif_data
 from flight_or_bite.timing.timers import summarize_ns
 from flight_or_bite.types import Action
 
@@ -58,12 +61,6 @@ class Split(StrEnum):
     test = "test"
 
 
-class JevBackendName(StrEnum):
-    auto = "auto"
-    typesafe = "typesafe"
-    openrouter = "openrouter"
-
-
 def _load_env() -> None:
     """Read API keys from a .env in the working directory; real environment variables win."""
     load_dotenv(find_dotenv(usecwd=True))
@@ -81,21 +78,71 @@ def info() -> None:
 
 
 @app.command("fetch-data")
-def fetch_data() -> None:
+def fetch_data(
+    version: list[int] = typer.Option(None, "--version", help="Connectome version; repeatable."),
+    data_dir: Path = typer.Option(Path("data"), "--data-dir"),
+    config: Path = typer.Option(Path("configs/data.yaml"), "--config"),
+) -> None:
     """Download the connectome and verify checksums."""
-    _not_implemented("fetch-data", "M1")
+    manifest = lif_data.load_manifest(config)
+    files = lif_data.select(manifest, version or {f.version for f in manifest.files})
+    columns = (
+        TextColumn("{task.description}"),
+        BarColumn(),
+        DownloadColumn(),
+        TransferSpeedColumn(),
+    )
+    try:
+        with Progress(*columns, console=console) as progress, httpx.Client(timeout=60.0) as client:
+            for file in files:
+                task = progress.add_task(file.name, total=file.bytes)
+                _, downloaded = lif_data.fetch_file(
+                    manifest, file, data_dir, client, lambda n, t=task: progress.advance(t, n)
+                )
+                if not downloaded:
+                    progress.update(task, completed=file.bytes, description=f"{file.name} (cached)")
+    except (httpx.HTTPError, lif_data.ChecksumError) as e:
+        console.print(f"[red]fetch-data failed: {e}[/]")
+        raise typer.Exit(1) from e
+    console.print(
+        f"[green]{len(files)} file(s) verified[/] against {manifest.source.repo}"
+        f"@{manifest.source.commit[:10]} in {data_dir}/ — data licence: "
+        f"{manifest.source.data_license}; do not commit or redistribute.",
+        soft_wrap=True,
+    )
 
 
 @app.command()
-def perf() -> None:
+def perf(
+    backend: list[str] = typer.Option(None, "--backend", help="Repeatable; default: all."),
+    version: int = typer.Option(None, "--version", help="Connectome version; default: lif.yaml."),
+    n_full: int = typer.Option(10, "--n-full", min=1),
+    n_stop: int = typer.Option(10, "--n-stop", min=1),
+    out: Path = typer.Option(Path("reports/perf.md"), "--out"),
+) -> None:
     """Benchmark LIF backends -> reports/perf.md."""
-    _not_implemented("perf", "M1")
+    from flight_or_bite.lif.perf_report import run_perf
+
+    run_perf(console, backend or None, version, n_full, n_stop, out)
 
 
 @app.command()
-def gate(name: str = typer.Argument(..., help="Gate id, G1..G7.")) -> None:
+def gate(
+    name: str = typer.Argument(..., help="Gate id, G1..G7."),
+    backend: list[str] = typer.Option(
+        None, "--backend", help="Repeatable; default: event, brian2."
+    ),
+    version: list[int] = typer.Option(
+        None, "--version", help="Repeatable; default: lif.yaml + 630."
+    ),
+) -> None:
     """Run one validity gate."""
-    _not_implemented(f"gate {name}", "M1 (G1) / M3")
+    if name.upper() != "G1":
+        _not_implemented(f"gate {name}", "M3")
+    from flight_or_bite.validation.run_gates import run_g1
+
+    passed = run_g1(console, backend or ["event", "brian2"], version or None)
+    raise typer.Exit(0 if passed else 1)
 
 
 @app.command()
@@ -130,7 +177,7 @@ def latency_bench(
 
 @latency_app.command("show")
 def latency_show() -> None:
-    """Show p50/p90/p99 and terminal histograms."""
+    """Show p50/p95 and terminal histograms."""
     _not_implemented("latency show", "M4")
 
 
@@ -173,17 +220,12 @@ _SMOKE_QUESTION = ChoiceQuestion(
 )
 
 
-def _fmt_ms(ns: int | None) -> str:
-    return "-" if ns is None else f"{ns / 1e6:.1f}"
-
-
 @jev_app.command("smoke")
 def jev_smoke(
     n: int = typer.Option(20, "--n", min=1),
     mock: bool = typer.Option(False, "--mock", help="Use MockJevClient instead of the network."),
     mock_latency_ms: float = typer.Option(50.0, "--mock-latency-ms", min=0.0),
     max_calls: int = typer.Option(DEFAULT_MAX_CALLS, "--max-calls", min=0),
-    backend: JevBackendName = typer.Option(JevBackendName.auto, "--backend"),
 ) -> None:
     """Identical sequential calls over one keep-alive session, printing per-call latency."""
     client: JevClientProtocol
@@ -195,14 +237,13 @@ def jev_smoke(
             )
         else:
             _load_env()
-            resolved = resolve_backend(backend.value)
-            client, backend_name = JevClient(backend=resolved, max_calls=max_calls), resolved.name
+            client, backend_name = JevClient(max_calls=max_calls), "openrouter-decisions"
     except JevAuthError as e:
         console.print(f"[red]{e}[/] (or pass --mock)")
         raise typer.Exit(1) from e
 
     table = Table(title=f"Jev smoke test, n={n}, backend={backend_name}")
-    for col in ("#", "model", "choice", "probabilities", "connect ms", "ttfb ms", "total ms"):
+    for col in ("#", "model", "choice", "probabilities", "t_wall ms"):
         table.add_column(col, justify="left" if col in ("model", "probabilities") else "right")
 
     totals: list[int] = []
@@ -212,7 +253,7 @@ def jev_smoke(
         for i in range(n):
             resp = client.evaluate(_SMOKE_STATE, {"action": _SMOKE_QUESTION})
             ans = resp.choice("action")
-            totals.append(resp.timings.total_ns)
+            totals.append(resp.t_wall_ns)
             distinct.add(tuple(sorted(ans.probabilities.items())))
             cost_usd += resp.meta.get("cost_usd") or 0.0
             # The API returns options in arbitrary order; print them in ours.
@@ -221,9 +262,7 @@ def jev_smoke(
                 for k in _SMOKE_QUESTION.criteria
             )
             table.add_row(
-                str(i), resp.model, ans.choice, probs,
-                _fmt_ms(resp.timings.connect_ns), _fmt_ms(resp.timings.ttfb_ns),
-                _fmt_ms(resp.timings.total_ns),
+                str(i), resp.model, ans.choice, probs, f"{resp.t_wall_ns / 1e6:.1f}",
             )  # fmt: skip
     except JevError as e:
         console.print(table)
@@ -236,7 +275,7 @@ def jev_smoke(
     s = summarize_ns(totals)
     console.print(
         f"cold first call: {totals[0] / 1e6:.1f} ms | all {s.n} calls: "
-        f"p50 {s.p50_ms:.1f}  p90 {s.p90_ms:.1f}  p99 {s.p99_ms:.1f} ms | "
+        f"p50 {s.p50_ms:.1f}  p95 {s.p95_ms:.1f} ms | "
         f"budget used {client.budget.used}/{client.budget.max_calls}",
         soft_wrap=True,
     )

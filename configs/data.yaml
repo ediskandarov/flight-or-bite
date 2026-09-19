@@ -1,0 +1,31 @@
+# Connectome files (SPEC §4.1, §10). FlyWire-derived data, CC BY-NC 4.0: never committed.
+#
+# Checksums are git blob SHA-1 values read from the GitHub tree API at the pinned commit,
+# i.e. they prove byte identity with the authors' repository, not with a copy of ours.
+source:
+  repo: philshiu/Drosophila_brain_model
+  commit: 91bdd1e7dcf193f3e7ca5a8933497fcef63b7960
+  code_license: MIT
+  data_license: CC BY-NC 4.0 (FlyWire)
+
+files:
+  - name: Connectivity_783.parquet
+    version: 783
+    role: connectivity
+    bytes: 100804642
+    git_blob_sha1: d386555d1a5f40ebfa1380bcb05b1fab044855fd
+  - name: Completeness_783.csv
+    version: 783
+    role: completeness
+    bytes: 3327347
+    git_blob_sha1: b5a26b82b69a3c2e7fd99cd6810c36fc8f0e492b
+  - name: 2023_03_23_connectivity_630_final.parquet
+    version: 630
+    role: connectivity
+    bytes: 86630944
+    git_blob_sha1: 8b4d9531bc0acbda7c2074ae577e6ac9e2fca166
+  - name: 2023_03_23_completeness_630_final.csv
+    version: 630
+    role: completeness
+    bytes: 3057611
+    git_blob_sha1: be745f0ce054308df21accc5c4b3883aa38498f9

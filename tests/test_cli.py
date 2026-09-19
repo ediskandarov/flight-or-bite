@@ -8,9 +8,7 @@ from flight_or_bite.cli.app import EXIT_NOT_IMPLEMENTED, app
 runner = CliRunner()
 
 SPEC_COMMANDS = [
-    ["fetch-data"],
-    ["perf"],
-    ["gate", "G1"],
+    ["gate", "G2"],
     ["gates"],
     ["table", "build", "--arbiter", "connectome"],
     ["table", "show", "--arbiter", "jev", "--slice", "looming"],
@@ -53,7 +51,7 @@ def test_info():
 def test_jev_smoke_on_mock():
     result = runner.invoke(app, ["jev", "smoke", "--mock", "--n", "5", "--mock-latency-ms", "1"])
     assert result.exit_code == 0, result.output
-    assert "p50" in result.output and "budget used 5/" in result.output
+    assert "p50" in result.output and "p95" in result.output and "budget used 5/" in result.output
 
 
 def test_jev_smoke_respects_max_calls():
@@ -66,4 +64,4 @@ def test_jev_smoke_respects_max_calls():
 def test_jev_smoke_without_key_explains():
     result = runner.invoke(app, ["jev", "smoke"])
     assert result.exit_code == 1
-    assert "JEV_API_KEY" in result.output and "OPENROUTER_API_KEY" in result.output
+    assert "OPENROUTER_API_KEY" in result.output

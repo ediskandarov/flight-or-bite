@@ -37,9 +37,8 @@ def test_known_latency_is_measured_by_client_and_external_timer(delay_s):
     with Stopwatch() as sw:
         resp = client.evaluate(STATE, {"action": QUESTION})
     delay_ns = int(delay_s * 1e9)
-    assert delay_ns <= resp.timings.total_ns <= delay_ns + SLACK_NS
-    assert resp.timings.total_ns <= sw.elapsed_ns <= delay_ns + SLACK_NS
-    assert resp.timings.connect_ns is None and resp.timings.ttfb_ns is None
+    assert delay_ns <= resp.t_wall_ns <= delay_ns + SLACK_NS
+    assert resp.t_wall_ns <= sw.elapsed_ns <= delay_ns + SLACK_NS
 
 
 def test_random_latency_is_reproducible_by_seed():

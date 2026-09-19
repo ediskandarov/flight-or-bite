@@ -12,7 +12,7 @@ Checked: **2026-09-19**.
 | Source | Used for | Licence | Read? |
 |---|---|---|---|
 | Shiu et al., "A *Drosophila* computational brain model reveals sensorimotor processing", *Nature* 2024. https://doi.org/10.1038/s41586-024-07763-9 | LIF model definition, neuron parameters, the single global weight constant, validation experiments (sugar → MN9) | paper | reachable; **to read at M1** |
-| https://github.com/philshiu/Drosophila_brain_model (last push 2024-09-14) | Reference Brian2 implementation (`model.py`, `utils.py`, `example.ipynb`), connectivity files, parameter values, sugar GRN ids used in the examples | MIT (code) | file list only; **to read at M1** |
+| https://github.com/philshiu/Drosophila_brain_model, pinned at commit `91bdd1e7dc` | Reference Brian2 implementation, connectivity files, parameter values, sugar GRN and MN9 ids | MIT (code) | **read in full at M1** (`model.py`, `utils.py`, `example.ipynb`, `Readme.md`); see [lif_model_notes.md](lif_model_notes.md). `figures.ipynb` not read |
 | https://github.com/eonsystemspbc/fly-brain (last push 2026-08-29) | Ports to other backends (Brian2, Brian2CUDA, PyTorch, NEST GPU) — cross-checking our non-reference backends. CUDA parts are out of scope | GPL-2.0 | description only |
 | FlyWire https://flywire.ai · Codex https://codex.flywire.ai | Cell-type annotations → neuron ids for `data/circuits.yaml` (sugar / bitter GRNs, LPLC2, LC4, MN9, DNp01), each with a `provenance` field | **CC BY-NC 4.0** (data) | reachable; **to use at M1/M3** |
 

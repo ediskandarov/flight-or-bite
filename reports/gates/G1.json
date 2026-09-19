@@ -1,0 +1,228 @@
+{
+  "gate": "G1",
+  "passed": true,
+  "metric": 0.9439016300880531,
+  "threshold": 0.8,
+  "details": {
+    "metric_is": "minimum Spearman rho across runs",
+    "run_dir": "runs/20260919T213854_gate-G1",
+    "runs": {
+      "event/v630": {
+        "gate": "G1",
+        "passed": true,
+        "metric": 0.9439016300880531,
+        "threshold": 0.8,
+        "details": {
+          "backend": "event-numba",
+          "n_sugar_neurons": 21,
+          "r_max_hz": 200.0,
+          "t_sim_ms": 500.0,
+          "n_rep": 10,
+          "sugar": [
+            0.0,
+            0.1,
+            0.2,
+            0.3,
+            0.4,
+            0.5,
+            0.6,
+            0.7,
+            0.8,
+            0.9,
+            1.0
+          ],
+          "mn9_rate_hz_mean": [
+            0.0,
+            0.2,
+            3.2,
+            32.0,
+            60.0,
+            68.4,
+            75.6,
+            81.8,
+            83.4,
+            92.4,
+            91.4
+          ],
+          "mn9_rate_hz_sd": [
+            0.0,
+            0.6,
+            2.857,
+            7.376,
+            6.573,
+            7.365,
+            12.643,
+            5.095,
+            6.989,
+            4.8,
+            8.297
+          ],
+          "rho_over_level_means": 0.990909090909091,
+          "strictly_increasing_means": false
+        }
+      },
+      "brian2/v630": {
+        "gate": "G1",
+        "passed": true,
+        "metric": 0.954754430667255,
+        "threshold": 0.8,
+        "details": {
+          "backend": "brian2-cython",
+          "n_sugar_neurons": 21,
+          "r_max_hz": 200.0,
+          "t_sim_ms": 500.0,
+          "n_rep": 10,
+          "sugar": [
+            0.0,
+            0.1,
+            0.2,
+            0.3,
+            0.4,
+            0.5,
+            0.6,
+            0.7,
+            0.8,
+            0.9,
+            1.0
+          ],
+          "mn9_rate_hz_mean": [
+            0.0,
+            0.0,
+            3.8,
+            31.4,
+            54.4,
+            70.4,
+            69.0,
+            84.2,
+            85.0,
+            90.0,
+            89.2
+          ],
+          "mn9_rate_hz_sd": [
+            0.0,
+            0.0,
+            3.628,
+            8.052,
+            7.419,
+            6.437,
+            5.814,
+            8.022,
+            5.882,
+            6.45,
+            4.118
+          ],
+          "rho_over_level_means": 0.9795014022931412,
+          "strictly_increasing_means": false
+        }
+      },
+      "event/v783": {
+        "gate": "G1",
+        "passed": true,
+        "metric": 0.9663232793694497,
+        "threshold": 0.8,
+        "details": {
+          "backend": "event-numba",
+          "n_sugar_neurons": 20,
+          "r_max_hz": 200.0,
+          "t_sim_ms": 500.0,
+          "n_rep": 10,
+          "sugar": [
+            0.0,
+            0.1,
+            0.2,
+            0.3,
+            0.4,
+            0.5,
+            0.6,
+            0.7,
+            0.8,
+            0.9,
+            1.0
+          ],
+          "mn9_rate_hz_mean": [
+            0.0,
+            0.0,
+            1.8,
+            29.0,
+            50.6,
+            61.0,
+            66.6,
+            73.6,
+            80.4,
+            83.4,
+            87.2
+          ],
+          "mn9_rate_hz_sd": [
+            0.0,
+            0.0,
+            2.441,
+            10.668,
+            5.064,
+            4.837,
+            7.158,
+            4.883,
+            6.437,
+            5.869,
+            5.231
+          ],
+          "rho_over_level_means": 0.9977246841962695,
+          "strictly_increasing_means": false
+        }
+      },
+      "brian2/v783": {
+        "gate": "G1",
+        "passed": true,
+        "metric": 0.9600826472812936,
+        "threshold": 0.8,
+        "details": {
+          "backend": "brian2-cython",
+          "n_sugar_neurons": 20,
+          "r_max_hz": 200.0,
+          "t_sim_ms": 500.0,
+          "n_rep": 10,
+          "sugar": [
+            0.0,
+            0.1,
+            0.2,
+            0.3,
+            0.4,
+            0.5,
+            0.6,
+            0.7,
+            0.8,
+            0.9,
+            1.0
+          ],
+          "mn9_rate_hz_mean": [
+            0.0,
+            0.0,
+            3.8,
+            28.2,
+            49.4,
+            60.4,
+            69.2,
+            69.4,
+            78.6,
+            79.6,
+            90.4
+          ],
+          "mn9_rate_hz_sd": [
+            0.0,
+            0.0,
+            4.142,
+            8.738,
+            11.065,
+            6.859,
+            5.455,
+            5.37,
+            3.105,
+            7.526,
+            5.851
+          ],
+          "rho_over_level_means": 0.9977246841962695,
+          "strictly_increasing_means": false
+        }
+      }
+    }
+  }
+}

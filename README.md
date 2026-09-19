@@ -10,7 +10,8 @@ decision time:
 The full specification is in [SPEC.md](SPEC.md). A negative result is a valid result.
 Every hand-made assumption is recorded in [docs/ENGINEERED.md](docs/ENGINEERED.md).
 
-Status: **M0 (scaffold)**. See SPEC §11 for milestones.
+Status: **M1 done** (LIF on the Mac: reference reproduced, G1 passed, backend benchmark in
+[reports/perf.md](reports/perf.md)). See SPEC §11 for milestones.
 
 ## Setup
 
@@ -21,6 +22,9 @@ uv sync
 uv run pytest
 uv run fob --help
 uv run fob info
+uv run fob fetch-data      # ~190 MB connectome, verified against the authors' repository
+uv run fob gate G1         # sugar -> MN9 on Brian2 and the event backend
+caffeinate -i uv run fob perf   # backend benchmark -> reports/perf.md (run on AC power)
 ```
 
 ## Jev smoke test
@@ -30,10 +34,9 @@ uv run fob jev smoke --mock            # offline, MockJevClient
 uv run fob jev smoke --n 20            # 20 real calls, per-call latency (~$0.0003)
 ```
 
-Keys are read from the environment or from a git-ignored `.env` in the working directory:
-`OPENROUTER_API_KEY` (Jev via OpenRouter's alpha Decisions endpoint — what we use today), or
-`JEV_API_KEY` / `TYPESAFE_API_KEY` (TypeSafe direct, invite-only; preferred when present).
-`--backend auto|typesafe|openrouter` overrides the choice.
+Jev is reached through OpenRouter's alpha Decisions endpoint, model pinned to
+`typesafe/jev-1.13`. The key is read from `OPENROUTER_API_KEY` (environment or a git-ignored
+`.env` in the working directory). Only client-side wall time is measured.
 
 API details, with sources: [docs/jev_api_notes.md](docs/jev_api_notes.md).
 

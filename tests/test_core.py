@@ -30,7 +30,8 @@ def test_arbiter_protocol_is_structural():
 
     assert isinstance(Fixed(), Arbiter)
     decision = Fixed().decide(Observation(0, 0, 0, 0), None)
-    assert decision.t_sim_ms is None and decision.t_server_ms is None and decision.meta == {}
+    assert decision.t_sim_ms is None and decision.meta == {}
+    assert not hasattr(decision, "t_server_ms")  # dropped by decision D10
 
 
 def test_stopwatch_measures_known_delay():
@@ -49,8 +50,7 @@ def test_summarize_ns_percentiles():
     summary = summarize_ns(ms * 1_000_000 for ms in range(1, 101))
     assert summary.n == 100
     assert summary.p50_ms == pytest.approx(50.5)
-    assert summary.p90_ms == pytest.approx(90.1)
-    assert summary.p99_ms == pytest.approx(99.01)
+    assert summary.p95_ms == pytest.approx(95.05)
     assert summary.mean_ms == pytest.approx(50.5)
 
 

@@ -1,0 +1,10 @@
+# Validity gates (SPEC §5). Thresholds come from the spec; the protocol details below were fixed
+# before the first gate run and must not be tuned afterwards.
+
+G1:
+  threshold: 0.8        # Spearman rho, SPEC §5
+  levels: 11            # sugar = 0.0, 0.1, ..., 1.0
+  n_rep: 10             # trials per level
+  seed_base: 2000000    # trial seed = seed_base + level_index * n_rep + rep
+  # metric: Spearman rho between sugar level and MN9 rate over ALL trials (levels * n_rep points),
+  # not over per-level means — trial noise counts against the gate.

@@ -1,0 +1,18 @@
+# LIF model parameters (SPEC §4.1). Every value is copied from `default_params` in
+# philshiu/Drosophila_brain_model model.py @ 91bdd1e7dc; the citations are the ones given there.
+# Nothing here is tuned by us. G6 perturbs w_syn; it never changes this file.
+
+connectome_version: 783   # decision D17 (final). The paper used 630; both are fetched.
+
+v_0_mv: -52.0      # resting potential            (Kakaria & de Bivort 2017, doi:10.3389/fnbeh.2017.00008)
+v_rst_mv: -52.0    # reset potential after spike  (Kakaria & de Bivort 2017)
+v_th_mv: -45.0     # spike threshold              (Kakaria & de Bivort 2017)
+t_mbr_ms: 20.0     # membrane time constant       (Kakaria & de Bivort 2017)
+tau_ms: 5.0        # synaptic time constant       (Jürgensen et al., doi:10.1088/2634-4386/ac3ba6)
+t_rfc_ms: 2.2      # refractory period            (Lazar et al., doi:10.7554/eLife.62362)
+t_dly_ms: 1.8      # synaptic delay               (Paul et al. 2015, doi:10.3389/fncel.2015.00029)
+w_syn_mv: 0.275    # weight per synapse — the model's single free parameter
+f_poi: 250.0       # Poisson input weight = f_poi * w_syn; one event always causes a spike
+
+# model.py never sets the clock, so the reference runs on Brian2's default of 0.1 ms.
+dt_ms: 0.1

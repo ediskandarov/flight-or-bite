@@ -41,21 +41,19 @@ def busy_wait_ns(delay_ns: int) -> None:
 class LatencySummary:
     n: int
     p50_ms: float
-    p90_ms: float
-    p99_ms: float
+    p95_ms: float
     mean_ms: float  # supplementary only (SPEC §6.2)
 
 
 def summarize_ns(samples_ns: Iterable[int]) -> LatencySummary:
-    """p50/p90/p99 of latency samples given in nanoseconds."""
+    """p50/p95 of latency samples given in nanoseconds (decision D10)."""
     arr = np.asarray(list(samples_ns), dtype=np.float64) / 1e6
     if arr.size == 0:
         raise ValueError("no latency samples")
-    p50, p90, p99 = np.percentile(arr, [50, 90, 99])
+    p50, p95 = np.percentile(arr, [50, 95])
     return LatencySummary(
         n=int(arr.size),
         p50_ms=float(p50),
-        p90_ms=float(p90),
-        p99_ms=float(p99),
+        p95_ms=float(p95),
         mean_ms=float(arr.mean()),
     )

@@ -36,8 +36,7 @@ class Decision:
     probs: dict[Action, float]
     action: Action  # sampled from probs
     t_wall_ns: int  # wall-clock from request to ready action
-    t_sim_ms: float | None = None  # connectome only
-    t_server_ms: float | None = None  # Jev only, and only if the API reports it
+    t_sim_ms: float | None = None  # connectome only; nobody else has a second clock (D10)
     meta: dict[str, Any] = field(default_factory=dict)  # cache_hit, backend, model_version, ...
 
 
