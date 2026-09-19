@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+dist/
+
+# FlyWire data is CC BY-NC 4.0: never commit it (SPEC §10). circuits.yaml is ours.
+data/*
+!data/.gitignore
+!data/circuits.yaml
+
+# Per-run outputs (SPEC §10)
+runs/
+
+# Secrets
+.env
+.env.*
+
+# macOS
+.DS_Store
