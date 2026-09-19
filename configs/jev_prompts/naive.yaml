@@ -1,0 +1,12 @@
+# DRAFT v0 (2026-09-20), written before any Jev response to it was seen. Tuned on `dev` only
+# (SPEC §4.3); frozen and hashed in PREREG.md before the test split is touched.
+#
+# naive: "only fields and numbers" (SPEC §4.3). No rules, no option descriptions.
+mode: naive
+version: v0
+instructions: "Which action should the agent take?"
+criteria:
+  EAT: null
+  ESCAPE: null
+  IDLE: null
+decimals: 2          # observation values are rounded to this many decimals in the state

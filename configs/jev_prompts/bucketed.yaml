@@ -1,0 +1,21 @@
+# DRAFT v0 (2026-09-20), written before any Jev response to it was seen. Tuned on `dev` only
+# (SPEC §4.3); frozen and hashed in PREREG.md before the test split is touched.
+#
+# bucketed (decision D7): identical to `naive` except that every number is replaced by a named
+# level — the vendor's advice for jev-1.13 ("pass in ... a named bucket"). Five equal-width levels;
+# the boundaries were fixed before any data was seen. No rules, so that the only difference from
+# `naive` is the representation of the numbers.
+mode: bucketed
+version: v0
+instructions: "Which action should the agent take?"
+criteria:
+  EAT: null
+  ESCAPE: null
+  IDLE: null
+buckets:             # upper bound (inclusive for the last) -> level name
+  - [0.2, "very low"]
+  - [0.4, "low"]
+  - [0.6, "medium"]
+  - [0.8, "high"]
+  - [1.0, "very high"]
+zero_label: "none"   # used for a value of exactly 0
