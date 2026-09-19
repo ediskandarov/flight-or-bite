@@ -52,6 +52,14 @@ Listed so that none is forgotten; values are deliberately left open.
 | V7 | **Oracle ties** (exactly equal Q-values, common once the value saturates) go to IDLE, then EAT, then ESCAPE | Without it a dictionary order decided, and the oracle "escaped" in a world with no threats | 2026-09-20 (M2) |
 | V8 | Oracle numerics: 201 energy levels (step 0.5) with linear interpolation; expectation over observations by quadrature (16 sugar × 8 bitter midpoints, 50 looming bins plus the two clip masses). Checked against brute-force expectimax on a toy MDP to 1e-9, and against simulation (DP predicts 148.9 trials from energy 50; 1000 dev episodes give 151.2 [143.4, 159.3]) | — | 2026-09-20 (M2) |
 
+## Policy tables and Jev prompts (drafts)
+
+| # | Reading / draft | Why | Added |
+|---|---|---|---|
+| P1 | Grid nodes are placed uniformly over [0, 1] on every axis (SPEC §4.5 fixes only the counts 5 × 3 × 5 × 3). `reports/grid_loss.md` measures what this costs and an environment-aligned alternative; the final grid is the human's decision | — | 2026-09-20 |
+| P2 | A node's policy is the mean over repeats of the per-repeat probabilities (for one-hot arbiters: outcome frequencies). Latency is drawn from a recorded repeat of the nearest node with the same outcome, or from any repeat of that node if the outcome never occurred there | SPEC §4.5 says "latency is sampled from the nearest node" without saying what to do for an unseen outcome | 2026-09-20 |
+| J1 | Jev prompt templates `naive` / `informed` / `bucketed`, **draft v0**, committed before any response to them was seen (`713fe97`). Observation numbers are rounded to 2 decimals. `bucketed` = `naive` with numbers replaced by five equal-width levels (very low … very high; exactly 0 → none), no rules | SPEC §4.3, decision D7 | 2026-09-20 |
+
 ## Not model assumptions, but choices that shape measured numbers
 
 | # | Choice | Why | Added |
