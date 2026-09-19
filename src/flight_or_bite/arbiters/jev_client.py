@@ -13,6 +13,8 @@ import os
 import time
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
+from datetime import datetime
+from pathlib import Path
 from typing import Any, Protocol
 
 import httpx
@@ -35,6 +37,7 @@ MODEL = "typesafe/jev-1.13"
 NO_CACHE_HEADERS = {"X-OpenRouter-Cache": "false"}
 
 DEFAULT_TIMEOUT_S = 10.0
+DEFAULT_LOG_DIR = Path("runs/jev_raw")  # SPEC §4.3: raw responses are always logged (D19)
 DEFAULT_MAX_CALLS = 100_000  # SPEC §4.3 says 30 000; raised by decision D8 (docs/decisions.md)
 
 State = str | Mapping[str, Any] | list[Any]
@@ -170,13 +173,32 @@ def _parse_body(data: Any) -> tuple[str, dict[str, Any], dict[str, Any]]:
     return model, answers, usage
 
 
+class RawLog:
+    """Append-only JSONL log of every exchange with Jev: one line per call, one file per day.
+
+    Holds the request body and the raw response text, never headers, so no credential is
+    written. Failed calls are logged too.
+    """
+
+    def __init__(self, directory: Path) -> None:
+        self.directory = directory
+
+    def write(self, record: dict[str, Any]) -> Path:
+        self.directory.mkdir(parents=True, exist_ok=True)
+        path = self.directory / f"{datetime.now():%Y%m%d}.jsonl"
+        with path.open("a", encoding="utf-8") as f:
+            f.write(json.dumps(record, ensure_ascii=False) + "\n")
+        return path
+
+
 class JevClient:
-    """Jev over one keep-alive session. No retries, no cache, pinned model."""
+    """Jev over one keep-alive session. No retries, no cache, pinned model, raw log."""
 
     def __init__(
         self,
         api_key: str | None = None,
         *,
+        log_dir: Path | None = None,  # None -> DEFAULT_LOG_DIR, resolved at call time
         timeout_s: float = DEFAULT_TIMEOUT_S,
         max_calls: int = DEFAULT_MAX_CALLS,
         transport: httpx.BaseTransport | None = None,
@@ -186,6 +208,7 @@ class JevClient:
             raise JevAuthError(f"no API key: set {API_KEY_ENV} (environment or .env)")
         self.model = MODEL
         self.budget = CallBudget(max_calls)
+        self.raw_log = RawLog(log_dir or DEFAULT_LOG_DIR)
         self._http = httpx.Client(
             base_url=BASE_URL,
             timeout=timeout_s,
@@ -205,6 +228,19 @@ class JevClient:
         t_wall_ns = time.perf_counter_ns() - t0
 
         request_id = resp.headers.get(GENERATION_ID_HEADER)
+        self.raw_log.write(  # after the timer has stopped, before any validation can raise
+            {
+                "ts": datetime.now().astimezone().isoformat(timespec="milliseconds"),
+                "call": self.budget.used,
+                "status": resp.status_code,
+                "generation_id": request_id,
+                "t_wall_ns": t_wall_ns,
+                "cache_hit": False,
+                "request_bytes": len(payload),
+                "request": json.loads(payload),
+                "response_text": resp.text,
+            }
+        )
         if resp.status_code != 200:
             raise JevHTTPError(resp.status_code, resp.text, request_id)
         try:

@@ -40,7 +40,17 @@ LIVE_RESPONSE = {
 
 
 def make_client(handler, **kwargs) -> JevClient:
+    kwargs.setdefault("log_dir", LOG_DIR[0])
     return JevClient(api_key="test-key", transport=httpx.MockTransport(handler), **kwargs)
+
+
+LOG_DIR: list = [None]
+
+
+@pytest.fixture(autouse=True)
+def log_dir(tmp_path):
+    LOG_DIR[0] = tmp_path / "raw"
+    return LOG_DIR[0]
 
 
 def ok(request: httpx.Request) -> httpx.Response:
@@ -211,3 +221,43 @@ def test_api_key_comes_from_openrouter_variable_only(monkeypatch):
 def test_empty_questions_rejected():
     with pytest.raises(ValueError):
         build_payload("s", {}, "m")
+
+
+def read_log(directory):
+    files = sorted(directory.glob("*.jsonl"))
+    assert len(files) == 1
+    return [json.loads(line) for line in files[0].read_text().splitlines()]
+
+
+def test_every_call_is_logged_raw_without_credentials(log_dir):
+    with make_client(ok) as client:
+        client.evaluate({"sugar": 0.7}, {"action": QUESTION})
+        client.evaluate({"sugar": 0.1}, {"action": QUESTION})
+
+    records = read_log(log_dir)
+    assert [r["call"] for r in records] == [1, 2]
+    first = records[0]
+    assert first["status"] == 200 and first["generation_id"] == LIVE_RESPONSE["id"]
+    assert first["request"]["state"] == {"sugar": 0.7}
+    assert first["request"]["model"] == "typesafe/jev-1.13"
+    assert json.loads(first["response_text"]) == LIVE_RESPONSE  # raw text, not a re-serialisation
+    assert first["t_wall_ns"] > 0 and first["cache_hit"] is False
+    assert "test-key" not in (log_dir / next(iter(p.name for p in log_dir.iterdir()))).read_text()
+
+
+def test_failures_are_logged_before_they_raise(log_dir):
+    bad_model = {**LIVE_RESPONSE, "model": "typesafe/jev-1.14"}
+    responses = iter(
+        [httpx.Response(429, text="slow down"), httpx.Response(200, text="not json"),
+         httpx.Response(200, json=bad_model)]
+    )  # fmt: skip
+    with make_client(lambda request: next(responses)) as client:
+        for expected in (JevHTTPError, JevResponseError, JevModelMismatch):
+            with pytest.raises(expected):
+                client.evaluate("s", {"action": QUESTION})
+
+    records = read_log(log_dir)
+    assert [r["status"] for r in records] == [429, 200, 200]
+    assert records[0]["response_text"] == "slow down"
+    assert records[1]["response_text"] == "not json"
+    assert json.loads(records[2]["response_text"])["model"] == "typesafe/jev-1.14"
