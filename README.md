@@ -27,6 +27,9 @@ uv run fob info
 uv run fob fetch-data      # ~190 MB connectome, verified against the authors' repository
 uv run fob gate G1         # sugar -> MN9 on Brian2 and the event backend
 uv run fob eval --split dev     # baselines and oracle on 1000 dev episodes -> reports/eval_dev.md
+uv run fob replay --seed 3 --arbiter oracle          # text log of one episode
+uv run fob table build --arbiter oracle              # policy table -> reports/tables/oracle/
+uv run fob table show --arbiter oracle --slice looming --at sugar=0.75
 caffeinate -i uv run fob perf   # backend benchmark -> reports/perf.md (run on AC power)
 ```
 

@@ -15,3 +15,6 @@ def no_real_credentials(monkeypatch):
 def raw_log_in_tmp(monkeypatch, tmp_path):
     """Tests must not write into the project's runs/ directory."""
     monkeypatch.setattr("flight_or_bite.arbiters.jev_client.DEFAULT_LOG_DIR", tmp_path / "jev_raw")
+    monkeypatch.setattr(
+        "flight_or_bite.arbiters.jev_client.DEFAULT_LEDGER", tmp_path / "ledger.json"
+    )

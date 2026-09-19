@@ -48,6 +48,9 @@ class TableArbiter(StrEnum):
     connectome = "connectome"
     shuffled = "shuffled"
     jev = "jev"
+    oracle = "oracle"
+    fixed_priority = "fixed_priority"
+    random = "random"
 
 
 class BenchArbiter(StrEnum):
@@ -151,19 +154,42 @@ def gates() -> None:
     _not_implemented("gates", "M3")
 
 
+def _run(op, *args) -> None:
+    from flight_or_bite.policy_table.cli_ops import NotReady
+
+    try:
+        op(console, *args)
+    except NotReady as e:
+        console.print(f"[yellow]{e}[/]")
+        raise typer.Exit(EXIT_NOT_IMPLEMENTED) from e
+
+
 @table_app.command("build")
-def table_build(arbiter: TableArbiter = typer.Option(..., "--arbiter")) -> None:
+def table_build(
+    arbiter: TableArbiter = typer.Option(..., "--arbiter"),
+    mode: str = typer.Option(None, "--mode", help="Jev state mode: naive, informed, bucketed."),
+    mock: bool = typer.Option(False, "--mock", help="Jev: use MockJevClient (no network)."),
+    grid: Path = typer.Option(Path("configs/grid.yaml"), "--grid"),
+) -> None:
     """Build a policy table (resumable)."""
-    _not_implemented("table build", "M4")
+    from flight_or_bite.policy_table import cli_ops
+
+    if arbiter is TableArbiter.jev and not mock:
+        _load_env()
+    _run(cli_ops.table_build, arbiter.value, mode, mock, grid)
 
 
 @table_app.command("show")
 def table_show(
-    arbiter: str = typer.Option(..., "--arbiter"),
+    arbiter: str = typer.Option(..., "--arbiter", help="Table name under reports/tables/."),
     slice_: str = typer.Option("looming", "--slice"),
+    at: list[str] = typer.Option(None, "--at", help="Fix another axis, e.g. --at sugar=0.6"),
 ) -> None:
     """Show a policy and latency slice."""
-    _not_implemented("table show", "M4")
+    from flight_or_bite.policy_table import cli_ops
+
+    fixed = {k: float(v) for k, v in (item.split("=", 1) for item in at or [])}
+    _run(cli_ops.table_show, arbiter, slice_, fixed)
 
 
 @latency_app.command("bench")
@@ -209,8 +235,10 @@ def replay(
     seed: int = typer.Option(..., "--seed"),
     arbiter: str = typer.Option(..., "--arbiter"),
 ) -> None:
-    """Text log of a tabular episode."""
-    _not_implemented("replay", "M4")
+    """Text log of a tabular episode (or of a baseline played directly)."""
+    from flight_or_bite.policy_table import cli_ops
+
+    _run(cli_ops.replay, seed, arbiter)
 
 
 @app.command()
@@ -283,7 +311,7 @@ def jev_smoke(
     console.print(
         f"cold first call: {totals[0] / 1e6:.1f} ms | all {s.n} calls: "
         f"p50 {s.p50_ms:.1f}  p95 {s.p95_ms:.1f} ms | "
-        f"budget used {client.budget.used}/{client.budget.max_calls}",
+        f"budget used {client.budget.used}/{client.budget.max_calls} (all runs)",
         soft_wrap=True,
     )
     # All requests are identical, so this doubles as a determinism check.

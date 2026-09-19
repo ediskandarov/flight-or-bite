@@ -38,6 +38,7 @@ NO_CACHE_HEADERS = {"X-OpenRouter-Cache": "false"}
 
 DEFAULT_TIMEOUT_S = 10.0
 DEFAULT_LOG_DIR = Path("runs/jev_raw")  # SPEC §4.3: raw responses are always logged (D19)
+DEFAULT_LEDGER = Path("runs/jev_ledger.json")  # cumulative call count across runs (D8)
 DEFAULT_MAX_CALLS = 100_000  # SPEC §4.3 says 30 000; raised by decision D8 (docs/decisions.md)
 
 State = str | Mapping[str, Any] | list[Any]
@@ -76,18 +77,37 @@ def is_pinned_model(reported: str, pinned: str = MODEL) -> bool:
 
 
 class CallBudget:
-    """The --max-calls fuse. Counts attempts, not successes: a failed call still costs."""
+    """The --max-calls fuse. Counts attempts, not successes: a failed call still costs.
 
-    def __init__(self, max_calls: int = DEFAULT_MAX_CALLS) -> None:
+    With a `ledger` file the count survives across processes and runs (decision D8): `used`
+    starts from the ledger's total and every attempt is written back before the request is sent.
+    """
+
+    def __init__(self, max_calls: int = DEFAULT_MAX_CALLS, ledger: Path | None = None) -> None:
         if max_calls < 0:
             raise ValueError("max_calls must be >= 0")
         self.max_calls = max_calls
-        self.used = 0
+        self.ledger = ledger
+        self.session = 0  # attempts made through this object
+        self.used = self._read()
+
+    def _read(self) -> int:
+        if self.ledger is None or not self.ledger.is_file():
+            return 0
+        return int(json.loads(self.ledger.read_text())["calls"])
 
     def spend(self) -> None:
+        if self.ledger is not None:
+            self.used = self._read()  # another process may have spent in the meantime
         if self.used >= self.max_calls:
             raise CallBudgetExceeded(f"call budget exhausted: {self.used}/{self.max_calls}")
         self.used += 1
+        self.session += 1
+        if self.ledger is not None:
+            self.ledger.parent.mkdir(parents=True, exist_ok=True)
+            tmp = self.ledger.with_suffix(".tmp")
+            tmp.write_text(json.dumps({"calls": self.used, "max_calls": self.max_calls}))
+            tmp.replace(self.ledger)
 
 
 @dataclass(frozen=True)
@@ -199,6 +219,7 @@ class JevClient:
         api_key: str | None = None,
         *,
         log_dir: Path | None = None,  # None -> DEFAULT_LOG_DIR, resolved at call time
+        ledger: Path | None | bool = True,  # True -> DEFAULT_LEDGER; None/False -> in-process only
         timeout_s: float = DEFAULT_TIMEOUT_S,
         max_calls: int = DEFAULT_MAX_CALLS,
         transport: httpx.BaseTransport | None = None,
@@ -207,7 +228,8 @@ class JevClient:
         if not api_key:
             raise JevAuthError(f"no API key: set {API_KEY_ENV} (environment or .env)")
         self.model = MODEL
-        self.budget = CallBudget(max_calls)
+        ledger_path = DEFAULT_LEDGER if ledger is True else (ledger or None)
+        self.budget = CallBudget(max_calls, ledger_path)
         self.raw_log = RawLog(log_dir or DEFAULT_LOG_DIR)
         self._http = httpx.Client(
             base_url=BASE_URL,
@@ -232,6 +254,7 @@ class JevClient:
             {
                 "ts": datetime.now().astimezone().isoformat(timespec="milliseconds"),
                 "call": self.budget.used,
+                "session_call": self.budget.session,
                 "status": resp.status_code,
                 "generation_id": request_id,
                 "t_wall_ns": t_wall_ns,

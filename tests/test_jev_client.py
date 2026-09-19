@@ -261,3 +261,22 @@ def test_failures_are_logged_before_they_raise(log_dir):
     assert records[0]["response_text"] == "slow down"
     assert records[1]["response_text"] == "not json"
     assert json.loads(records[2]["response_text"])["model"] == "typesafe/jev-1.14"
+
+
+def test_call_ledger_persists_across_clients_and_enforces_the_budget(tmp_path):
+    ledger = tmp_path / "ledger.json"
+    with make_client(ok, ledger=ledger, max_calls=3) as first:
+        first.evaluate("s", {"action": QUESTION})
+        first.evaluate("s", {"action": QUESTION})
+    assert json.loads(ledger.read_text())["calls"] == 2
+
+    with make_client(ok, ledger=ledger, max_calls=3) as second:  # a later run
+        assert second.budget.used == 2 and second.budget.session == 0
+        second.evaluate("s", {"action": QUESTION})
+        with pytest.raises(CallBudgetExceeded):
+            second.evaluate("s", {"action": QUESTION})
+    assert json.loads(ledger.read_text())["calls"] == 3
+
+    with make_client(ok, ledger=None, max_calls=1) as isolated:  # in-process only
+        isolated.evaluate("s", {"action": QUESTION})
+    assert json.loads(ledger.read_text())["calls"] == 3
