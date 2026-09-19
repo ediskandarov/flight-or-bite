@@ -41,3 +41,13 @@ keep-alive session; the ECDF figure; the power-source / timer-throttling self-ch
 | D17 | **Connectome: v783** (final; supersedes the provisional D4) | v630 remains downloadable for cross-checks only |
 | D18 | Before M2: an **exploratory probe of the looming channel** (`reports/probe_looming.md`), 1–2 hours, nothing tuned, stop after the report. Everything in it is labelled exploratory (SPEC §8) | Not a milestone; does not count as G3 or G7 |
 | D19 | Raw Jev responses are logged to disk from now on, before any new call is made | Closes the gap noted in `reports/status.md` §7 |
+
+## 2026-09-20 (night) — "Proceed with implementation. I trust your judgement."
+
+Human instruction received while the looming probe was running; it supersedes "stop after the
+report" (D18). What the agent did with that latitude, and what it deliberately did not:
+
+| # | Decision (agent's judgement, open to reversal) | Reason |
+|---|---|---|
+| D20 | **M2 implemented** (environment with deadline, baselines, oracle, `fob eval`) | Fully specified by numbers in SPEC §3–§4.4; depends on none of the open questions |
+| D21 | **No choice of `R_max`, `theta_eat`, `alpha`, or of a different looming encoding** | These are the most influential hand-set parameters; the probe (`reports/probe_looming.md`) was commissioned so that the spec's author can decide them, and its findings (DNp01 fires in 100% of trials from looming 0.1) make the choice non-trivial |

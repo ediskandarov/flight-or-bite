@@ -10,8 +10,10 @@ decision time:
 The full specification is in [SPEC.md](SPEC.md). A negative result is a valid result.
 Every hand-made assumption is recorded in [docs/ENGINEERED.md](docs/ENGINEERED.md).
 
-Status: **M1 done** (LIF on the Mac: reference reproduced, G1 passed, backend benchmark in
-[reports/perf.md](reports/perf.md)). See SPEC §11 for milestones.
+Status: **M2 done.** M1: reference reproduced, G1 passed, backend benchmark in
+[reports/perf.md](reports/perf.md). M2: environment, baselines and oracle —
+[reports/eval_dev.md](reports/eval_dev.md). Exploratory: [reports/probe_looming.md](reports/probe_looming.md).
+See SPEC §11 for milestones.
 
 ## Setup
 
@@ -24,6 +26,7 @@ uv run fob --help
 uv run fob info
 uv run fob fetch-data      # ~190 MB connectome, verified against the authors' repository
 uv run fob gate G1         # sugar -> MN9 on Brian2 and the event backend
+uv run fob eval --split dev     # baselines and oracle on 1000 dev episodes -> reports/eval_dev.md
 caffeinate -i uv run fob perf   # backend benchmark -> reports/perf.md (run on AC power)
 ```
 

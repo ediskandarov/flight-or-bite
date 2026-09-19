@@ -194,7 +194,14 @@ def eval_(
     deadline_sweep: bool = typer.Option(False, "--deadline-sweep"),
 ) -> None:
     """Evaluate arbiters; table with confidence intervals."""
-    _not_implemented("eval", "M2 (dev) / M5 (test)")
+    from flight_or_bite.arena.env import SplitLocked
+    from flight_or_bite.eval.run_eval import run_eval
+
+    try:
+        run_eval(console, split.value, unlock_test, deadline_sweep)
+    except SplitLocked as e:
+        console.print(f"[red]{e}[/]")
+        raise typer.Exit(1) from e
 
 
 @app.command()

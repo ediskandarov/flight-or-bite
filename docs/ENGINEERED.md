@@ -39,6 +39,19 @@ Listed so that none is forgotten; values are deliberately left open.
 | Policy-grid resolution and interpolation scheme | §4.5 | M1 / M4 |
 | All environment constants in `configs/env.yaml` | §3 | M2 |
 
+## Environment and oracle: readings of the SPEC where it is silent (M2)
+
+| # | Reading | Why | Added |
+|---|---|---|---|
+| V1 | **Only food can be toxic.** Toxicity is drawn with p = 0.25 *given that food is present*; with no food `sugar = 0`, the trial is non-toxic and `bitter ~ U(0, 0.1)` | SPEC §3 says "Еда токсична с вероятностью 0.25"; it does not say what `bitter` is without food | 2026-09-20 (M2) |
+| V2 | **The oracle acts with a stationary policy**: backward induction over the 500-trial horizon gives V_t(energy), but `decide(obs, rng)` has no trial index, so the value one step from the start (V_1) is used on every trial | The `Arbiter` interface of SPEC §4 carries no time. The objective has no discount, so a horizon is needed for the value to be finite | 2026-09-20 (M2) |
+| V3 | **Lifetime** = trials completed alive; the trial on which the agent dies is not counted; survivors get `max_trials` (500) | SPEC §7 says "время жизни в триалах (цензурировано на 500)" | 2026-09-20 (M2) |
+| V4 | **Order within a trial:** the predator lottery first (death ends the trial), then metabolism and the action's energy effect, then the `energy <= 0` check | Not specified | 2026-09-20 (M2) |
+| V5 | **Causes of death:** `predator`; `missed_deadline` = killed by a threat on a trial whose action the deadline replaced by IDLE; `toxin` = energy fell to 0 on a trial where it would have stayed positive without the toxic penalty; `starvation` otherwise | SPEC §7 lists the four causes without defining them | 2026-09-20 (M2) |
+| V6 | **Common random numbers:** stimuli, hidden threat/toxicity and the death lottery are all drawn at `reset(seed)`, independent of actions; action sampling uses a separate stream seeded by (seed, arbiter name) | Needed for SPEC §7's paired comparison on identical seeds | 2026-09-20 (M2) |
+| V7 | **Oracle ties** (exactly equal Q-values, common once the value saturates) go to IDLE, then EAT, then ESCAPE | Without it a dictionary order decided, and the oracle "escaped" in a world with no threats | 2026-09-20 (M2) |
+| V8 | Oracle numerics: 201 energy levels (step 0.5) with linear interpolation; expectation over observations by quadrature (16 sugar × 8 bitter midpoints, 50 looming bins plus the two clip masses). Checked against brute-force expectimax on a toy MDP to 1e-9, and against simulation (DP predicts 148.9 trials from energy 50; 1000 dev episodes give 151.2 [143.4, 159.3]) | — | 2026-09-20 (M2) |
+
 ## Not model assumptions, but choices that shape measured numbers
 
 | # | Choice | Why | Added |
