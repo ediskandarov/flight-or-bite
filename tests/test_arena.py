@@ -133,16 +133,33 @@ def test_survivors_are_censored_at_max_trials():
         arena.step(Action.IDLE)
 
 
-def test_test_split_is_locked_logged_and_needs_prereg(tmp_path, monkeypatch):
+def test_test_split_needs_unlock_a_frozen_prereg_and_matching_hashes(tmp_path, monkeypatch):
+    from flight_or_bite import prereg
+
+    doc = tmp_path / "PREREG.md"
     monkeypatch.setattr(env_module, "TEST_ACCESS_LOG", tmp_path / "test_access.log")
-    monkeypatch.setattr(env_module, "PREREG", tmp_path / "PREREG.md")
+    monkeypatch.setattr(prereg, "PREREG", doc)
     with pytest.raises(SplitLocked, match="unlock-test"):
         Arena(CFG).reset(100_000)
     with pytest.raises(SplitLocked, match="PREREG"):
         Arena(CFG, unlock_test=True).reset(100_000)
+
+    # a draft that merely mentions the frozen status in its prose must stay locked
+    doc.write_text(
+        "# PREREG\n\nStatus: DRAFT\n\nOpens with `Status: FROZEN` only.\n\n"
+        + prereg.hash_table()
+        + "\n"
+    )
+    with pytest.raises(SplitLocked, match="not frozen"):
+        Arena(CFG, unlock_test=True).reset(100_000)
+
+    stale = prereg.hash_table().replace(prereg.sha256(prereg.hashed_files()[0]), "0" * 64)
+    doc.write_text("# PREREG\n\nStatus: FROZEN\n\n" + stale + "\n")
+    with pytest.raises(SplitLocked, match="do not match"):
+        Arena(CFG, unlock_test=True).reset(100_000)
     assert not (tmp_path / "test_access.log").exists()
 
-    (tmp_path / "PREREG.md").write_text("# prereg")
+    doc.write_text("# PREREG\n\nStatus: FROZEN\n\n" + prereg.hash_table() + "\n")
     Arena(CFG, unlock_test=True).reset(100_000)
     Arena(CFG, unlock_test=True).reset(100_001)
     log = (tmp_path / "test_access.log").read_text().splitlines()

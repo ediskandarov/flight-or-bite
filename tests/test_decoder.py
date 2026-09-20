@@ -59,3 +59,25 @@ def test_exact_tie_goes_to_escape_and_is_flagged():
     d = run(trial(mn9_times=[10.0, 20.0, 30.0], dn_times=[30.0]))
     assert d.action is Action.ESCAPE and d.tie
     assert not run(trial(mn9_times=[10.0, 20.0, 30.0], dn_times=[30.1])).tie
+
+
+FROZEN_THETA = 74.8  # 4 spikes within 50 ms (decision D36)
+
+
+def test_decisions_do_not_depend_on_the_float_representation_of_a_step():
+    """39.2 and 39.199999999999996 are the same 0.1 ms step (seen in the Brian2 cross-check)."""
+    a = run(trial(mn9_times=[10.0, 20.0, 39.2, 59.9]), theta=FROZEN_THETA)
+    b = run(
+        trial(mn9_times=[10.0, 20.0, 39.199999999999996, 59.900000000000006]), theta=FROZEN_THETA
+    )
+    assert (a.action, a.t_sim_ms) == (b.action, b.t_sim_ms) == (Action.EAT, 59.9)
+
+
+def test_a_burst_spanning_exactly_the_window_does_not_count_whatever_the_rounding():
+    for start in (0.3, 17.1, 123.7):  # start + 50.0 is rarely exact in floating point
+        spikes = [start, start + 10.0, start + 20.0, start + 50.0]
+        assert run(trial(mn9_times=spikes), theta=FROZEN_THETA).action is Action.IDLE
+        assert (
+            run(trial(mn9_times=[start, start + 10.0, start + 20.0, start + 49.9])).action
+            is Action.EAT
+        )

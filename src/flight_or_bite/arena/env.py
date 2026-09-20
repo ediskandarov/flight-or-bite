@@ -11,10 +11,10 @@ import numpy as np
 import yaml
 from pydantic import BaseModel, ConfigDict
 
+from flight_or_bite import prereg
 from flight_or_bite.types import Action, Observation
 
 TEST_ACCESS_LOG = Path("runs/test_access.log")
-PREREG = Path("PREREG.md")
 
 CAUSE_STARVATION = "starvation"
 CAUSE_PREDATOR = "predator"
@@ -67,14 +67,20 @@ class SplitLocked(PermissionError):
     pass
 
 
+def _require_frozen_prereg() -> None:
+    try:
+        prereg.check()
+    except prereg.PreregError as e:
+        raise SplitLocked(str(e)) from e
+
+
 def check_split_access(cfg: EnvConfig, split: str, unlock_test: bool) -> None:
     """Fail early, before any run directory or log entry is created."""
     if split != "test":
         return
     if not unlock_test:
         raise SplitLocked("the test split is locked; pass --unlock-test")
-    if not PREREG.is_file():
-        raise SplitLocked("the test split stays locked until PREREG.md is committed (SPEC §8)")
+    _require_frozen_prereg()
 
 
 class Arena:
@@ -182,8 +188,7 @@ class Arena:
     def _authorise_test_access(self, seed: int) -> None:
         if not self.unlock_test:
             raise SplitLocked(f"seed {seed} is in the test split; pass --unlock-test")
-        if not PREREG.is_file():
-            raise SplitLocked("the test split stays locked until PREREG.md is committed (SPEC §8)")
+        _require_frozen_prereg()
         TEST_ACCESS_LOG.parent.mkdir(parents=True, exist_ok=True)
         with TEST_ACCESS_LOG.open("a") as f:
             stamp = datetime.now().astimezone().isoformat(timespec="seconds")

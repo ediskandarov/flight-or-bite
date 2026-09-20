@@ -66,7 +66,7 @@ def test_eval_refuses_the_test_split_without_unlock():
 
 
 def test_eval_refuses_the_test_split_without_prereg(monkeypatch, tmp_path):
-    monkeypatch.setattr("flight_or_bite.arena.env.PREREG", tmp_path / "PREREG.md")
+    monkeypatch.setattr("flight_or_bite.prereg.PREREG", tmp_path / "PREREG.md")
     result = runner.invoke(app, ["eval", "--split", "test", "--unlock-test"])
     assert result.exit_code == 1 and "PREREG" in result.output
 

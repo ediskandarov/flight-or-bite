@@ -11,7 +11,8 @@ The full specification is in [SPEC.md](SPEC.md). A negative result is a valid re
 Every hand-made assumption is recorded in [docs/ENGINEERED.md](docs/ENGINEERED.md).
 
 Status: **M3 done** — validity gates in [reports/gates.md](reports/gates.md): G1–G5 and G7 passed,
-G6 (robustness) failed for 2 of 11 variants. Draft preregistration: [PREREG.draft.md](PREREG.draft.md).
+G6 (robustness) failed for 2 of 11 variants. Preregistration, `Status: DRAFT`: [PREREG.md](PREREG.md). Jev templates for approval:
+[reports/jev_templates.md](reports/jev_templates.md). Brian2 cross-check: [reports/crosscheck_brian2.md](reports/crosscheck_brian2.md).
 M1: [reports/perf.md](reports/perf.md). M2: [reports/eval_dev.md](reports/eval_dev.md).
 Exploratory reports: `reports/probe_*.md`, `reports/calibration.md`, `reports/grid_loss.md`, `reports/env_sweep.md`.
 See SPEC §11 for milestones.

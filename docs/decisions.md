@@ -85,3 +85,13 @@ report" (D18). What the agent did with that latitude, and what it deliberately d
 | D38 | **Draft of `PREREG.md`** with confirmatory hypotheses on fresh seeds, Holm across levels: H1 sugar 0.6 lowers P(DNp01); H2 monotone in dose; H3 silencing `M_loom` removes the effect; H4 hunger 1 vs 0 at sugar 0.6 lowers P(ESCAPE); H5 shift of the escape curve by sugar in Jev: sign and size against the oracle | Kept as `PREREG.draft.md`: a file named `PREREG.md` would unlock the test split |
 | D39 | Random sensory set 5 and the targets through which `M_loom` acts are **not** investigated; they go under "not established" | — |
 | D40 | The Jev templates are sent to the author for review before M4. **Stop after M3 and the PREREG draft** | — |
+
+## 2026-09-20 — M3 accepted
+
+| # | Decision | Effect |
+|---|---|---|
+| D41 | **M3 accepted. G6 stands as a failure.** The final report carries SPEC §5's sentence verbatim — "выводы зависят от ручных параметров" — plus the clarification: both failed variants are a weakening by x0.5, the network is silent, there is no change of sign | `reports/gates.md`, `PREREG.md` §6. No threshold was changed after the results |
+| D42 | Wording. **cL20:** ablation does not remove the effect; its targets on this path (LC4 / LPLC2) are clamped sources in the model, so the path is invisible by construction; the mechanism is carried by the other 24 neurons. **G4:** "on the shuffled graphs the signal does not reach the output neurons" | Checked against data before being written down: 345 of cL20's 361 synapses onto looming-active DNp01 partners land on LC4 (343) / LPLC2 (2); the stimulated neurons' spikes are identical with and without sugar (0 differing pairs of 17 916); ablating the other 24 with cL20 intact removes the effect (34 -> 0). `runs/cl20_check.json` |
+| D43 | Spike-for-spike check of `event` against Brian2 on 10 conflict trials (sugar 0.6 + looming 0.8, frozen encoding, identical input) | `reports/crosscheck_brian2.md` |
+| D44 | `PREREG.md` gains a planned robustness analysis of H1 (r_max x1.5, w_syn x1.5, alpha 0.5 / 1.5, theta 3 / 5 spikes, population code); the x0.5 variants are reported as "the network is silent" | `PREREG.md` §4. The file is named `PREREG.md` with `Status: DRAFT`; the test split opens only on a `Status: FROZEN` line of its own plus matching hashes (`src/flight_or_bite/prereg.py`) |
+| D45 | Texts of all Jev templates in `reports/jev_templates.md`. **M4 does not start until the author approves them** | — |
