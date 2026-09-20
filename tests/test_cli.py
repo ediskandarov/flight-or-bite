@@ -8,8 +8,6 @@ from flight_or_bite.cli.app import EXIT_NOT_IMPLEMENTED, app
 runner = CliRunner()
 
 SPEC_COMMANDS = [
-    ["latency", "bench", "--arbiter", "all", "--n", "1000"],
-    ["latency", "show"],
     ["live", "--seed", "1"],
     ["report"],
 ]
@@ -28,6 +26,14 @@ def test_spec_commands_parse_and_report_not_implemented(argv):
     result = runner.invoke(app, argv)
     assert result.exit_code == EXIT_NOT_IMPLEMENTED, result.output
     assert "not implemented" in result.output
+
+
+def test_confirmatory_commands_are_locked_until_the_freeze(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)  # no PREREG.md here
+    monkeypatch.delenv("FOB_CONFIRM_SMOKE", raising=False)
+    for argv in (["confirm"], ["confirm-h5"]):
+        result = runner.invoke(app, argv)
+        assert result.exit_code == 1 and "locked" in result.output, result.output
 
 
 def test_invalid_arbiter_is_a_usage_error():
