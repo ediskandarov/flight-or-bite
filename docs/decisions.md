@@ -117,3 +117,18 @@ report" (D18). What the agent did with that latitude, and what it deliberately d
 | D55 | Secondary `sample_from_probs` analysis: 100 episodes. **Jev failure policy** written into `PREREG.md` §2b: no decision is ever substituted; retries for transient errors; otherwise the run stops and the unfinished episode is replayed from its start | The test harness must implement the episode replay |
 | D56 | §2: the main comparison is **connectome vs jev_informed**. H4 gets the additional outcome "DNp01 spiked". Duplicate `cache_hit` sentence removed | — |
 | D57 | After the edits the diff is shown to the author; **the freeze happens only on the author's word** | `PREREG.md` stays `Status: DRAFT` |
+
+## 2026-09-20 — PREREG.md accepted and frozen
+
+| # | Decision | Effect |
+|---|---|---|
+| D58 | **`PREREG.md` accepted by the author in full** (text of `2209e6a`, edits D50-D57). Freeze ordered by the author: smoke run of the full test command on dev (5 episodes, all arbiters) -> final header -> hashes recomputed -> `Status: FROZEN` -> commit | Smoke: `runs/online_smoke/`, 25 of 25 episodes finished, 252 Jev calls. At the freeze only the header, the spent-calls figure in §9 (9 091 -> 9 343) and §11 (commit id, 14 hashes: `configs/confirm.yaml` and `configs/timing.yaml` added, `configs/grid.yaml` changed by D54) were edited |
+| D59 | **Division of labour after the freeze.** The author runs from their own terminal: the main online run on `test`, the secondary `sample_from_probs` run, every latency measurement (`reports/run_instructions.md`). The agent computes: H1-H4, H6 (primary test), the robustness analysis of H1, the connectome table, the Jev tables (pass 1 now, pass 2 not earlier than 12 h later), then `fob report`. Nothing is interpreted beyond `PREREG.md`; everything else goes under exploratory. No new probes | — |
+
+Agent's judgement, open to reversal:
+
+| # | Decision | Reason |
+|---|---|---|
+| D60 | The uncommitted work of the interrupted session was split into a formatting-only commit (`7fcdf8b`, ruff line-length 100 -> 120) and the substantive commits | The author was asked and did not object; the split keeps the substantive diff reviewable. No hashed file is touched by the formatter |
+| D61 | **H5 is computed by the agent** together with H1-H4 (`fob confirm-h5`, 440 Jev calls, budgeted in `PREREG.md` §9), although the author's list in D59 does not name it | H5 is preregistered and is not a latency measurement, so nothing about it needs the author's terminal |
+| D62 | `fob confirm` and `fob confirm-h5` refuse to run unless `PREREG.md` is frozen with matching hashes, and refuse to run a second time once their result file exists | "Confirmatory analyses are computed once" is enforced by code, not by memory |
