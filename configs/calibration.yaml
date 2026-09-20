@@ -1,0 +1,27 @@
+# Calibration protocol (decision D25), fixed before it was run. Nothing here depends on Jev, on
+# the oracle, or on any comparison between arbiters: each channel is calibrated on its own
+# single stimulus, against a property of the environment's stimulus scale (its midpoint).
+
+eat_window_ms: 50.0          # sliding window of the MN9 rate (D25)
+theta_fraction: 0.5          # theta_eat = theta_fraction * MN9 saturation rate (D25)
+
+saturation:                  # "MN9 saturation" made operational:
+  drives_hz: [50, 100, 200, 400, 800, 1600, 3200]   # Poisson rate of every sugar GRN
+  n_trials: 20               # dev seeds 0..19; MN9 rate = spikes over the whole 500 ms window
+  # saturation = the largest of the per-drive mean MN9 rates
+
+bisection:
+  target_p: 0.5              # P(response) at stimulus 0.5, other channels silent, alpha = 0
+  stimulus: 0.5
+  n_trials: 50               # dev seeds 0..49, the SAME seeds at every step (common random numbers)
+  # Search brackets for R_max (the drive at stimulus 0.5 is half of it). A bracket only has to
+  # contain the answer; it does not affect it. Looming is narrow because 20 Hz of drive already
+  # gives P = 1 (reports/probe_looming.md), and high-rate looming trials are very slow.
+  bracket_hz: {sugar: [0.0, 2000.0], looming: [0.0, 100.0]}
+  tolerance_hz: 0.25
+  max_steps: 20
+  # response: sugar channel -> decoder says EAT; looming channel -> decoder says ESCAPE
+
+verification:
+  n_trials: 50               # per level, dev seeds 500..549 (not used in the bisection)
+  levels: 11

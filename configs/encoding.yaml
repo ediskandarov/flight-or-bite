@@ -1,11 +1,22 @@
-# Sensory encoding / motor decoding constants (SPEC §4.1). All of these are hand-made assumptions
-# and are registered in docs/ENGINEERED.md. They may change only before preregistration.
+# Sensory encoding / motor decoding constants (SPEC §4.1), calibrated by decision D25.
+# Protocol: configs/calibration.yaml; script: scripts/calibrate.py; run: runs/20260920T104933_calibration.
+# All of these are hand-made assumptions registered in docs/ENGINEERED.md (E6-E11).
+# They may change only before preregistration.
 
-t_sim_ms: 500.0    # trial window (SPEC §4.1)
+t_sim_ms: 500.0              # trial window (SPEC §4.1)
 
-# E1 (provisional, M1): Poisson rate at stimulus strength 1.0. The authors' materials drive sugar
-# GRNs at 100-200 Hz (model.py default 150 Hz; example.ipynb text says 200 Hz, its second
-# experiment uses 100 Hz). 200 Hz is the top of that range. G6 perturbs it by +-50%.
-r_max_hz: 200.0
+# Poisson rate of a channel's neurons at stimulus strength 1.0. Each channel was calibrated on
+# its own single stimulus so that P(response) = 0.5 at stimulus 0.5 (bisection, dev seeds 0..49).
+r_max_sugar_hz: 102.7832      # P(EAT) = 0.5 at sugar 0.5
+r_max_looming_hz: 2.3438      # P(ESCAPE) = 0.5 at looming 0.5
+r_max_bitter_hz: 102.7832     # = r_max_sugar_hz by decision D25, not calibrated
 
-alpha: null        # hunger gain on the sugar channel — to be set at M3
+# EAT: the MN9 rate over a trailing window reaches theta_eat. theta_eat = half of MN9's
+# saturation rate (149.6 Hz, the largest mean rate in a sweep of the sugar drive up to 3200 Hz).
+# With a 50 ms window this means 4 spikes within 50 ms (an effective threshold of 80 Hz).
+theta_eat_hz: 74.8000
+eat_window_ms: 50.0
+# ESCAPE: one DNp01 spike, either side (D25). Exact ties go to ESCAPE (E10).
+
+alpha: null                  # hunger gain on the sugar channel — NOT set; treated as 0 everywhere
+calibration_run: "runs/20260920T104933_calibration"
