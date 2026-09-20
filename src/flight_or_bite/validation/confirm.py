@@ -26,6 +26,7 @@ def load_cfg() -> dict[str, Any]:
         cfg["n_pairs"] = 4
         cfg["seed_base"] += 50_000_000
         cfg["H2"]["permutations"] = 200
+        cfg["H5"] |= {"jev_reps": 2, "connectome_trials": 2, "bootstrap": 200}
     return cfg
 
 

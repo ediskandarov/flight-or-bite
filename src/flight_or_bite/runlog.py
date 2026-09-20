@@ -42,8 +42,12 @@ def _versions() -> dict[str, str | None]:
     return found
 
 
-def start_run(name: str, config: dict[str, Any], seeds: Any = None, root: Path = Path("runs")) -> Path:
+RUNS_ROOT = Path("runs")  # resolved at call time, so that tests can redirect it
+
+
+def start_run(name: str, config: dict[str, Any], seeds: Any = None, root: Path | None = None) -> Path:
     """Create runs/<timestamp>_<name>/ and write meta.json into it."""
+    root = root or RUNS_ROOT
     run_dir = root / f"{datetime.now().strftime('%Y%m%dT%H%M%S')}_{name}"
     run_dir.mkdir(parents=True, exist_ok=False)
     status = _git("status", "--porcelain")

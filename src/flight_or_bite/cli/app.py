@@ -193,16 +193,95 @@ def table_show(
 @latency_app.command("bench")
 def latency_bench(
     arbiter: BenchArbiter = typer.Option(..., "--arbiter"),
-    n: int = typer.Option(1000, "--n"),
+    n: int = typer.Option(None, "--n", help="Timed decisions per arbiter; default: configs/timing.yaml."),
+    mock: bool = typer.Option(False, "--mock", help="Offline: MockJevClient instead of the network."),
+    out: Path = typer.Option(Path("reports/latency"), "--out"),
 ) -> None:
-    """Measure decision time following the SPEC §6.2 protocol."""
-    _not_implemented("latency bench", "M4")
+    """Measure decision time (PREREG §8, configs/timing.yaml). Resumable: re-run the same command."""
+    from flight_or_bite.arbiters.jev_client import JevError
+    from flight_or_bite.timing.bench import run_bench
+
+    if not mock:
+        _load_env()
+    try:
+        run_bench(console, arbiter.value, n, mock, out)
+    except JevError as e:
+        console.print(f"[red]latency bench stopped: {type(e).__name__}: {e}[/]")
+        raise typer.Exit(1) from e
 
 
 @latency_app.command("show")
-def latency_show() -> None:
-    """Show p50/p95 and terminal histograms."""
-    _not_implemented("latency show", "M4")
+def latency_show(out: Path = typer.Option(Path("reports/latency"), "--out")) -> None:
+    """Show p50/p95 and terminal histograms (log scale) from the recorded samples."""
+    from flight_or_bite.timing.bench import render, summary
+
+    console.print(render(summary(out)))
+
+
+@app.command()
+def confirm(workers: int = typer.Option(5, "--workers", min=1)) -> None:
+    """Confirmatory analyses H1-H4, H6 and the robustness analysis (PREREG §3, §4, §8). Computed once."""
+    import os
+
+    from flight_or_bite import prereg
+    from flight_or_bite.runlog import start_run, write_json
+    from flight_or_bite.validation import confirm as confirm_mod
+
+    smoke = os.environ.get("FOB_CONFIRM_SMOKE") == "1"
+    out = Path("runs/confirm_smoke/confirm.json" if smoke else "reports/confirm/confirm.json")
+    if not smoke:
+        try:
+            prereg.check()
+        except prereg.PreregError as e:
+            console.print(f"[red]{e}[/]")
+            raise typer.Exit(1) from e
+        if out.is_file():
+            console.print(f"[red]{out} exists: confirmatory analyses are computed once (PREREG §3).[/]")
+            raise typer.Exit(1)
+    run_dir = start_run(
+        "confirm-smoke" if smoke else "confirm", {"confirm": confirm_mod.load_cfg(), "workers": workers}
+    )
+    result = confirm_mod.run_all(workers, console.print)
+    result["run_dir"] = str(run_dir)
+    write_json(out, result)
+    write_json(run_dir / "confirm.json", result)
+    console.print(f"[green]{out}[/]")
+
+
+@app.command("confirm-h5")
+def confirm_h5(mock_jev: bool = typer.Option(False, "--mock-jev", help="Offline: MockJevClient.")) -> None:
+    """H5 (PREREG §5): escape-curve shift by sugar, Jev vs oracle vs connectome. Computed once; resumable."""
+    import os
+
+    from flight_or_bite import prereg
+    from flight_or_bite.arbiters.jev_client import JevError
+    from flight_or_bite.runlog import start_run, write_json
+    from flight_or_bite.validation.confirm_h5 import run_h5
+
+    smoke = os.environ.get("FOB_CONFIRM_SMOKE") == "1"
+    if smoke != mock_jev:
+        console.print("[red]--mock-jev goes together with FOB_CONFIRM_SMOKE=1, and only with it[/]")
+        raise typer.Exit(1)
+    out_dir = Path("runs/confirm_smoke" if smoke else "reports/confirm")
+    if not smoke:
+        _load_env()
+        try:
+            prereg.check()
+        except prereg.PreregError as e:
+            console.print(f"[red]{e}[/]")
+            raise typer.Exit(1) from e
+        if (out_dir / "h5.json").is_file():
+            console.print(f"[red]{out_dir / 'h5.json'} exists: confirmatory analyses are computed once.[/]")
+            raise typer.Exit(1)
+    run_dir = start_run("confirm-h5-smoke" if smoke else "confirm-h5", {"mock_jev": mock_jev})
+    try:
+        result = run_h5(mock_jev, out_dir, console.print)
+    except (JevError, httpx.TransportError) as e:
+        console.print(f"[red]H5 stopped: {type(e).__name__}: {e}. Answers so far are kept; re-run to resume.[/]")
+        raise typer.Exit(1) from e
+    result["run_dir"] = str(run_dir)
+    write_json(out_dir / "h5.json", result)
+    console.print(f"[green]{out_dir / 'h5.json'}[/] delta_jev {result['delta_jev']:+.4f} {result['delta_jev_ci95']}")
 
 
 @app.command()
