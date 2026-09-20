@@ -10,9 +10,10 @@ decision time:
 The full specification is in [SPEC.md](SPEC.md). A negative result is a valid result.
 Every hand-made assumption is recorded in [docs/ENGINEERED.md](docs/ENGINEERED.md).
 
-Status: **M2 done.** M1: reference reproduced, G1 passed, backend benchmark in
-[reports/perf.md](reports/perf.md). M2: environment, baselines and oracle —
-[reports/eval_dev.md](reports/eval_dev.md). Exploratory: [reports/probe_looming.md](reports/probe_looming.md).
+Status: **M3 done** — validity gates in [reports/gates.md](reports/gates.md): G1–G5 and G7 passed,
+G6 (robustness) failed for 2 of 11 variants. Draft preregistration: [PREREG.draft.md](PREREG.draft.md).
+M1: [reports/perf.md](reports/perf.md). M2: [reports/eval_dev.md](reports/eval_dev.md).
+Exploratory reports: `reports/probe_*.md`, `reports/calibration.md`, `reports/grid_loss.md`, `reports/env_sweep.md`.
 See SPEC §11 for milestones.
 
 ## Setup
@@ -25,7 +26,7 @@ uv run pytest
 uv run fob --help
 uv run fob info
 uv run fob fetch-data      # ~190 MB connectome, verified against the authors' repository
-uv run fob gate G1         # sugar -> MN9 on Brian2 and the event backend
+uv run fob gates           # formal gates G1-G7 (about 1.5 h); `fob gates --summary` prints the table
 uv run fob eval --split dev     # baselines and oracle on 1000 dev episodes -> reports/eval_dev.md
 uv run fob replay --seed 3 --arbiter oracle          # text log of one episode
 uv run fob table build --arbiter oracle              # policy table -> reports/tables/oracle/

@@ -1,0 +1,79 @@
+{
+  "gate": "G7",
+  "passed": true,
+  "metric": 0.00146484375,
+  "threshold": 0.05,
+  "details": {
+    "metric_is": "smallest Holm-adjusted exact McNemar p over the looming levels",
+    "levels": {
+      "0.6": {
+        "n": 40,
+        "control_yes": 29,
+        "condition_yes": 15,
+        "b": 15,
+        "c": 1,
+        "p": 0.000518798828125,
+        "decisions_control": {
+          "EAT": 0,
+          "ESCAPE": 29,
+          "IDLE": 11
+        },
+        "decisions_condition": {
+          "EAT": 29,
+          "ESCAPE": 8,
+          "IDLE": 3
+        },
+        "p_holm": 0.00146484375
+      },
+      "0.8": {
+        "n": 40,
+        "control_yes": 39,
+        "condition_yes": 27,
+        "b": 12,
+        "c": 0,
+        "p": 0.00048828125,
+        "decisions_control": {
+          "EAT": 0,
+          "ESCAPE": 39,
+          "IDLE": 1
+        },
+        "decisions_condition": {
+          "EAT": 26,
+          "ESCAPE": 14,
+          "IDLE": 0
+        },
+        "p_holm": 0.00146484375
+      },
+      "1.0": {
+        "n": 40,
+        "control_yes": 40,
+        "condition_yes": 34,
+        "b": 6,
+        "c": 0,
+        "p": 0.03125,
+        "decisions_control": {
+          "EAT": 0,
+          "ESCAPE": 40,
+          "IDLE": 0
+        },
+        "decisions_condition": {
+          "EAT": 18,
+          "ESCAPE": 22,
+          "IDLE": 0
+        },
+        "p_holm": 0.03125
+      }
+    },
+    "pooled": {
+      "n": 120,
+      "control_yes": 108,
+      "condition_yes": 76,
+      "b": 33,
+      "c": 1,
+      "p": 4.0745362639427185e-09
+    },
+    "effect_b_minus_c": 32
+  },
+  "generated": "2026-09-20T15:06:55+04:00",
+  "run_dir": "runs/20260920T135908_gates"
+}

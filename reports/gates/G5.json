@@ -1,0 +1,231 @@
+{
+  "gate": "G5",
+  "passed": true,
+  "metric": 3.0,
+  "threshold": 3.0,
+  "details": {
+    "metric_is": "number of ablation criteria met",
+    "dnp01_ablated": {
+      "p_escape": 0.0,
+      "p_escape_intact": 1.0,
+      "max": 0.05
+    },
+    "mn9_ablated": {
+      "p_eat": 0.0,
+      "p_eat_intact": 1.0,
+      "max": 0.05
+    },
+    "suppression_intact": {
+      "levels": {
+        "0.6": {
+          "n": 40,
+          "control_yes": 28,
+          "condition_yes": 13,
+          "b": 15,
+          "c": 0,
+          "p": 6.103515625e-05,
+          "decisions_control": {
+            "EAT": 0,
+            "ESCAPE": 28,
+            "IDLE": 12
+          },
+          "decisions_condition": {
+            "EAT": 32,
+            "ESCAPE": 7,
+            "IDLE": 1
+          }
+        },
+        "0.8": {
+          "n": 40,
+          "control_yes": 38,
+          "condition_yes": 22,
+          "b": 16,
+          "c": 0,
+          "p": 3.0517578125e-05,
+          "decisions_control": {
+            "EAT": 0,
+            "ESCAPE": 38,
+            "IDLE": 2
+          },
+          "decisions_condition": {
+            "EAT": 30,
+            "ESCAPE": 10,
+            "IDLE": 0
+          }
+        },
+        "1.0": {
+          "n": 40,
+          "control_yes": 40,
+          "condition_yes": 37,
+          "b": 3,
+          "c": 0,
+          "p": 0.25,
+          "decisions_control": {
+            "EAT": 0,
+            "ESCAPE": 40,
+            "IDLE": 0
+          },
+          "decisions_condition": {
+            "EAT": 17,
+            "ESCAPE": 23,
+            "IDLE": 0
+          }
+        }
+      },
+      "pooled": {
+        "n": 120,
+        "control_yes": 106,
+        "condition_yes": 72,
+        "b": 34,
+        "c": 0,
+        "p": 1.1641532182693481e-10
+      },
+      "effect_b_minus_c": 34
+    },
+    "m_loom_ablated": {
+      "levels": {
+        "0.6": {
+          "n": 40,
+          "control_yes": 28,
+          "condition_yes": 27,
+          "b": 1,
+          "c": 0,
+          "p": 1.0,
+          "decisions_control": {
+            "EAT": 0,
+            "ESCAPE": 28,
+            "IDLE": 12
+          },
+          "decisions_condition": {
+            "EAT": 29,
+            "ESCAPE": 11,
+            "IDLE": 0
+          }
+        },
+        "0.8": {
+          "n": 40,
+          "control_yes": 38,
+          "condition_yes": 39,
+          "b": 0,
+          "c": 1,
+          "p": 1.0,
+          "decisions_control": {
+            "EAT": 0,
+            "ESCAPE": 38,
+            "IDLE": 2
+          },
+          "decisions_condition": {
+            "EAT": 20,
+            "ESCAPE": 20,
+            "IDLE": 0
+          }
+        },
+        "1.0": {
+          "n": 40,
+          "control_yes": 40,
+          "condition_yes": 40,
+          "b": 0,
+          "c": 0,
+          "p": 1.0,
+          "decisions_control": {
+            "EAT": 0,
+            "ESCAPE": 40,
+            "IDLE": 0
+          },
+          "decisions_condition": {
+            "EAT": 12,
+            "ESCAPE": 28,
+            "IDLE": 0
+          }
+        }
+      },
+      "pooled": {
+        "n": 120,
+        "control_yes": 106,
+        "condition_yes": 106,
+        "b": 1,
+        "c": 1,
+        "p": 1.0
+      },
+      "effect_b_minus_c": 0,
+      "retained": 0.0,
+      "max_retained": 0.2
+    },
+    "cl20_ablated": {
+      "levels": {
+        "0.6": {
+          "n": 40,
+          "control_yes": 28,
+          "condition_yes": 13,
+          "b": 15,
+          "c": 0,
+          "p": 6.103515625e-05,
+          "decisions_control": {
+            "EAT": 0,
+            "ESCAPE": 28,
+            "IDLE": 12
+          },
+          "decisions_condition": {
+            "EAT": 32,
+            "ESCAPE": 7,
+            "IDLE": 1
+          }
+        },
+        "0.8": {
+          "n": 40,
+          "control_yes": 38,
+          "condition_yes": 22,
+          "b": 16,
+          "c": 0,
+          "p": 3.0517578125e-05,
+          "decisions_control": {
+            "EAT": 0,
+            "ESCAPE": 38,
+            "IDLE": 2
+          },
+          "decisions_condition": {
+            "EAT": 30,
+            "ESCAPE": 10,
+            "IDLE": 0
+          }
+        },
+        "1.0": {
+          "n": 40,
+          "control_yes": 40,
+          "condition_yes": 37,
+          "b": 3,
+          "c": 0,
+          "p": 0.25,
+          "decisions_control": {
+            "EAT": 0,
+            "ESCAPE": 40,
+            "IDLE": 0
+          },
+          "decisions_condition": {
+            "EAT": 17,
+            "ESCAPE": 23,
+            "IDLE": 0
+          }
+        }
+      },
+      "pooled": {
+        "n": 120,
+        "control_yes": 106,
+        "condition_yes": 72,
+        "b": 34,
+        "c": 0,
+        "p": 1.1641532182693481e-10
+      },
+      "effect_b_minus_c": 34,
+      "retained": 1.0,
+      "report_only": true
+    },
+    "criteria": {
+      "dnp01": true,
+      "mn9": true,
+      "m_loom": true
+    }
+  },
+  "generated": "2026-09-20T15:01:35+04:00",
+  "run_dir": "runs/20260920T135908_gates"
+}
