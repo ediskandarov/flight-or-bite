@@ -32,3 +32,11 @@ what waits for the author. Committed together with the step.
 - Still running: Jev tables pass 1 (network only). `informed` finished 19:00:36 -> its pass 2 may start from 07:01 on 2026-09-21; the other modes 12 h after their own `session_1/session.json` `finished`.
 - No CPU-heavy agent job is left. The author may start `reports/run_instructions.md` section 1.
 - Next for the agent: wait for pass 1 to end -> commit tables; after 12 h pass 2 (`--session 2`, four modes); when the author's three runs are in - commit `reports/online/`, `reports/latency/`; then `uv run fob report`, read it through, commit.
+
+## 2026-09-20 20:45 — Jev tables pass 1 done (step e, part 1); pass 2 scheduled
+
+- Done: pass 1 of all four Jev tables, `reports/tables/jev_*/session_1/` (commit `b3425c1`): 21 250 calls, 0 retried, model `typesafe/jev-1.13-20260917` everywhere. Ledger 31 033 = 9 343 + 21 250 + 440 (H5). Pass 1 finished: informed 19:00:36, naive 19:41:44, informed_bucketed 20:11:42, bucketed 20:40:57.
+- Pass 2 is scheduled: `runs/jev_pass2.sh` runs in the background of the agent's session under `caffeinate -i`, log `runs/jev_tables_pass2.log`. It retries every 10 min while `fob table build ... --session 2` answers "too early" (exit 3), then builds informed, naive, informed_bucketed, bucketed in turn (expected 07:01-09:30 on 2026-09-21). On a Jev failure it stops with `FAILED`; tables are resumable.
+- **If the agent's session died overnight**: just run `caffeinate -i ./runs/jev_pass2.sh` again (from any terminal) - finished shards are kept, the 12 h guard is enforced by the code.
+- The author had not started the test runs by 20:41 (`reports/online/` absent, `runs/test_access.log` absent).
+- Next: after pass 2 -> commit `reports/tables`; after the author's runs -> commit `reports/online`, `reports/latency`; then `uv run fob report`, read it through, commit. Remember: the author's latency bench must not overlap with pass 2 (instructions §2 say so).
