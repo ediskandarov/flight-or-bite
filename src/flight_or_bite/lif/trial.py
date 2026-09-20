@@ -12,10 +12,10 @@ from pathlib import Path
 
 import numpy as np
 
-from flight_or_bite.lif.backend import Stimulus
+from flight_or_bite.lif.backend import Stimulus, StopOnFirstSpike
 from flight_or_bite.lif.circuits import load_circuits, resolve
 from flight_or_bite.lif.data import load_manifest
-from flight_or_bite.lif.decoder import Decoded, decode
+from flight_or_bite.lif.decoder import Decoded, decode, spikes_needed
 from flight_or_bite.lif.encoding import Encoding, load_encoding
 from flight_or_bite.lif.event_backend import EventBackend
 from flight_or_bite.lif.graph import Connectome, load_connectome
@@ -80,7 +80,10 @@ class TrialRunner:
         return steps.astype(np.int64), neurons[cols].astype(np.int32)
 
     def run(self, obs: Observation, seed: int, *, ablated: np.ndarray | None = None,
-            theta_eat_hz: float | None = None) -> Trial:  # fmt: skip
+            theta_eat_hz: float | None = None, early_stop: bool = False) -> Trial:  # fmt: skip
+        """`early_stop`: end the simulation at the decoder's event (online use). The decoded
+        action and t_sim are the same as for the full trial; rates and counts then cover only the
+        simulated part."""
         rates = self.enc.rates(obs)
         parts, driven = [], []
         for channel in ("sugar", "bitter"):
@@ -103,9 +106,15 @@ class TrialRunner:
         neurons = np.concatenate([p[1] for p in parts]) if parts else np.empty(0, np.int32)
         order = np.argsort(steps, kind="stable")
         marked = np.concatenate(driven).astype(np.int32) if driven else np.empty(0, np.int32)
+        theta = theta_eat_hz or self.enc.theta_eat_hz
+        stop = burst = None
+        if early_stop:
+            stop = StopOnFirstSpike(self.dnp01)
+            burst = (self.mn9, spikes_needed(theta, self.enc.eat_window_ms),
+                     round(self.enc.eat_window_ms / self.params.dt_ms))  # fmt: skip
         result = self.backend.run_trial(
             Stimulus(marked, np.zeros(len(marked))), self.enc.t_sim_ms, seed=seed,
-            kicks=(steps[order], neurons[order]), ablated=ablated,
+            kicks=(steps[order], neurons[order]), ablated=ablated, stop=stop, stop_on_burst=burst,
         )  # fmt: skip
         decoded = decode(result, self.mn9, self.dnp01, theta_eat_hz=theta_eat_hz or self.enc.theta_eat_hz,
                          eat_window_ms=self.enc.eat_window_ms, t_sim_ms=self.enc.t_sim_ms)  # fmt: skip

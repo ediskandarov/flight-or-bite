@@ -36,7 +36,7 @@ NEVER = -(2**40)
 def _simulate(
     indptr, post, count, w_syn, silenced, ablated,
     kick_ptr, kick_neuron, kick_mv,
-    refractory_steps, watched,
+    refractory_steps, watched, burst_neuron, burst_k, burst_window_steps,
     n_steps, delay, v_0, v_rst, v_th, a_v, a_g, c_g,
 ):  # fmt: skip
     n = indptr.shape[0] - 1
@@ -56,6 +56,8 @@ def _simulate(
     n_out = 0
     steps_done = n_steps
     stopped = False
+    burst_ring = np.full(max(burst_k, 1), NEVER, dtype=np.int64)  # last burst_k spike steps
+    burst_n = 0
 
     for step in range(n_steps):
         slot = step % (delay + 1)
@@ -114,6 +116,11 @@ def _simulate(
             last[i] = step
             if watched[i]:
                 hit = True
+            if i == burst_neuron:  # burst criterion: burst_k spikes less than the window apart
+                burst_ring[burst_n % burst_k] = step
+                burst_n += 1
+                if burst_n >= burst_k and step - burst_ring[burst_n % burst_k] < burst_window_steps:
+                    hit = True
             if n_out == cap:
                 cap *= 2
                 grown_i = np.empty(cap, dtype=np.int32)
@@ -183,8 +190,12 @@ class EventBackend:
         silenced: np.ndarray | None = None,
         kicks: tuple[np.ndarray, np.ndarray] | None = None,
         ablated: np.ndarray | None = None,
+        stop_on_burst: tuple[int, int, int] | None = None,
     ) -> TrialResult:
         """`kicks` = (steps, neurons) replaces the random Poisson schedule (replay mode).
+
+        `stop_on_burst` = (neuron, k, window_steps): also stop when `neuron` has fired k spikes
+        fewer than window_steps apart — the decoder's EAT criterion, for online use.
 
         `silenced` neurons keep firing but have no effect on others (model.py's `silence`);
         `ablated` neurons cannot fire at all — needed when the neuron itself is the read-out.
@@ -209,6 +220,7 @@ class EventBackend:
         ablated_mask = np.zeros(con.n_neurons, dtype=np.bool_)
         if ablated is not None:
             ablated_mask[ablated] = True
+        burst_neuron, burst_k, burst_window_steps = stop_on_burst or (-1, 1, 0)
         watched = np.zeros(con.n_neurons, dtype=np.bool_)
         if stop is not None:
             watched[stop.neurons] = True
@@ -216,7 +228,7 @@ class EventBackend:
         spike_i, spike_step, steps_done, stopped, n_active = _simulate(
             con.indptr, con.post, con.count, p.w_syn_mv, silenced_mask, ablated_mask,
             kick_ptr, kick_neuron, p.poisson_kick_mv,
-            refractory_steps, watched,
+            refractory_steps, watched, burst_neuron, burst_k, burst_window_steps,
             n_steps, p.delay_steps, p.v_0_mv, p.v_rst_mv, p.v_th_mv,
             self._a_v, self._a_g, self._c_g,
         )  # fmt: skip
