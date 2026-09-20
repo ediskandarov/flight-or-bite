@@ -8,6 +8,7 @@ round trips inside one "call" and contaminate latency measurements.
 
 from __future__ import annotations
 
+import fcntl
 import json
 import os
 import time
@@ -97,17 +98,23 @@ class CallBudget:
         return int(json.loads(self.ledger.read_text())["calls"])
 
     def spend(self) -> None:
-        if self.ledger is not None:
+        if self.ledger is None:
+            self._spend_one()
+            return
+        self.ledger.parent.mkdir(parents=True, exist_ok=True)
+        with self.ledger.with_suffix(".lock").open("w") as lock:  # several processes share the ledger
+            fcntl.flock(lock, fcntl.LOCK_EX)
             self.used = self._read()  # another process may have spent in the meantime
+            self._spend_one()
+            tmp = self.ledger.with_suffix(f".{os.getpid()}.tmp")
+            tmp.write_text(json.dumps({"calls": self.used, "max_calls": self.max_calls}))
+            tmp.replace(self.ledger)
+
+    def _spend_one(self) -> None:
         if self.used >= self.max_calls:
             raise CallBudgetExceeded(f"call budget exhausted: {self.used}/{self.max_calls}")
         self.used += 1
         self.session += 1
-        if self.ledger is not None:
-            self.ledger.parent.mkdir(parents=True, exist_ok=True)
-            tmp = self.ledger.with_suffix(".tmp")
-            tmp.write_text(json.dumps({"calls": self.used, "max_calls": self.max_calls}))
-            tmp.replace(self.ledger)
 
 
 @dataclass(frozen=True)
@@ -207,6 +214,7 @@ class RawLog:
         self.directory.mkdir(parents=True, exist_ok=True)
         path = self.directory / f"{datetime.now():%Y%m%d}.jsonl"
         with path.open("a", encoding="utf-8") as f:
+            fcntl.flock(f, fcntl.LOCK_EX)  # several processes append to the same daily file
             f.write(json.dumps(record, ensure_ascii=False) + "\n")
         return path
 
