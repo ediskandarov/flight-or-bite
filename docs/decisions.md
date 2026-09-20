@@ -104,3 +104,16 @@ report" (D18). What the agent did with that latitude, and what it deliberately d
 | D47 | In the bucketed modes only unique combinations of levels are queried (900 of 1 225 points on grid B); the rest are copies flagged `cache_hit` | `policy_table/table.py` (`key_fn`) |
 | D48 | Jev latency is reported per state mode, separately | `PREREG.md` §8 |
 | D49 | Order: Brian2 cross-check on conflict trials -> choose Jev's main mode on 50 dev episodes -> show the final PREREG to the author -> freeze -> test | — |
+
+## 2026-09-20 — edits to PREREG.md before the freeze
+
+| # | Decision | Effect |
+|---|---|---|
+| D50 | **H6:** the primary test is a paired Wilcoxon test on `t_sim` of the first DNp01 spike (H1 pairs with a spike in both arms, sugar 0.6 vs looming-only). The correlation with difficulty d is secondary: IDLE trials excluded, only grid points with p_eat + p_escape >= 0.5. For Jev an equivalence claim: the 95% CI of rho inside [-0.1, 0.1] | `PREREG.md` §8 |
+| D51 | **Deadline sweep:** the share of decisions made within the deadline, from the measured latency distributions, both tracks; survival under a deadline is not simulated | Deviates from SPEC §6.3-D |
+| D52 | H1-H4 and the robustness analysis: **100 pairs per level** | — |
+| D53 | H5: `Delta_oracle` computed and written in before the freeze: **-0.0909 (-1/11), negative** | — |
+| D54 | Jev tables: **two passes of N_rep 5, at least 12 h apart**, with a `session` column | Table builder to be extended in M4 |
+| D55 | Secondary `sample_from_probs` analysis: 100 episodes. **Jev failure policy** written into `PREREG.md` §2b: no decision is ever substituted; retries for transient errors; otherwise the run stops and the unfinished episode is replayed from its start | The test harness must implement the episode replay |
+| D56 | §2: the main comparison is **connectome vs jev_informed**. H4 gets the additional outcome "DNp01 spiked". Duplicate `cache_hit` sentence removed | — |
+| D57 | After the edits the diff is shown to the author; **the freeze happens only on the author's word** | `PREREG.md` stays `Status: DRAFT` |
