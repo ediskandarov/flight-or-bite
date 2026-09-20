@@ -25,3 +25,10 @@ what waits for the author. Committed together with the step.
 - Done: `fob confirm` finished (18:18-18:46). `reports/confirm/confirm.json`, run dir `runs/20260920T181855_confirm`, commit `4dfcb44`. By the PREREG criteria: H1, H2, H3, H4, H6 (primary test) confirmed; min Holm p: 2.2e-11, 3e-05, 3.5e-10, 1.1e-11, 1.6e-08. Robustness of H1: sign kept in 7 of 8 variants; variant 3 (`w_syn x1.5`) not: b/c = 0/2, 0/0, 0/0, DNp01 spikes in 95-100 of 100 trials in both arms. Reported as is. Do NOT re-run `fob confirm` (it refuses anyway).
 - Still running: connectome table (24 of 49 shards at 18:47), Jev tables pass 1 (informed 32 of 49 shards; ledger 13 376).
 - Next: H5 after the informed table ends; pass 2 after 12 h; `fob report`.
+
+## 2026-09-20 19:12 — connectome table and H5 done; the CPU is free for the author's runs
+
+- Done: connectome table `reports/tables/connectome/` (24 500 rows, 18:28-19:05, commit `a4ab2bc`). H5 (`fob confirm-h5`, 19:05-19:11): `reports/confirm/h5.json`, raw answers `reports/confirm/h5_jev.jsonl` (440, no retries, model `typesafe/jev-1.13-20260917`). Delta_Jev = -0.1181 [-0.1226, -0.1137] -> H5 confirmed (CI excludes zero); Delta_oracle = -0.0909; Delta_connectome = -0.4773 [-0.5068, -0.4477]. Do NOT re-run (it refuses anyway).
+- Still running: Jev tables pass 1 (network only). `informed` finished 19:00:36 -> its pass 2 may start from 07:01 on 2026-09-21; the other modes 12 h after their own `session_1/session.json` `finished`.
+- No CPU-heavy agent job is left. The author may start `reports/run_instructions.md` section 1.
+- Next for the agent: wait for pass 1 to end -> commit tables; after 12 h pass 2 (`--session 2`, four modes); when the author's three runs are in - commit `reports/online/`, `reports/latency/`; then `uv run fob report`, read it through, commit.
