@@ -19,3 +19,9 @@ what waits for the author. Committed together with the step.
 - If a job was interrupted: `fob table build ...` resumes by itself (same command; complete shards are kept). `fob confirm` keeps no partial state: re-run the same command - the seeds are fixed by `configs/confirm.yaml`, so the result is the same run, not a second one. It refuses to run once `reports/confirm/confirm.json` exists.
 - Next: when `fob confirm` ends - commit `reports/confirm/confirm.json`; then `fob confirm-h5` (440 Jev calls) after the informed table is finished (so that the agent's own Jev calls do not overlap); pass 2 of every Jev table not earlier than 12 h after that table's `session_1/session.json` `finished` time: `uv run fob table build --arbiter jev --mode <mode> --session 2`; then `uv run fob report`.
 - Waits for the author: the three runs of `reports/run_instructions.md`. CPU-heavy agent jobs (`fob confirm`, connectome table) must be finished before the author starts - check with the `pgrep` line of the instructions.
+
+## 2026-09-20 18:47 — confirmatory analyses done (step d, part 1)
+
+- Done: `fob confirm` finished (18:18-18:46). `reports/confirm/confirm.json`, run dir `runs/20260920T181855_confirm`, commit `4dfcb44`. By the PREREG criteria: H1, H2, H3, H4, H6 (primary test) confirmed; min Holm p: 2.2e-11, 3e-05, 3.5e-10, 1.1e-11, 1.6e-08. Robustness of H1: sign kept in 7 of 8 variants; variant 3 (`w_syn x1.5`) not: b/c = 0/2, 0/0, 0/0, DNp01 spikes in 95-100 of 100 trials in both arms. Reported as is. Do NOT re-run `fob confirm` (it refuses anyway).
+- Still running: connectome table (24 of 49 shards at 18:47), Jev tables pass 1 (informed 32 of 49 shards; ledger 13 376).
+- Next: H5 after the informed table ends; pass 2 after 12 h; `fob report`.
