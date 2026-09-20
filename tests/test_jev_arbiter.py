@@ -31,12 +31,15 @@ def test_informed_state_adds_rules_whose_numbers_match_the_environment():
     state = load_prompt("informed").state(OBS)
     assert state["observation"] == load_prompt("naive").state(OBS)
     rules, cfg = state["rules"], load_env_config()
-    for number in ("500", "50%", "25%", "20%", "0.3 and 1", "0 and 0.1", "mean 0.7", "mean 0.2",
-                   "deviation 0.2", "starts at 50", "exceed 100", "costs 1 energy", "12 times",
-                   "15 times", "probability 0.6", "costs 3 energy", "probability 0.3"):  # fmt: skip
+    expected = [
+        "500", "30%", "25%", "20%", "0.3 and 1", "0 and 0.1", "mean 0.7", "mean 0.2",
+        "deviation 0.2", "starts at 50", "exceed 100", "Every trial costs 1 energy", "8 times",
+        "15 times", "probability 0.6", "ESCAPE costs 1 energy", "probability 0.3",
+    ]  # fmt: skip
+    for number in expected:
         assert number in rules, number
-    assert (cfg.max_trials, cfg.p_food, cfg.p_toxic, cfg.p_threat) == (500, 0.5, 0.25, 0.2)
-    assert (cfg.eat_gain, cfg.toxic_cost, cfg.escape_cost) == (12.0, 15.0, 3.0)
+    assert (cfg.max_trials, cfg.p_food, cfg.p_toxic, cfg.p_threat) == (500, 0.3, 0.25, 0.2)
+    assert (cfg.eat_gain, cfg.toxic_cost, cfg.escape_cost) == (8.0, 15.0, 1.0)
     assert (cfg.p_death_eat, cfg.p_death_idle) == (0.6, 0.3)
     for hint in ("should", "best", "optimal", "recommend"):
         assert hint not in rules.lower()

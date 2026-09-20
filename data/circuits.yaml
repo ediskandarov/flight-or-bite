@@ -3,7 +3,8 @@
 # `provenance`; nothing here is guessed. Root ids change between FlyWire materialisations, so
 # each set states for which connectome versions it has been verified against the data files.
 #
-# Which bitter set the project uses is NOT decided; two candidate sets are recorded below.
+# Bitter channel: the project uses `bitter_grn_shiu` (the model authors' list, 20 ids in v783) by
+# decision D33; `bitter_grn` (65 ids from the annotation table) is kept for reference only.
 
 sugar_grn_right:
   description: Sugar-sensing gustatory receptor neurons, right hemisphere

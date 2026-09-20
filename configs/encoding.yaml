@@ -18,5 +18,7 @@ theta_eat_hz: 74.8000
 eat_window_ms: 50.0
 # ESCAPE: one DNp01 spike, either side (D25). Exact ties go to ESCAPE (E10).
 
-alpha: null                  # hunger gain on the sugar channel — NOT set; treated as 0 everywhere
+# Hunger gain on the sugar channel: rate = sugar * r_max_sugar_hz * (1 + alpha * hunger) (SPEC §4.1).
+# Set by the spec's author (D32). The calibration above was done at hunger = 0 (gain 1).
+alpha: 1.0
 calibration_run: "runs/20260920T104933_calibration"

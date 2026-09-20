@@ -14,10 +14,10 @@ def cfg(**changes):
     return CFG.model_copy(update=changes)
 
 
-def test_defaults_are_the_specs():
+def test_config_is_the_spec_with_the_authors_three_changes():
     assert (CFG.energy_start, CFG.energy_max, CFG.max_trials) == (50.0, 100.0, 500)
-    assert (CFG.p_food, CFG.p_toxic, CFG.p_threat) == (0.5, 0.25, 0.2)
-    assert (CFG.eat_gain, CFG.toxic_cost, CFG.escape_cost, CFG.metabolism) == (12.0, 15.0, 3.0, 1.0)
+    assert (CFG.p_toxic, CFG.p_threat, CFG.toxic_cost, CFG.metabolism) == (0.25, 0.2, 15.0, 1.0)
+    assert (CFG.p_food, CFG.eat_gain, CFG.escape_cost) == (0.3, 8.0, 1.0)  # decision D31
     assert (CFG.p_death_eat, CFG.p_death_idle) == (0.6, 0.3)
     assert CFG.deadline_ms is None
     assert list(CFG.seeds_of("dev"))[::999] == [0, 999] and CFG.split_of(100_500) == "test"
@@ -48,7 +48,7 @@ def test_stimulus_distributions():
     assert np.all(arena.bitter[arena.toxic] >= 0.3) and np.all(arena.bitter[~arena.toxic] <= 0.1)
     assert np.all((arena.looming >= 0) & (arena.looming <= 1))
     assert arena.looming[arena.threat].mean() > arena.looming[~arena.threat].mean() + 0.3
-    assert 0.4 < food.mean() < 0.6 and 0.12 < arena.threat.mean() < 0.28
+    assert abs(food.mean() - CFG.p_food) < 0.1 and 0.12 < arena.threat.mean() < 0.28
 
 
 def test_idle_starves_after_the_energy_runs_out():
@@ -63,11 +63,14 @@ def test_idle_starves_after_the_energy_runs_out():
     assert (steps, info["lifetime"], info["cause"]) == (50, 49, "starvation")
 
 
-def test_escape_costs_three_plus_metabolism():
+def test_escape_costs_its_price_plus_metabolism():
     arena = Arena(cfg(p_threat=0.0))
     arena.reset(1)
     obs, _, info = arena.step(Action.ESCAPE)
-    assert info["energy"] == pytest.approx(46.0) and obs.hunger == pytest.approx(0.54)
+    expected = 50.0 - CFG.metabolism - CFG.escape_cost
+    assert info["energy"] == pytest.approx(expected) and obs.hunger == pytest.approx(
+        1 - expected / 100
+    )
 
 
 def test_eating_gains_energy_and_is_capped():

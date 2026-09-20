@@ -36,4 +36,4 @@ def test_project_encoding_is_the_calibrated_one():
     enc = load_encoding()
     assert enc.r_max_bitter_hz == enc.r_max_sugar_hz  # decision D25
     assert enc.r_max_looming_hz < enc.r_max_sugar_hz and enc.eat_window_ms == 50.0
-    assert enc.alpha is None and enc.calibration_run
+    assert enc.alpha == 1.0 and enc.calibration_run  # decision D32

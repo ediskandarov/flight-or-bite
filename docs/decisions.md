@@ -65,3 +65,13 @@ report" (D18). What the agent did with that latitude, and what it deliberately d
 | D28 | **Environment sweep on dev:** `p_food` in {0.3, 0.4} x `eat_gain` in {8, 10}; the target is a configuration where 25-75% of the oracle's deaths are from starvation. The agent shows the table and does **not** choose. **Stop after it** | `reports/env_sweep.md`. Answers N5 |
 | D29 | Jev: a fourth state mode **`informed_bucketed`** (2 x 2 design: rules yes/no x numbers/levels) | Deviates further from SPEC §4.3 (2 modes -> 4) |
 | D30 | Shiu et al. 2024 and the neuroai.science article are to be read before the gates are implemented | Already done on 2026-09-20; notes in `reports/probe_looming.md` §1 |
+
+## 2026-09-20 — the author's decisions after `env_sweep`, `calibration`, `probe_interaction`
+
+| # | Decision | Effect |
+|---|---|---|
+| D31 | **Environment: `p_food` 0.3, `eat_gain` 8, `escape_cost` 1** (other values as in SPEC §3) | Deviates from SPEC §3. In `reports/env_sweep.md` this configuration gave: oracle 75.2 trials, 28% of its deaths from starvation, 16% margin over `fixed_priority`. The `informed` prompt texts carry the new numbers |
+| D32 | **`alpha` = 1.0** | E11. Calibration stays anchored at hunger = 0 |
+| D33 | **Bitter GRNs: the 20 of the model authors' list** | E12 |
+| D34 | `theta_eat` kept; its justification in `ENGINEERED.md` rewritten as "a burst criterion, chosen by us". Tie rule (R7) accepted | E9, E10 |
+| D35 | Exploratory probe `reports/probe_r5.md` with a pre-specified test (paired McNemar on "DNp01 spiked", identical seeds, 40 repeats, looming 0.6 / 0.8 / 1.0): specificity, dose, mediators, alternative looming encoding. Nothing tuned. **Stop after the report** | Protocol committed before the run |
