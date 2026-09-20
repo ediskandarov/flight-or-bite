@@ -167,13 +167,14 @@ def table_build(
     mode: str = typer.Option(None, "--mode", help="Jev state mode: naive, informed, bucketed."),
     mock: bool = typer.Option(False, "--mock", help="Jev: use MockJevClient (no network)."),
     grid: Path = typer.Option(Path("configs/grid.yaml"), "--grid"),
+    session: int = typer.Option(1, "--session", help="Jev: pass 1 or 2, 12 h apart (PREREG §7)."),
 ) -> None:
     """Build a policy table (resumable)."""
     from flight_or_bite.policy_table import cli_ops
 
     if arbiter is TableArbiter.jev and not mock:
         _load_env()
-    _run(cli_ops.table_build, arbiter.value, mode, mock, grid)
+    _run(cli_ops.table_build, arbiter.value, mode, mock, grid, session)
 
 
 @table_app.command("show")
@@ -215,13 +216,37 @@ def eval_(
     split: Split = typer.Option(..., "--split"),
     unlock_test: bool = typer.Option(False, "--unlock-test"),
     deadline_sweep: bool = typer.Option(False, "--deadline-sweep"),
+    online: bool = typer.Option(False, "--online", help="Main metric: paired online episodes (PREREG §2)."),
+    episodes: int = typer.Option(None, "--episodes", help="Default: 300, or 100 with --sample-from-probs."),
+    sample: bool = typer.Option(False, "--sample-from-probs", help="Secondary analysis (PREREG §2)."),
+    out: Path = typer.Option(None, "--out", help="Default: reports/online/<split>[_sampled]."),
+    mock_jev: bool = typer.Option(False, "--mock-jev", help="Offline: MockJevClient instead of the network."),
 ) -> None:
-    """Evaluate arbiters; table with confidence intervals."""
+    """Evaluate arbiters; table with confidence intervals. With --online: the main metric."""
     from flight_or_bite.arena.env import SplitLocked
-    from flight_or_bite.eval.run_eval import run_eval
 
     try:
-        run_eval(console, split.value, unlock_test, deadline_sweep)
+        if online:
+            from flight_or_bite.eval import online as online_eval
+
+            if not mock_jev:
+                _load_env()
+            try:
+                where = online_eval.run_online(console, split.value, episodes, unlock_test, sample, out,
+                                               mock_jev=mock_jev)  # fmt: skip
+            except online_eval.RunStopped as e:
+                console.print(f"[red]{e}[/]")
+                raise typer.Exit(1) from e
+            s = online_eval.summary_of(where)
+            for name, r in s["arbiters"].items():
+                console.print(
+                    f"  {name:16s} {r['lifetime_mean']:6.1f} [{r['lifetime_ci95'][0]:.1f}, {r['lifetime_ci95'][1]:.1f}]"
+                )
+            console.print(f"[green]{s['episodes']} paired episodes in {where}[/]")
+        else:
+            from flight_or_bite.eval.run_eval import run_eval
+
+            run_eval(console, split.value, unlock_test, deadline_sweep)
     except SplitLocked as e:
         console.print(f"[red]{e}[/]")
         raise typer.Exit(1) from e

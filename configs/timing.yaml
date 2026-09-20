@@ -1,0 +1,12 @@
+# Decision-time measurement (PREREG §8; SPEC §6 as amended by D10-D15). Hashed in PREREG.md.
+# Run by the human from their own terminal, on AC power, under `caffeinate -i` (D5).
+
+n: 1000                       # timed decisions per arbiter (per state mode for Jev)
+warmup: 20                    # Jev: untimed warm-up calls; the first one is reported as the cold call
+state_seed: 20260920          # grid-B points are shuffled once with this seed and cycled through
+jev_modes: [naive, informed, bucketed, informed_bucketed]   # reported separately (D48)
+max_error_share: 0.05         # a Jev bench with more failed calls than this is reported as invalid
+deadlines_ms: [1, 3, 10, 30, 100, 300, 1000, 3000]
+# Jev: sequential calls, one keep-alive session per mode, X-OpenRouter-Cache: false, no retries;
+# a failed call is recorded and excluded. Connectome: one process, graph in memory (t_load
+# reported separately), early stop at the decoder's event; RTF = t_sim / t_wall.

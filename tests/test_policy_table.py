@@ -61,8 +61,8 @@ def test_build_writes_complete_shards_and_resumes(tmp_path):
     LoomingRamp.calls = 0
     made = build_table(LoomingRamp(), GRID, out)
     assert made == 24 * 4 == LoomingRamp.calls
-    shards = sorted(out.glob("shard_*.parquet"))
-    assert len(shards) == 5 and not list(out.glob("*.part"))
+    shards = sorted(out.glob("session_1/shard_*.parquet"))
+    assert len(shards) == 5 and not list(out.glob("**/*.part"))
     first = pd.read_parquet(shards[0])
 
     shards[2].unlink()  # simulate an interrupted build
@@ -73,7 +73,7 @@ def test_build_writes_complete_shards_and_resumes(tmp_path):
 
 
 def test_incomplete_table_is_refused(table_dir):
-    sorted(table_dir.glob("shard_*.parquet"))[0].unlink()
+    sorted(table_dir.glob("session_1/shard_*.parquet"))[0].unlink()
     with pytest.raises(ValueError, match="incomplete"):
         PolicyTable.load(table_dir)
 
@@ -110,7 +110,7 @@ def test_latency_comes_from_the_nearest_node_and_matches_the_outcome(table_dir):
 
 
 def test_cache_hits_never_enter_latency(table_dir):
-    shard = sorted(table_dir.glob("shard_*.parquet"))[0]
+    shard = sorted(table_dir.glob("session_1/shard_*.parquet"))[0]
     df = pd.read_parquet(shard)
     df.loc[df.index[:3], ["cache_hit", "t_wall_ns"]] = [True, 1]
     df.to_parquet(shard)
@@ -138,7 +138,7 @@ def test_points_with_identical_requests_are_queried_once(tmp_path):
 
     made = build_table(LoomingRamp(), GRID, tmp_path / "k", key_fn=key)
     assert made == LoomingRamp.calls == 16 * 4  # 8 cells x 2 keys x 4 repeats
-    shards = sorted((tmp_path / "k").glob("shard_*.parquet"))
+    shards = sorted((tmp_path / "k").glob("session_1/shard_*.parquet"))
     df = pd.concat(pd.read_parquet(f) for f in shards)
     assert len(df) == 24 * 4 and int(df["cache_hit"].sum()) == 8 * 4
     copies = df[df["cache_hit"]]
@@ -147,3 +147,23 @@ def test_points_with_identical_requests_are_queried_once(tmp_path):
     assert table.interpolate(Observation(0.0, 0.0, 0.5, 0.0))[Action.ESCAPE] == 0.0
     assert len(table.latency[(0, 0, 1, 0)]) == 4  # a copied node borrows its source's samples
     assert build_table(LoomingRamp(), GRID, tmp_path / "k", key_fn=key) == 0  # resumable
+
+
+def test_sessions_are_merged_carry_their_number_and_respect_the_gap(tmp_path):
+    from datetime import datetime, timedelta
+
+    from flight_or_bite.policy_table.table import SessionTooEarly, check_gap
+
+    out = tmp_path / "s"
+    with pytest.raises(SessionTooEarly, match="not finished"):
+        check_gap(out, 2, 12)
+    build_table(LoomingRamp(), GRID, out, session=1, n_rep=2)
+    with pytest.raises(SessionTooEarly, match="may start at"):
+        check_gap(out, 2, 12)
+    check_gap(out, 2, 12, now=datetime.now().astimezone() + timedelta(hours=12, minutes=1))
+    build_table(LoomingRamp(), GRID, out, session=2, n_rep=2)
+    check_gap(out, 2, 12)  # a session that has started may be resumed at any time
+    table = PolicyTable.load(out)
+    assert sorted(table.rows["session"].unique()) == [1, 2] and len(table.rows) == 24 * 4
+    assert sorted(table.rows["rep"].unique()) == [0, 1, 2, 3]  # later sessions continue the numbering
+    assert all(len(rows) == 4 for rows in table.latency.values())

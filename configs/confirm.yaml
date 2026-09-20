@@ -1,0 +1,43 @@
+# Confirmatory analyses of PREREG §3, §4, §5, §8 (H1-H6). Hashed in PREREG.md: frozen with it.
+#
+# Common: connectome v783, event backend, frozen encoding, decoder D25, full 500 ms trials,
+# bitter 0, hunger 0 unless stated. Per-channel RNG streams make the arms of one seed paired.
+# Trial seed = seed_base + 1000 * hypothesis + 100 * level_index + repeat.
+
+seed_base: 9000000
+sugar: 0.6
+looming_levels: [0.6, 0.8, 1.0]
+n_pairs: 100                  # per looming level
+alpha_level: 0.05             # after Holm over the three looming levels, within each hypothesis
+
+H1: {hypothesis: 1}           # outcome: DNp01 spiked; control = looming only; exact McNemar
+H2:                           # dose trend; permutation test, one-sided (decreasing)
+  hypothesis: 2
+  doses: [0.0, 0.3, 0.6, 1.0]
+  permutations: 100000
+  permutation_seed: 20260920
+H3: {hypothesis: 3, ablate: m_loom}   # exact sign test on d = effect intact - effect ablated
+H4: {hypothesis: 4, hunger: [0.0, 1.0]}   # primary outcome: decoder says ESCAPE; additional: DNp01 spiked
+H6: {min_pairs: 6}            # paired Wilcoxon on first-DNp01-spike t_sim, H1 pairs with a spike in both arms
+
+H5:                           # escape-curve shift by sugar: Jev (main mode) vs oracle vs connectome
+  hypothesis: 5
+  bitter: 0.0
+  hunger: 0.5
+  looming_levels: 11          # 0.0 .. 1.0
+  sugar: [0.0, 0.6]
+  jev_mode: informed
+  jev_reps: 20
+  connectome_trials: 40       # seed = seed_base + 5000 + 100 * point_index + trial
+  bootstrap: 10000
+  bootstrap_seed: 20260920
+
+robustness:                   # planned, not confirmatory. Seed = seed_base + 1000 + 10000 * variant + 100 * level + repeat
+  1: {name: "r_max_sugar x1.5", r_max_sugar_scale: 1.5}
+  2: {name: "r_max_looming x1.5", r_max_looming_scale: 1.5}
+  3: {name: "w_syn x1.5", w_syn_scale: 1.5}
+  4: {name: "alpha 0.5 (hunger 0.5)", alpha: 0.5, hunger: 0.5}
+  5: {name: "alpha 1.5 (hunger 0.5)", alpha: 1.5, hunger: 0.5}
+  6: {name: "theta 3 spikes", eat_spikes: 3, outcome: escape}
+  7: {name: "theta 5 spikes", eat_spikes: 5, outcome: escape}
+  8: {name: "population looming code", looming_fraction: 0.025390625}

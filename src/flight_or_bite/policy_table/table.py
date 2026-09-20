@@ -7,6 +7,7 @@ from __future__ import annotations
 import itertools
 import json
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -21,6 +22,16 @@ from flight_or_bite.types import Action, Arbiter, Decision, Observation
 AXES = ("sugar", "bitter", "looming", "hunger")
 
 
+class JevSessions(BaseModel):
+    """PREREG §7: Jev tables are built in passes of a few repeats, hours apart."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    n_rep_per_session: int
+    sessions: int
+    min_gap_hours: float
+
+
 class GridSpec(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
@@ -28,6 +39,7 @@ class GridSpec(BaseModel):
     n_rep: int
     shard_points: int
     seed_base: int
+    jev: JevSessions | None = None
 
     def model_post_init(self, _: Any) -> None:
         if tuple(self.axes) != AXES:
@@ -51,12 +63,36 @@ def load_grid(path: Path = Path("configs/grid.yaml")) -> GridSpec:
     return GridSpec.model_validate(yaml.safe_load(path.read_text()))
 
 
-def _shard_path(out_dir: Path, k: int) -> Path:
-    return out_dir / f"shard_{k:04d}.parquet"
+class SessionTooEarly(Exception):
+    pass
 
 
-def build_table(arbiter: Arbiter, grid: GridSpec, out_dir: Path, on_point=lambda done, total: None,
-                key_fn=None) -> int:  # fmt: skip
+def _session_dir(table_dir: Path, session: int) -> Path:
+    return table_dir / f"session_{session}"
+
+
+def _shard_path(session_dir: Path, k: int) -> Path:
+    return session_dir / f"shard_{k:04d}.parquet"
+
+
+def check_gap(table_dir: Path, session: int, min_gap_hours: float, now: datetime | None = None) -> None:
+    """A later session may start only `min_gap_hours` after the previous one finished."""
+    if session <= 1 or (_session_dir(table_dir, session) / "session.json").is_file():
+        return  # first pass, or a pass that has already started and is being resumed
+    marker = _session_dir(table_dir, session - 1) / "session.json"
+    info = json.loads(marker.read_text()) if marker.is_file() else {}
+    if "finished" not in info:
+        raise SessionTooEarly(f"session {session - 1} of {table_dir} is not finished")
+    ready = datetime.fromisoformat(info["finished"]) + timedelta(hours=min_gap_hours)
+    if (now or datetime.now().astimezone()) < ready:
+        raise SessionTooEarly(
+            f"session {session} may start at {ready.isoformat(timespec='minutes')} "
+            f"({min_gap_hours:g} h after session {session - 1} finished)"
+        )
+
+
+def build_table(arbiter: Arbiter, grid: GridSpec, table_dir: Path, on_point=lambda done, total: None,
+                key_fn=None, *, session: int = 1, n_rep: int | None = None) -> int:  # fmt: skip
     """Evaluate `arbiter` n_rep times at every grid point. Resumable: complete shards are kept.
 
     Returns the number of decisions made in this call. Each (point, repeat) has its own RNG
@@ -65,9 +101,19 @@ def build_table(arbiter: Arbiter, grid: GridSpec, out_dir: Path, on_point=lambda
     `key_fn(obs)`: grid points with equal keys produce byte-identical requests (the bucketed Jev
     modes), so only the first point of each key is queried; the others receive copies of its
     repeats, flagged `cache_hit` (never used for latency) with `source_point` naming the origin.
+
+    `session`: shards go to `<table_dir>/session_<n>/` and every row carries the session number;
+    later sessions continue the repeat numbering, so their RNG streams differ.
     """
+    n_rep = n_rep or grid.n_rep
+    out_dir = _session_dir(table_dir, session)
     out_dir.mkdir(parents=True, exist_ok=True)
-    (out_dir / "grid.json").write_text(json.dumps(grid.model_dump(), indent=2))
+    (table_dir / "grid.json").write_text(json.dumps(grid.model_dump(), indent=2))
+    marker = out_dir / "session.json"
+    if not marker.is_file():  # the start time survives resumed runs
+        started = datetime.now().astimezone().isoformat(timespec="seconds")
+        marker.write_text(json.dumps({"session": session, "n_rep": n_rep, "started": started}))
+    rep_offset = (session - 1) * n_rep
     points = grid.points()
     made = 0
     first_of_key: dict = {}
@@ -88,7 +134,7 @@ def build_table(arbiter: Arbiter, grid: GridSpec, out_dir: Path, on_point=lambda
     for k, start in enumerate(range(0, len(points), grid.shard_points)):
         chunk = points[start : start + grid.shard_points]
         path = _shard_path(out_dir, k)
-        if path.is_file() and len(pd.read_parquet(path, columns=["rep"])) == len(chunk) * grid.n_rep:
+        if path.is_file() and len(pd.read_parquet(path, columns=["rep"])) == len(chunk) * n_rep:
             on_point(start + len(chunk), len(points))
             continue
         rows = []
@@ -102,16 +148,17 @@ def build_table(arbiter: Arbiter, grid: GridSpec, out_dir: Path, on_point=lambda
                 on_point(here + 1, len(points))
                 continue
             own = []
-            for rep in range(grid.n_rep):
+            for rep in range(rep_offset, rep_offset + n_rep):
                 rng = np.random.default_rng([grid.seed_base, here, rep])
                 d: Decision = arbiter.decide(obs, rng)
                 made += 1
                 own.append({
                     **{f"i_{a}": i for a, i in zip(AXES, index, strict=True)},
-                    "rep": rep, "action": d.action.value,
+                    "rep": rep, "session": session, "action": d.action.value,
                     **{f"p_{a.value.lower()}": d.probs.get(a, 0.0) for a in ACTIONS},
                     "t_wall_ns": d.t_wall_ns, "t_sim_ms": d.t_sim_ms,
                     "cache_hit": bool(d.meta.get("cache_hit", False)),
+                    "retried": int(d.meta.get("retried", 0)),
                     "source_point": here,
                     "meta": json.dumps(d.meta, default=str),
                 })  # fmt: skip
@@ -121,37 +168,44 @@ def build_table(arbiter: Arbiter, grid: GridSpec, out_dir: Path, on_point=lambda
         tmp = path.with_suffix(".part")
         pd.DataFrame(rows).to_parquet(tmp)
         tmp.replace(path)  # a shard is either complete or absent
+    info = json.loads(marker.read_text())
+    if "finished" not in info:
+        info["finished"] = datetime.now().astimezone().isoformat(timespec="seconds")
+        marker.write_text(json.dumps(info))
     return made
 
 
 @dataclass
 class PolicyTable:
     grid: GridSpec
-    probs: np.ndarray  # [*grid.shape, 3], mean over repeats of the per-repeat probabilities
+    probs: np.ndarray  # [*grid.shape, 3], mean over repeats (all sessions) of the per-repeat probabilities
     latency: dict[tuple[int, ...], pd.DataFrame]  # node -> rows (action, t_wall_ns, t_sim_ms)
+    rows: pd.DataFrame | None = None  # every row of every session, for per-session analyses
 
     @classmethod
     def load(cls, directory: Path) -> PolicyTable:
         grid = GridSpec.model_validate(json.loads((directory / "grid.json").read_text()))
-        shards = sorted(directory.glob("shard_*.parquet"))
-        df = pd.concat([pd.read_parquet(s) for s in shards], ignore_index=True)
-        expected = int(np.prod(grid.shape)) * grid.n_rep
-        if len(df) != expected:
+        frames, expected = [], 0
+        for marker in sorted(directory.glob("session_*/session.json")):
+            expected += int(np.prod(grid.shape)) * json.loads(marker.read_text())["n_rep"]
+            frames += [pd.read_parquet(f) for f in sorted(marker.parent.glob("shard_*.parquet"))]
+        df = pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
+        if not expected or len(df) != expected:
             raise ValueError(f"table is incomplete: {len(df)} of {expected} rows in {directory}")
         keys = [f"i_{a}" for a in AXES]
         probs = np.zeros((*grid.shape, len(ACTIONS)))
         mean = df.groupby(keys)[[f"p_{a.value.lower()}" for a in ACTIONS]].mean()
         for index, row in mean.iterrows():
             probs[index] = row.to_numpy() / row.to_numpy().sum()
-        # latency never includes cache hits (SPEC §4.3)
-        timed = df[~df["cache_hit"]]
+        # latency never includes cache hits (SPEC §4.3) or retried calls (PREREG §2b)
+        timed = df[~df["cache_hit"] & (df["retried"] == 0)]
         latency = {index: g[["action", "t_wall_ns", "t_sim_ms"]].reset_index(drop=True)
                    for index, g in timed.groupby(keys)}  # fmt: skip
         points = grid.points()
         for index, g in df.groupby(keys):  # a node made only of copies borrows its source's samples
-            if index not in latency and "source_point" in g:
-                latency[index] = latency[points[int(g["source_point"].iloc[0])]]
-        return cls(grid, probs, latency)
+            if index not in latency:
+                latency[index] = latency.get(points[int(g["source_point"].iloc[0])], g.iloc[:0])
+        return cls(grid, probs, latency, df)
 
     def _cell(self, axis: str, value: float) -> tuple[int, float]:
         nodes = np.asarray(self.grid.axes[axis])

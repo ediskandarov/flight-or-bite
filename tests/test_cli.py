@@ -96,13 +96,34 @@ def test_jev_table_on_the_mock_needs_a_mode(tmp_path, monkeypatch):
     assert missing.exit_code == EXIT_NOT_IMPLEMENTED and "--mode" in missing.output
 
 
-def test_connectome_tables_wait_for_the_decoder_and_missing_tables_are_explained(tmp_path, monkeypatch):
+def test_unplanned_and_missing_tables_are_explained(tmp_path, monkeypatch):
     monkeypatch.setattr("flight_or_bite.policy_table.cli_ops.TABLE_ROOT", tmp_path)
-    for name in ("connectome", "shuffled"):
-        result = runner.invoke(app, ["table", "build", "--arbiter", name])
-        assert result.exit_code == EXIT_NOT_IMPLEMENTED and "decoder" in result.output
+    result = runner.invoke(app, ["table", "build", "--arbiter", "shuffled"])
+    assert result.exit_code == EXIT_NOT_IMPLEMENTED and "preregistered plan" in result.output
     result = runner.invoke(app, ["table", "show", "--arbiter", "jev_naive"])
     assert result.exit_code == EXIT_NOT_IMPLEMENTED and "fob table build" in result.output
+    result = runner.invoke(app, ["table", "build", "--arbiter", "oracle", "--session", "2"])
+    assert result.exit_code == EXIT_NOT_IMPLEMENTED and "only Jev tables" in result.output
+
+
+def test_jev_table_sessions_on_the_mock(tmp_path, monkeypatch):
+    monkeypatch.setattr("flight_or_bite.policy_table.cli_ops.TABLE_ROOT", tmp_path)
+    grid = tmp_path / "grid.yaml"
+    grid.write_text(
+        "axes:\n  sugar: [0.0, 1.0]\n  bitter: [0.0, 1.0]\n  looming: [0.0, 0.5, 1.0]\n  hunger: [0.0, 1.0]\n"
+        "n_rep: 20\nshard_points: 10\nseed_base: 1\njev: {n_rep_per_session: 2, sessions: 2, min_gap_hours: 12}\n"
+    )
+    base = ["table", "build", "--arbiter", "jev", "--mode", "naive", "--mock", "--grid", str(grid)]
+    too_many = runner.invoke(app, [*base, "--session", "3"])
+    assert too_many.exit_code == EXIT_NOT_IMPLEMENTED and "--session must be 1..2" in too_many.output
+    early = runner.invoke(app, [*base, "--session", "2"])
+    assert early.exit_code == EXIT_NOT_IMPLEMENTED and "not finished" in early.output
+    first = runner.invoke(app, base)
+    assert first.exit_code == 0 and "48 new decisions" in first.output, first.output
+    second = runner.invoke(app, [*base, "--session", "2"])  # the mock ignores the 12 h gap
+    assert second.exit_code == 0 and "48 new decisions" in second.output, second.output
+    shown = runner.invoke(app, ["table", "show", "--arbiter", "jev_naive_mock"])
+    assert shown.exit_code == 0 and " 4" in shown.output  # 2 sessions x 2 repeats per node
 
 
 def test_replay_plays_a_baseline_directly_when_there_is_no_table(tmp_path, monkeypatch):

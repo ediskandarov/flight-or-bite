@@ -15,8 +15,10 @@ from flight_or_bite.eval.episodes import arbiter_rng
 from flight_or_bite.policy_table.table import (
     AXES,
     PolicyTable,
+    SessionTooEarly,
     TabularArbiter,
     build_table,
+    check_gap,
     load_grid,
 )
 from flight_or_bite.types import Arbiter
@@ -50,7 +52,11 @@ def make_arbiter(name: str, *, mode: str | None = None, mock: bool = False) -> A
         if mode not in MODES:
             raise NotReady(f"--mode is required for jev: one of {', '.join(MODES)}")
         return JevArbiter(MockJevClient() if mock else JevClient(), load_prompt(mode), retries=5)
-    raise NotReady(f"the {name!r} arbiter needs the motor decoder, which is not defined yet (M3)")
+    if name == "connectome":
+        from flight_or_bite.arbiters.connectome import ConnectomeArbiter
+
+        return ConnectomeArbiter()
+    raise NotReady(f"tables for {name!r} are not part of the preregistered plan")
 
 
 def table_dir(name: str, mode: str | None, mock: bool) -> Path:
@@ -58,17 +64,29 @@ def table_dir(name: str, mode: str | None, mock: bool) -> Path:
     return TABLE_ROOT / label
 
 
-def table_build(console: Console, name: str, mode: str | None, mock: bool, grid_path: Path) -> None:
+def table_build(console: Console, name: str, mode: str | None, mock: bool, grid_path: Path, session: int = 1) -> None:
     grid = load_grid(grid_path)
-    arbiter = make_arbiter(name, mode=mode, mock=mock)
     out = table_dir(name, mode, mock)
+    n_rep = grid.n_rep
+    if name == "jev" and grid.jev is not None:  # PREREG §7: passes of 5 repeats, 12 h apart
+        if not 1 <= session <= grid.jev.sessions:
+            raise NotReady(f"--session must be 1..{grid.jev.sessions}")
+        n_rep = grid.jev.n_rep_per_session
+        try:
+            check_gap(out, session, 0.0 if mock else grid.jev.min_gap_hours)
+        except SessionTooEarly as e:
+            raise NotReady(str(e)) from e
+    elif session != 1:
+        raise NotReady("only Jev tables are built in several sessions")
+    arbiter = make_arbiter(name, mode=mode, mock=mock)
     total = len(grid.points())
+    prompt = getattr(arbiter, "prompt", None)
+    key_fn = prompt.state_key if prompt is not None and prompt.buckets else None  # D47
     with Progress(console=console) as progress:
-        task = progress.add_task(f"{arbiter.name}: {total} points x {grid.n_rep}", total=total)
-        prompt = getattr(arbiter, "prompt", None)
-        key_fn = prompt.state_key if prompt is not None and prompt.buckets else None  # D47
-        made = build_table(arbiter, grid, out, lambda done, _: progress.update(task, completed=done), key_fn)
-    console.print(f"[green]{out}[/]: {made} new decisions, {total * grid.n_rep} rows in total")
+        task = progress.add_task(f"{arbiter.name}: {total} points x {n_rep}, session {session}", total=total)
+        made = build_table(arbiter, grid, out, lambda done, _: progress.update(task, completed=done), key_fn,
+                           session=session, n_rep=n_rep)  # fmt: skip
+    console.print(f"[green]{out}[/]: {made} new decisions, {total * n_rep} rows in session {session}")
 
 
 def load_tabular(label: str) -> TabularArbiter:
