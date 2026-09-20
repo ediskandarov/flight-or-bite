@@ -55,18 +55,36 @@ def _shard_path(out_dir: Path, k: int) -> Path:
     return out_dir / f"shard_{k:04d}.parquet"
 
 
-def build_table(
-    arbiter: Arbiter, grid: GridSpec, out_dir: Path, on_point=lambda done, total: None
-) -> int:
+def build_table(arbiter: Arbiter, grid: GridSpec, out_dir: Path, on_point=lambda done, total: None,
+                key_fn=None) -> int:  # fmt: skip
     """Evaluate `arbiter` n_rep times at every grid point. Resumable: complete shards are kept.
 
     Returns the number of decisions made in this call. Each (point, repeat) has its own RNG
     stream, so a resumed build is identical to an uninterrupted one for seeded arbiters.
+
+    `key_fn(obs)`: grid points with equal keys produce byte-identical requests (the bucketed Jev
+    modes), so only the first point of each key is queried; the others receive copies of its
+    repeats, flagged `cache_hit` (never used for latency) with `source_point` naming the origin.
     """
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / "grid.json").write_text(json.dumps(grid.model_dump(), indent=2))
     points = grid.points()
     made = 0
+    first_of_key: dict = {}
+    shared: dict[int, list[dict]] = {}
+    if key_fn is not None:
+        for n, index in enumerate(points):
+            first_of_key.setdefault(key_fn(grid.observation(index)), n)
+
+    def rows_of(source: int) -> list[dict]:
+        if source not in shared:  # its shard was written by an earlier, interrupted run
+            done = pd.read_parquet(_shard_path(out_dir, source // grid.shard_points))
+            mask = ~done["cache_hit"]
+            for a, i in zip(AXES, points[source], strict=True):
+                mask &= done[f"i_{a}"] == i
+            shared[source] = done[mask].to_dict("records")
+        return shared[source]
+
     for k, start in enumerate(range(0, len(points), grid.shard_points)):
         chunk = points[start : start + grid.shard_points]
         path = _shard_path(out_dir, k)
@@ -79,19 +97,33 @@ def build_table(
         rows = []
         for offset, index in enumerate(chunk):
             obs = grid.observation(index)
+            here = start + offset
+            source = first_of_key[key_fn(obs)] if key_fn is not None else here
+            if source != here:  # an identical request was already made for `source`
+                where = {f"i_{a}": i for a, i in zip(AXES, index, strict=True)}
+                rows += [
+                    {**row, **where, "cache_hit": True, "source_point": source}
+                    for row in rows_of(source)
+                ]
+                on_point(here + 1, len(points))
+                continue
+            own = []
             for rep in range(grid.n_rep):
-                rng = np.random.default_rng([grid.seed_base, start + offset, rep])
+                rng = np.random.default_rng([grid.seed_base, here, rep])
                 d: Decision = arbiter.decide(obs, rng)
                 made += 1
-                rows.append({
+                own.append({
                     **{f"i_{a}": i for a, i in zip(AXES, index, strict=True)},
                     "rep": rep, "action": d.action.value,
                     **{f"p_{a.value.lower()}": d.probs.get(a, 0.0) for a in ACTIONS},
                     "t_wall_ns": d.t_wall_ns, "t_sim_ms": d.t_sim_ms,
                     "cache_hit": bool(d.meta.get("cache_hit", False)),
+                    "source_point": here,
                     "meta": json.dumps(d.meta, default=str),
                 })  # fmt: skip
-            on_point(start + offset + 1, len(points))
+            rows += own
+            shared[here] = own
+            on_point(here + 1, len(points))
         tmp = path.with_suffix(".part")
         pd.DataFrame(rows).to_parquet(tmp)
         tmp.replace(path)  # a shard is either complete or absent
@@ -121,6 +153,10 @@ class PolicyTable:
         timed = df[~df["cache_hit"]]
         latency = {index: g[["action", "t_wall_ns", "t_sim_ms"]].reset_index(drop=True)
                    for index, g in timed.groupby(keys)}  # fmt: skip
+        points = grid.points()
+        for index, g in df.groupby(keys):  # a node made only of copies borrows its source's samples
+            if index not in latency and "source_point" in g:
+                latency[index] = latency[points[int(g["source_point"].iloc[0])]]
         return cls(grid, probs, latency)
 
     def _cell(self, axis: str, value: float) -> tuple[int, float]:

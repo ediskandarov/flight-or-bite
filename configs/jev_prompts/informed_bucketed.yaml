@@ -1,11 +1,9 @@
-# DRAFT v0 (2026-09-20), written before any Jev response to it was seen (decision D29).
+# v1 (2026-09-20): approved by the spec's author with edits; NOT tuned on dev. Frozen by hash in PREREG.md.
 #
-# informed_bucketed: the fourth cell of the 2 x 2 design (rules: no/yes x observation: numbers /
-# named levels). The rules are those of `informed`, word for word, except for the one sentence
-# that describes the observation: it now explains the level names and their numeric ranges, so
-# that the numeric facts in the rules can be related to the levels. Buckets as in `bucketed`.
+# informed_bucketed: the fourth cell of the 2 x 2 design (rules package: no/yes x observation:
+# numbers / named levels). Rules as in `informed`, except for the sentence describing the observation.
 mode: informed_bucketed
-version: v0
+version: v1
 instructions: "Which action should the agent take on this trial?"
 criteria:
   EAT: "Eat the food that is present on this trial."
@@ -30,9 +28,9 @@ rules: >-
   When a predator is present, looming is drawn from a normal distribution with mean 0.7 and
   standard deviation 0.2; when no predator is present, from a normal distribution with mean 0.2 and
   standard deviation 0.2. The value is clipped to the range 0 to 1.
-  `hunger` equals 1 minus energy divided by 100. Energy starts at 50, cannot exceed 100, and the
+  hunger = 1 − (energy / 100): 0 means full energy, 1 means about to starve. Energy starts at 50, cannot exceed 100, and the
   agent dies when energy reaches 0. Every trial costs 1 energy.
   EAT adds 8 times sugar to energy. If the food is toxic, EAT also subtracts 15 times bitter from
   energy. If a predator is present, an agent that eats dies with probability 0.6.
-  ESCAPE costs 1 energy. A predator cannot kill an agent that escapes.
-  IDLE costs nothing extra. If a predator is present, an idle agent dies with probability 0.3.
+  ESCAPE costs an additional 1 energy. A predator cannot kill an agent that escapes.
+  IDLE has no additional cost. If a predator is present, an idle agent dies with probability 0.3.

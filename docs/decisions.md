@@ -95,3 +95,12 @@ report" (D18). What the agent did with that latitude, and what it deliberately d
 | D43 | Spike-for-spike check of `event` against Brian2 on 10 conflict trials (sugar 0.6 + looming 0.8, frozen encoding, identical input) | `reports/crosscheck_brian2.md` |
 | D44 | `PREREG.md` gains a planned robustness analysis of H1 (r_max x1.5, w_syn x1.5, alpha 0.5 / 1.5, theta 3 / 5 spikes, population code); the x0.5 variants are reported as "the network is silent" | `PREREG.md` §4. The file is named `PREREG.md` with `Status: DRAFT`; the test split opens only on a `Status: FROZEN` line of its own plus matching hashes (`src/flight_or_bite/prereg.py`) |
 | D45 | Texts of all Jev templates in `reports/jev_templates.md`. **M4 does not start until the author approves them** | — |
+
+## 2026-09-20 — Jev templates approved as v1
+
+| # | Decision | Effect |
+|---|---|---|
+| D46 | **Templates accepted with edits as v1, not tuned on dev.** (1) hunger sentence: "hunger = 1 − (energy / 100): 0 means full energy, 1 means about to starve."; (2) "ESCAPE costs an additional 1 energy." / "IDLE has no additional cost."; (3) one question in all four modes: "Which action should the agent take on this trial?"; (4) the "rules" factor is a package (rules + `criteria` descriptions) and is not split; (5) the rules go into `instructions` before the question, `state` carries the observation only; `docs/jev_api_notes.md` §12 shows the full request body of each mode | `configs/jev_prompts/*.yaml`, `reports/jev_templates.md`. Supersedes the v0 drafts; `reports/probe_jev.md` was made with v0 and the old environment |
+| D47 | In the bucketed modes only unique combinations of levels are queried (900 of 1 225 points on grid B); the rest are copies flagged `cache_hit` | `policy_table/table.py` (`key_fn`) |
+| D48 | Jev latency is reported per state mode, separately | `PREREG.md` §8 |
+| D49 | Order: Brian2 cross-check on conflict trials -> choose Jev's main mode on 50 dev episodes -> show the final PREREG to the author -> freeze -> test | — |

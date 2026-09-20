@@ -1,13 +1,10 @@
-# DRAFT v0 (2026-09-20), written before any Jev response to it was seen. Tuned on `dev` only
-# (SPEC §4.3); frozen and hashed in PREREG.md before the test split is touched.
+# v1 (2026-09-20): approved by the spec's author with edits; NOT tuned on dev. Frozen by hash in PREREG.md.
 #
-# bucketed (decision D7): identical to `naive` except that every number is replaced by a named
-# level — the vendor's advice for jev-1.13 ("pass in ... a named bucket"). Five equal-width levels;
-# the boundaries were fixed before any data was seen. No rules, so that the only difference from
-# `naive` is the representation of the numbers.
+# bucketed (D7): identical to `naive` except that every number is replaced by a named level — the
+# vendor's advice for jev-1.13. Five equal-width levels, fixed before any data was seen.
 mode: bucketed
-version: v0
-instructions: "Which action should the agent take?"
+version: v1
+instructions: "Which action should the agent take on this trial?"
 criteria:
   EAT: null
   ESCAPE: null

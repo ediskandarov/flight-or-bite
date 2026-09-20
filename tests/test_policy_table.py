@@ -129,3 +129,23 @@ def test_tabular_arbiter_reproduces_the_policy_and_reports_recorded_latency(tabl
     assert share == pytest.approx(0.75, abs=0.03)
     assert all(d.t_sim_ms == (10.0 if d.action is Action.ESCAPE else 40.0) for d in decisions)
     assert decisions[0].meta["tabular"] and decisions[0].probs[Action.ESCAPE] == pytest.approx(0.75)
+
+
+def test_points_with_identical_requests_are_queried_once(tmp_path):
+    """Bucketed Jev modes: here looming 0.0 and 0.5 share a key, 1.0 does not."""
+    LoomingRamp.calls = 0
+
+    def key(obs):
+        return (obs.sugar, obs.bitter, obs.looming >= 0.75, obs.hunger)
+
+    made = build_table(LoomingRamp(), GRID, tmp_path / "k", key_fn=key)
+    assert made == LoomingRamp.calls == 16 * 4  # 8 cells x 2 keys x 4 repeats
+    shards = sorted((tmp_path / "k").glob("shard_*.parquet"))
+    df = pd.concat(pd.read_parquet(f) for f in shards)
+    assert len(df) == 24 * 4 and int(df["cache_hit"].sum()) == 8 * 4
+    copies = df[df["cache_hit"]]
+    assert (copies["i_looming"] == 1).all() and (copies["p_escape"] == 0.0).all()
+    table = PolicyTable.load(tmp_path / "k")
+    assert table.interpolate(Observation(0.0, 0.0, 0.5, 0.0))[Action.ESCAPE] == 0.0
+    assert len(table.latency[(0, 0, 1, 0)]) == 4  # a copied node borrows its source's samples
+    assert build_table(LoomingRamp(), GRID, tmp_path / "k", key_fn=key) == 0  # resumable

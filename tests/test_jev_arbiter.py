@@ -27,22 +27,25 @@ def test_naive_state_is_only_fields_and_rounded_numbers():
     }  # fmt: skip
 
 
-def test_informed_state_adds_rules_whose_numbers_match_the_environment():
-    state = load_prompt("informed").state(OBS)
-    assert state["observation"] == load_prompt("naive").state(OBS)
-    rules, cfg = state["rules"], load_env_config()
+def test_informed_puts_the_rules_into_instructions_and_keeps_the_state_bare():
+    prompt = load_prompt("informed")
+    assert prompt.state(OBS) == load_prompt("naive").state(OBS)  # observation only (D46)
+    text, cfg = prompt.question().instructions, load_env_config()
+    assert text.endswith("\n\nWhich action should the agent take on this trial?")
     expected = [
         "500", "30%", "25%", "20%", "0.3 and 1", "0 and 0.1", "mean 0.7", "mean 0.2",
         "deviation 0.2", "starts at 50", "exceed 100", "Every trial costs 1 energy", "8 times",
-        "15 times", "probability 0.6", "ESCAPE costs 1 energy", "probability 0.3",
+        "15 times", "probability 0.6", "ESCAPE costs an additional 1 energy", "probability 0.3",
+        "hunger = 1 − (energy / 100): 0 means full energy, 1 means about to starve.",
+        "IDLE has no additional cost.",
     ]  # fmt: skip
     for number in expected:
-        assert number in rules, number
+        assert number in text, number
     assert (cfg.max_trials, cfg.p_food, cfg.p_toxic, cfg.p_threat) == (500, 0.3, 0.25, 0.2)
     assert (cfg.eat_gain, cfg.toxic_cost, cfg.escape_cost) == (8.0, 15.0, 1.0)
     assert (cfg.p_death_eat, cfg.p_death_idle) == (0.6, 0.3)
-    for hint in ("should", "best", "optimal", "recommend"):
-        assert hint not in rules.lower()
+    for hint in ("should eat", "should escape", "best", "optimal", "recommend"):
+        assert hint not in text.lower()
 
 
 @pytest.mark.parametrize(
@@ -102,20 +105,54 @@ def test_unexpected_options_are_rejected():
 
 
 def test_two_by_two_design_of_state_modes():
-    """rules: no / yes  x  observation: numbers / named levels."""
-    states = {m: load_prompt(m).state(OBS) for m in MODES}
+    """rules package: no / yes  x  observation: numbers / named levels."""
+    prompts = {m: load_prompt(m) for m in MODES}
     numbers = {"sugar": 0.64, "bitter": 0.05, "looming": 0.2, "hunger": 0.5}
     levels = {"sugar": "high", "bitter": "very low", "looming": "low", "hunger": "medium"}
-    assert states["naive"] == numbers and states["bucketed"] == levels
-    assert states["informed"]["observation"] == numbers
-    assert states["informed_bucketed"]["observation"] == levels
-    a, b = states["informed"]["rules"], states["informed_bucketed"]["rules"]
+    assert prompts["naive"].state(OBS) == prompts["informed"].state(OBS) == numbers
+    assert prompts["bucketed"].state(OBS) == prompts["informed_bucketed"].state(OBS) == levels
+    question = "Which action should the agent take on this trial?"
+    assert all(p.version == "v1" and p.instructions == question for p in prompts.values())
+    # the "rules" factor is a package: rules text AND option descriptions, together or not at all
+    for mode, p in prompts.items():
+        described = all(v is not None for v in p.criteria.values())
+        assert bool(p.rules) == ("informed" in mode) == described
+        assert (p.full_instructions == question) == ("informed" not in mode)
+    a, b = prompts["informed"].rules, prompts["informed_bucketed"].rules
     assert "four numbers between 0 and 1" in a and "reported as a level" in b
-    # apart from the sentence describing the observation the two rule texts are identical
     tail = "`sugar` is the amount of food present"
     assert a[a.index(tail) :] == b[b.index(tail) :]
-    for level in ("none", "very low", "low", "medium", "high", "very high"):
-        assert level in b
+    assert prompts["informed"].criteria == prompts["informed_bucketed"].criteria
+
+
+def test_bucketed_state_key_collapses_observations_into_identical_requests():
+    p = load_prompt("bucketed")
+    near = Observation(sugar=0.61, bitter=0.01, looming=0.39, hunger=0.59)
+    far = Observation(sugar=0.61, bitter=0.01, looming=0.41, hunger=0.59)
+    assert p.state_key(OBS) == p.state_key(near) != p.state_key(far)
+
+
+def test_retries_are_off_by_default_and_flagged_when_used(monkeypatch):
+    import httpx
+
+    from flight_or_bite.arbiters import jev_arbiter
+
+    monkeypatch.setattr(jev_arbiter.time, "sleep", lambda s: None)
+
+    class Flaky(MockJevClient):
+        failures = 2
+
+        def evaluate(self, state, questions):
+            if Flaky.failures:
+                Flaky.failures -= 1
+                raise httpx.ConnectError("boom")
+            return super().evaluate(state, questions)
+
+    with pytest.raises(httpx.ConnectError):
+        JevArbiter(Flaky(), load_prompt("naive")).decide(OBS, np.random.default_rng(0))
+    Flaky.failures = 2
+    arbiter = JevArbiter(Flaky(), load_prompt("naive"), retries=3)
+    assert arbiter.decide(OBS, np.random.default_rng(0)).meta["retried"] == 2
 
 
 def test_native_action_of_the_baselines_is_their_argmax():

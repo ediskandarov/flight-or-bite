@@ -49,7 +49,7 @@ def make_arbiter(name: str, *, mode: str | None = None, mock: bool = False) -> A
 
         if mode not in MODES:
             raise NotReady(f"--mode is required for jev: one of {', '.join(MODES)}")
-        return JevArbiter(MockJevClient() if mock else JevClient(), load_prompt(mode))
+        return JevArbiter(MockJevClient() if mock else JevClient(), load_prompt(mode), retries=5)
     raise NotReady(f"the {name!r} arbiter needs the motor decoder, which is not defined yet (M3)")
 
 
@@ -65,8 +65,10 @@ def table_build(console: Console, name: str, mode: str | None, mock: bool, grid_
     total = len(grid.points())
     with Progress(console=console) as progress:
         task = progress.add_task(f"{arbiter.name}: {total} points x {grid.n_rep}", total=total)
+        prompt = getattr(arbiter, "prompt", None)
+        key_fn = prompt.state_key if prompt is not None and prompt.buckets else None  # D47
         made = build_table(
-            arbiter, grid, out, lambda done, _: progress.update(task, completed=done)
+            arbiter, grid, out, lambda done, _: progress.update(task, completed=done), key_fn
         )
     console.print(f"[green]{out}[/]: {made} new decisions, {total * grid.n_rep} rows in total")
 
