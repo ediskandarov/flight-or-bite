@@ -22,9 +22,7 @@ seeds = base.seeds_of("dev")
 CONFIGS = [("SPEC default", base.p_food, base.eat_gain)] + [
     (f"p_food {p}, G {g}", p, g) for p in (0.3, 0.4) for g in (8.0, 10.0)
 ]
-run_dir = start_run(
-    "env-sweep", {"configs": CONFIGS, "base": base.model_dump()}, seeds={"dev": [0, 999]}
-)
+run_dir = start_run("env-sweep", {"configs": CONFIGS, "base": base.model_dump()}, seeds={"dev": [0, 999]})
 rng = np.random.default_rng(20260920)
 out = []
 for label, p_food, gain in CONFIGS:

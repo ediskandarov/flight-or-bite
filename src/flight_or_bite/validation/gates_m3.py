@@ -87,9 +87,7 @@ def g2_metric(runner: TrialRunner, cfg: dict, *, n_rep: int | None = None, seed_
     }
 
 
-def g3_metric(
-    runner: TrialRunner, cfg: dict, *, n_rep: int | None = None, seed_offset: int = 0
-) -> dict:
+def g3_metric(runner: TrialRunner, cfg: dict, *, n_rep: int | None = None, seed_offset: int = 0) -> dict:
     n_rep = n_rep or cfg["n_rep"]
     looming = np.round(np.linspace(0, 1, cfg["levels"]), 3)
     p, t50 = [], []
@@ -118,13 +116,9 @@ def variant_worker(item: tuple[str, dict]) -> dict:
     off, hunger = g6["seed_base_offset"], spec.get("hunger", 0.0)
     out: dict[str, Any] = {"variant": name, "spec": spec}
     touches_sugar = any(k in spec for k in ("r_max_sugar_scale", "w_syn_scale", "alpha"))
-    touches_looming = any(
-        k in spec for k in ("r_max_looming_scale", "w_syn_scale", "looming_fraction")
-    )
+    touches_looming = any(k in spec for k in ("r_max_looming_scale", "w_syn_scale", "looming_fraction"))
     if touches_sugar:
-        out["G1"] = g1_metric(
-            runner, cfg["G1"], n_rep=g6["n_rep"]["G1"], seed_offset=off, hunger=hunger
-        )
+        out["G1"] = g1_metric(runner, cfg["G1"], n_rep=g6["n_rep"]["G1"], seed_offset=off, hunger=hunger)
     if touches_sugar or "eat_spikes" in spec:
         out["G2"] = g2_metric(runner, cfg["G2"], n_rep=g6["n_rep"]["G2"], seed_offset=off, hunger=hunger,
                               eat_spikes=spec.get("eat_spikes"))  # fmt: skip
@@ -149,12 +143,8 @@ def suppression(runner: TrialRunner, sugar: float, levels: list[float], n_rep: i
         cond = [runner.run(Observation(sugar, 0.0, lv, 0.0), s, ablated=ablated) for s in seeds]
         c_yes, x_yes = [t.dnp01_spiked for t in control], [t.dnp01_spiked for t in cond]
         per[str(lv)] = mcnemar_exact(c_yes, x_yes) | {
-            "decisions_control": {
-                a.value: sum(t.decoded.action is a for t in control) for a in Action
-            },
-            "decisions_condition": {
-                a.value: sum(t.decoded.action is a for t in cond) for a in Action
-            },
+            "decisions_control": {a.value: sum(t.decoded.action is a for t in control) for a in Action},
+            "decisions_condition": {a.value: sum(t.decoded.action is a for t in cond) for a in Action},
         }
         pool_c += c_yes
         pool_x += x_yes
@@ -206,9 +196,7 @@ def run_gate(name: str, workers: int = 5, log=print) -> GateResult:
             )
             for r in range(n)
         ]
-        esc0 = [
-            runner.run(Observation(0.0, 0.0, c["dnp01"]["looming"], 0.0), sb + r) for r in range(n)
-        ]
+        esc0 = [runner.run(Observation(0.0, 0.0, c["dnp01"]["looming"], 0.0), sb + r) for r in range(n)]
         eat = [
             runner.run(
                 Observation(c["mn9"]["sugar"], 0.0, 0.0, 0.0),
@@ -217,19 +205,12 @@ def run_gate(name: str, workers: int = 5, log=print) -> GateResult:
             )
             for r in range(n)
         ]
-        eat0 = [
-            runner.run(Observation(c["mn9"]["sugar"], 0.0, 0.0, 0.0), sb + 1000 + r)
-            for r in range(n)
-        ]
+        eat0 = [runner.run(Observation(c["mn9"]["sugar"], 0.0, 0.0, 0.0), sb + 1000 + r) for r in range(n)]
         p = lambda ts, a: float(np.mean([t.decoded.action is a for t in ts]))  # noqa: E731
         m = c["m_loom"]
         intact = suppression(runner, m["sugar"], m["looming_levels"], n, sb + 2000)
-        no_m = suppression(
-            runner, m["sugar"], m["looming_levels"], n, sb + 2000, ablated=runner.named["m_loom"]
-        )
-        no_cl20 = suppression(
-            runner, m["sugar"], m["looming_levels"], n, sb + 2000, ablated=runner.named["cl20"]
-        )
+        no_m = suppression(runner, m["sugar"], m["looming_levels"], n, sb + 2000, ablated=runner.named["m_loom"])
+        no_cl20 = suppression(runner, m["sugar"], m["looming_levels"], n, sb + 2000, ablated=runner.named["cl20"])
 
         def retained(x: dict) -> float:
             whole = intact["effect_b_minus_c"]

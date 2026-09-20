@@ -68,9 +68,7 @@ def test_escape_costs_its_price_plus_metabolism():
     arena.reset(1)
     obs, _, info = arena.step(Action.ESCAPE)
     expected = 50.0 - CFG.metabolism - CFG.escape_cost
-    assert info["energy"] == pytest.approx(expected) and obs.hunger == pytest.approx(
-        1 - expected / 100
-    )
+    assert info["energy"] == pytest.approx(expected) and obs.hunger == pytest.approx(1 - expected / 100)
 
 
 def test_eating_gains_energy_and_is_capped():
@@ -145,11 +143,7 @@ def test_test_split_needs_unlock_a_frozen_prereg_and_matching_hashes(tmp_path, m
         Arena(CFG, unlock_test=True).reset(100_000)
 
     # a draft that merely mentions the frozen status in its prose must stay locked
-    doc.write_text(
-        "# PREREG\n\nStatus: DRAFT\n\nOpens with `Status: FROZEN` only.\n\n"
-        + prereg.hash_table()
-        + "\n"
-    )
+    doc.write_text("# PREREG\n\nStatus: DRAFT\n\nOpens with `Status: FROZEN` only.\n\n" + prereg.hash_table() + "\n")
     with pytest.raises(SplitLocked, match="not frozen"):
         Arena(CFG, unlock_test=True).reset(100_000)
 

@@ -60,9 +60,7 @@ def test_probs_fn_controls_policy_and_is_normalized():
     def looming_policy(state, question):
         return {"EAT": 1.0 - state["looming"], "ESCAPE": state["looming"], "IDLE": 0.0}
 
-    client = MockJevClient(
-        probs_fn=lambda s, q: {k: 2 * v for k, v in looming_policy(s, q).items()}
-    )
+    client = MockJevClient(probs_fn=lambda s, q: {k: 2 * v for k, v in looming_policy(s, q).items()})
     answer = client.evaluate(STATE, {"action": QUESTION}).choice("action")
     assert answer.choice == "ESCAPE"
     assert answer.probabilities == pytest.approx({"EAT": 0.4, "ESCAPE": 0.6, "IDLE": 0.0})

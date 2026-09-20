@@ -20,9 +20,7 @@ from flight_or_bite.lif.data import (
 
 CONTENT = b"pre,post,weight\n" * 1000
 BLOB_SHA1 = hashlib.sha1(b"blob %d\0" % len(CONTENT) + CONTENT).hexdigest()
-FILE = DataFile(
-    name="toy.csv", version=1, role="completeness", bytes=len(CONTENT), git_blob_sha1=BLOB_SHA1
-)
+FILE = DataFile(name="toy.csv", version=1, role="completeness", bytes=len(CONTENT), git_blob_sha1=BLOB_SHA1)
 MANIFEST = DataManifest(
     source=DataSource(repo="o/r", commit="abc", code_license="MIT", data_license="CC BY-NC 4.0"),
     files=[FILE],

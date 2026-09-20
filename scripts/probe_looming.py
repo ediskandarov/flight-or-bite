@@ -50,9 +50,7 @@ run_dir = start_run(
 
 def stimulus(sugar: float, looming: float) -> Stimulus:
     neurons = np.concatenate([sugar_n, loom_n])
-    rates = np.concatenate(
-        [np.full(len(sugar_n), sugar * R_MAX), np.full(len(loom_n), looming * R_MAX)]
-    )
+    rates = np.concatenate([np.full(len(sugar_n), sugar * R_MAX), np.full(len(loom_n), looming * R_MAX)])
     return Stimulus(neurons.astype(np.int32), rates)
 
 

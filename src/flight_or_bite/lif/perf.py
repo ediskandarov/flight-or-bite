@@ -67,9 +67,7 @@ def bench_backend(
     first = backend.run_trial(stimulus, t_ms, seed=seed_base - 1)  # warm-up, reported separately
     full = [backend.run_trial(stimulus, t_ms, seed=seed_base + k) for k in range(n_full)]
     stop = StopOnFirstSpike(np.array([watch]))
-    stopped = [
-        backend.run_trial(stimulus, t_ms, seed=seed_base + k, stop=stop) for k in range(n_stop)
-    ]
+    stopped = [backend.run_trial(stimulus, t_ms, seed=seed_base + k, stop=stop) for k in range(n_stop)]
     wall = np.array([r.t_wall_ns for r in full]) / 1e9
     perf = BackendPerf(
         backend=backend.name,

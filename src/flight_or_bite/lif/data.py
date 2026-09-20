@@ -41,9 +41,7 @@ class DataManifest(BaseModel):
         return found
 
     def url(self, file: DataFile) -> str:
-        return (
-            f"https://raw.githubusercontent.com/{self.source.repo}/{self.source.commit}/{file.name}"
-        )
+        return f"https://raw.githubusercontent.com/{self.source.repo}/{self.source.commit}/{file.name}"
 
 
 class ChecksumError(Exception):
@@ -64,11 +62,7 @@ def git_blob_sha1(path: Path) -> str:
 
 
 def is_valid(path: Path, file: DataFile) -> bool:
-    return (
-        path.is_file()
-        and path.stat().st_size == file.bytes
-        and git_blob_sha1(path) == file.git_blob_sha1
-    )
+    return path.is_file() and path.stat().st_size == file.bytes and git_blob_sha1(path) == file.git_blob_sha1
 
 
 def fetch_file(
@@ -94,9 +88,7 @@ def fetch_file(
     if not is_valid(part, file):
         got = f"{part.stat().st_size} bytes, git blob sha1 {git_blob_sha1(part)}"
         part.unlink()
-        raise ChecksumError(
-            f"{file.name}: expected {file.bytes} bytes, {file.git_blob_sha1}; got {got}"
-        )
+        raise ChecksumError(f"{file.name}: expected {file.bytes} bytes, {file.git_blob_sha1}; got {got}")
     part.replace(target)  # atomic: a half-written file never carries the real name
     return target, True
 

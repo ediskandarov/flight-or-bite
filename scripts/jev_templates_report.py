@@ -62,10 +62,7 @@ for mode in MODES:
         "**criteria:**",
         "",
     ]
-    L += [
-        f"- `{k}`: {('«' + v + '»') if v else '`null` (без описания)'}"
-        for k, v in p.criteria.items()
-    ]
+    L += [f"- `{k}`: {('«' + v + '»') if v else '`null` (без описания)'}" for k, v in p.criteria.items()]
     L += [
         "",
         "**instructions** (целиком, как уходит в запрос):",

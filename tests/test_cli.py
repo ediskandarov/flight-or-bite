@@ -78,26 +78,16 @@ def test_table_build_show_and_replay(tmp_path, monkeypatch):
         "axes:\n  sugar: [0.0, 1.0]\n  bitter: [0.0, 1.0]\n  looming: [0.0, 0.5, 1.0]\n"
         "  hunger: [0.0, 1.0]\nn_rep: 2\nshard_points: 10\nseed_base: 1\n"
     )
-    built = runner.invoke(
-        app, ["table", "build", "--arbiter", "fixed_priority", "--grid", str(grid)]
-    )
+    built = runner.invoke(app, ["table", "build", "--arbiter", "fixed_priority", "--grid", str(grid)])
     assert built.exit_code == 0 and "48 new decisions" in built.output, built.output
-    again = runner.invoke(
-        app, ["table", "build", "--arbiter", "fixed_priority", "--grid", str(grid)]
-    )
+    again = runner.invoke(app, ["table", "build", "--arbiter", "fixed_priority", "--grid", str(grid)])
     assert "0 new decisions" in again.output
 
-    shown = runner.invoke(
-        app, ["table", "show", "--arbiter", "fixed_priority", "--slice", "looming"]
-    )
+    shown = runner.invoke(app, ["table", "show", "--arbiter", "fixed_priority", "--slice", "looming"])
     assert shown.exit_code == 0 and "p_escape" in shown.output and "1.000" in shown.output
 
     played = runner.invoke(app, ["replay", "--seed", "3", "--arbiter", "fixed_priority"])
-    assert (
-        played.exit_code == 0
-        and "fixed_priority_table" in played.output
-        and "end:" in played.output
-    )
+    assert played.exit_code == 0 and "fixed_priority_table" in played.output and "end:" in played.output
 
 
 def test_jev_table_on_the_mock_needs_a_mode(tmp_path, monkeypatch):
@@ -106,9 +96,7 @@ def test_jev_table_on_the_mock_needs_a_mode(tmp_path, monkeypatch):
     assert missing.exit_code == EXIT_NOT_IMPLEMENTED and "--mode" in missing.output
 
 
-def test_connectome_tables_wait_for_the_decoder_and_missing_tables_are_explained(
-    tmp_path, monkeypatch
-):
+def test_connectome_tables_wait_for_the_decoder_and_missing_tables_are_explained(tmp_path, monkeypatch):
     monkeypatch.setattr("flight_or_bite.policy_table.cli_ops.TABLE_ROOT", tmp_path)
     for name in ("connectome", "shuffled"):
         result = runner.invoke(app, ["table", "build", "--arbiter", name])

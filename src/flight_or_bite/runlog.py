@@ -42,9 +42,7 @@ def _versions() -> dict[str, str | None]:
     return found
 
 
-def start_run(
-    name: str, config: dict[str, Any], seeds: Any = None, root: Path = Path("runs")
-) -> Path:
+def start_run(name: str, config: dict[str, Any], seeds: Any = None, root: Path = Path("runs")) -> Path:
     """Create runs/<timestamp>_<name>/ and write meta.json into it."""
     run_dir = root / f"{datetime.now().strftime('%Y%m%dT%H%M%S')}_{name}"
     run_dir.mkdir(parents=True, exist_ok=False)

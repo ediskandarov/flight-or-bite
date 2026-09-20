@@ -71,9 +71,7 @@ ANNOT_PATH = Path("data/flywire_annotations_783.tsv")
 FRACTION_RATE_HZ = 100.0
 
 params, enc = load_params(), load_encoding()
-con = load_connectome(
-    load_manifest(Path("configs/data.yaml")), params.connectome_version, Path("data")
-)
+con = load_connectome(load_manifest(Path("configs/data.yaml")), params.connectome_version, Path("data"))
 circ = load_circuits()
 sugar_n, bitter_n = resolve(con, circ["sugar_grn_right"]), resolve(con, circ["bitter_grn_shiu"])
 loom_n = np.concatenate([resolve(con, circ["lplc2"]), resolve(con, circ["lc4"])])
@@ -88,10 +86,7 @@ def annotations() -> pd.DataFrame:
         url = (f"https://raw.githubusercontent.com/flyconnectome/flywire_annotations/{ANNOT_COMMIT}/"
                "supplemental_files/Supplemental_file1_neuron_annotations.tsv")  # fmt: skip
         data = urllib.request.urlopen(url, timeout=300).read()  # noqa: S310
-        if (
-            hashlib.sha1(b"blob %d\0" % len(data) + data, usedforsecurity=False).hexdigest()
-            != ANNOT_BLOB
-        ):
+        if hashlib.sha1(b"blob %d\0" % len(data) + data, usedforsecurity=False).hexdigest() != ANNOT_BLOB:
             raise RuntimeError("annotation table does not match the pinned git blob")
         ANNOT_PATH.write_bytes(data)
     cols = ["root_id", "super_class", "cell_class", "cell_sub_class", "cell_type", "top_nt", "side"]
@@ -102,9 +97,7 @@ def stream(seed: int, channel: str) -> np.random.Generator:
     return np.random.default_rng([seed, int.from_bytes(channel.encode(), "little") % (2**32)])
 
 
-def kicks(
-    neurons: np.ndarray, rate_hz: float, seed: int, channel: str
-) -> tuple[np.ndarray, np.ndarray]:
+def kicks(neurons: np.ndarray, rate_hz: float, seed: int, channel: str) -> tuple[np.ndarray, np.ndarray]:
     """Bernoulli(rate * dt) per neuron and step from the channel's own stream."""
     p = rate_hz * params.dt_ms * 1e-3
     steps, cols = np.nonzero(stream(seed, channel).random((N_STEPS, len(neurons))) < p)
@@ -133,12 +126,8 @@ def trial(level: float, seed: int, co: np.ndarray | None = None, co_rate: float 
     steps = np.concatenate([p[0] for p in parts])
     neurons = np.concatenate([p[1] for p in parts])
     order = np.argsort(steps, kind="stable")
-    stim = Stimulus(
-        np.concatenate(stimulated).astype(np.int32), np.zeros(sum(len(s) for s in stimulated))
-    )
-    r = backend.run_trial(
-        stim, enc.t_sim_ms, seed=seed, silenced=silenced, kicks=(steps[order], neurons[order])
-    )
+    stim = Stimulus(np.concatenate(stimulated).astype(np.int32), np.zeros(sum(len(s) for s in stimulated)))
+    r = backend.run_trial(stim, enc.t_sim_ms, seed=seed, silenced=silenced, kicks=(steps[order], neurons[order]))
     d = decode(
         r,
         mn9,
@@ -188,20 +177,14 @@ if __name__ == "__main__":
     ann = annotations()
     index_of = {int(r): i for i, r in enumerate(con.ids)}
 
-    control = {
-        lv: [trial(lv, SEED + rep, want_active=True) for rep in range(REPS)] for lv in LOOMING
-    }
+    control = {lv: [trial(lv, SEED + rep, want_active=True) for rep in range(REPS)] for lv in LOOMING}
     out["control"] = {str(lv): {"yes": sum(r["dn"] for r in rows), "n": REPS,
                                 "t_dn_ms_p50": float(np.median([r["t_dn"] for r in rows if r["dn"]])) if any(r["dn"] for r in rows) else None}
                       for lv, rows in control.items()}  # fmt: skip
     print("control", out["control"], flush=True)
 
     # ---- A. specificity ------------------------------------------------------------------
-    pool = ann[
-        (ann.super_class == "sensory")
-        & (ann.cell_class != "gustatory")
-        & ann.root_id.isin(index_of)
-    ]
+    pool = ann[(ann.super_class == "sensory") & (ann.cell_class != "gustatory") & ann.root_id.isin(index_of)]
     out["A"] = {
         "sensory_pool": int(len(pool)),
         "sensory_pool_classes": pool.cell_class.value_counts(dropna=False).head(12).to_dict(),
@@ -209,12 +192,8 @@ if __name__ == "__main__":
     conditions = {"sugar_grn": sugar_n, "bitter_grn": bitter_n}
     for s in range(1, 6):
         picked = pool.sample(n=20, random_state=np.random.default_rng(s))
-        conditions[f"random_sensory_{s}"] = np.array(
-            [index_of[int(r)] for r in picked.root_id], dtype=np.int32
-        )
-        out["A"][f"random_sensory_{s}_classes"] = picked.cell_class.value_counts(
-            dropna=False
-        ).to_dict()
+        conditions[f"random_sensory_{s}"] = np.array([index_of[int(r)] for r in picked.root_id], dtype=np.int32)
+        out["A"][f"random_sensory_{s}_classes"] = picked.cell_class.value_counts(dropna=False).to_dict()
     for name, neurons in conditions.items():
         out["A"][name] = compare(control, lambda lv, n=neurons: cell(lv, n, CO_RATE))
         print("A", name, out["A"][name]["pooled"], flush=True)
@@ -222,31 +201,21 @@ if __name__ == "__main__":
     # ---- B. dose -------------------------------------------------------------------------
     out["B"] = {}
     for sugar in (0.3, 0.6, 1.0):
-        out["B"][str(sugar)] = compare(
-            control, lambda lv, s=sugar: cell(lv, sugar_n, s * enc.r_max_sugar_hz)
-        )
+        out["B"][str(sugar)] = compare(control, lambda lv, s=sugar: cell(lv, sugar_n, s * enc.r_max_sugar_hz))
         print("B", sugar, out["B"][str(sugar)]["pooled"], flush=True)
 
     # ---- C. mediators --------------------------------------------------------------------
     sugar_active: set[int] = set()
     for rep in range(REPS):
         stim = Stimulus(sugar_n.astype(np.int32), np.zeros(len(sugar_n)))
-        r = backend.run_trial(
-            stim, enc.t_sim_ms, seed=SEED + rep, kicks=kicks(sugar_n, CO_RATE, SEED + rep, "co")
-        )
+        r = backend.run_trial(stim, enc.t_sim_ms, seed=SEED + rep, kicks=kicks(sugar_n, CO_RATE, SEED + rep, "co"))
         sugar_active |= set(np.unique(r.spike_i).tolist())
-    loom_active = set(
-        np.concatenate([r["active"] for rows in control.values() for r in rows]).tolist()
-    )
+    loom_active = set(np.concatenate([r["active"] for rows in control.values() for r in rows]).tolist())
     pre, post, count = con.pre(), con.post, con.count
     dn_set = set(int(d) for d in dnp01)
     partners = set(pre[np.isin(post, dnp01)].tolist())
     partners_loom = partners & loom_active
-    inhibitory = {
-        int(i)
-        for i in sugar_active
-        if (seg := count[con.indptr[i] : con.indptr[i + 1]]).size and seg[0] < 0
-    }
+    inhibitory = {int(i) for i in sugar_active if (seg := count[con.indptr[i] : con.indptr[i + 1]]).size and seg[0] < 0}
 
     def onto(targets: set[int]) -> dict[int, int]:
         mask = np.isin(pre, list(inhibitory)) & np.isin(post, list(targets))

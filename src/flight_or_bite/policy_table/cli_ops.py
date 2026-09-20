@@ -67,9 +67,7 @@ def table_build(console: Console, name: str, mode: str | None, mock: bool, grid_
         task = progress.add_task(f"{arbiter.name}: {total} points x {grid.n_rep}", total=total)
         prompt = getattr(arbiter, "prompt", None)
         key_fn = prompt.state_key if prompt is not None and prompt.buckets else None  # D47
-        made = build_table(
-            arbiter, grid, out, lambda done, _: progress.update(task, completed=done), key_fn
-        )
+        made = build_table(arbiter, grid, out, lambda done, _: progress.update(task, completed=done), key_fn)
     console.print(f"[green]{out}[/]: {made} new decisions, {total * grid.n_rep} rows in total")
 
 
@@ -84,12 +82,8 @@ def table_show(console: Console, label: str, axis: str, at: dict[str, float]) ->
     if axis not in AXES:
         raise NotReady(f"--slice must be one of {', '.join(AXES)}")
     table = load_tabular(label).table
-    fixed = {
-        a: at.get(a, table.grid.axes[a][len(table.grid.axes[a]) // 2]) for a in AXES if a != axis
-    }
-    nearest = {
-        a: int(np.abs(np.asarray(table.grid.axes[a]) - v).argmin()) for a, v in fixed.items()
-    }
+    fixed = {a: at.get(a, table.grid.axes[a][len(table.grid.axes[a]) // 2]) for a in AXES if a != axis}
+    nearest = {a: int(np.abs(np.asarray(table.grid.axes[a]) - v).argmin()) for a, v in fixed.items()}
     out = Table(title=f"{label}: slice over {axis} at " + ", ".join(
         f"{a}={table.grid.axes[a][i]}" for a, i in nearest.items()))  # fmt: skip
     for col in (
@@ -112,16 +106,10 @@ def table_show(console: Console, label: str, axis: str, at: dict[str, float]) ->
 
 def replay(console: Console, seed: int, label: str) -> None:
     cfg = load_env_config()
-    arbiter = (
-        make_arbiter(label)
-        if label in DIRECT and not (TABLE_ROOT / label).exists()
-        else load_tabular(label)
-    )
+    arbiter = make_arbiter(label) if label in DIRECT and not (TABLE_ROOT / label).exists() else load_tabular(label)
     arena = Arena(cfg)
     obs, rng = arena.reset(seed), arbiter_rng(seed, arbiter.name)
-    console.print(
-        f"replay: arbiter {arbiter.name}, seed {seed} ({cfg.split_of(seed) or 'no split'})"
-    )
+    console.print(f"replay: arbiter {arbiter.name}, seed {seed} ({cfg.split_of(seed) or 'no split'})")
     done, info = False, {}
     while not done:
         d = arbiter.decide(obs, rng)
@@ -131,6 +119,4 @@ def replay(console: Console, seed: int, label: str) -> None:
         obs, done, info = arena.step(d.action, decision_time_ms=d.t_wall_ns / 1e6)
         flags = ("  THREAT" if info["threat"] else "") + ("  TOXIC" if info["toxic"] else "")
         console.print(line + flags, highlight=False)
-    console.print(
-        f"end: {info['cause']} after {info['lifetime']} trials, energy {info['energy']:.1f}"
-    )
+    console.print(f"end: {info['cause']} after {info['lifetime']} trials, energy {info['energy']:.1f}")

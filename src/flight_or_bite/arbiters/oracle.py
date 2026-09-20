@@ -71,9 +71,7 @@ class OracleArbiter(TimedArbiter):
 
         m_t, m_s = masses(cfg.looming_threat), masses(cfg.looming_safe)
         weight = cfg.p_threat * m_t + (1.0 - cfg.p_threat) * m_s
-        posterior = np.divide(
-            cfg.p_threat * m_t, weight, out=np.zeros_like(weight), where=weight > 0
-        )
+        posterior = np.divide(cfg.p_threat * m_t, weight, out=np.zeros_like(weight), where=weight > 0)
         return weight, posterior
 
     def _food_quadrature(self, n_sugar: int, n_bitter: int) -> tuple[np.ndarray, np.ndarray]:
@@ -121,9 +119,7 @@ class OracleArbiter(TimedArbiter):
         cfg = self.cfg
         energy = (1.0 - obs.hunger) * cfg.energy_max
         p_thr = threat_posterior(obs.looming, cfg)
-        gain = cfg.eat_gain * obs.sugar - (
-            cfg.toxic_cost * obs.bitter if is_toxic(obs, cfg) else 0.0
-        )
+        gain = cfg.eat_gain * obs.sugar - (cfg.toxic_cost * obs.bitter if is_toxic(obs, cfg) else 0.0)
         base = energy - cfg.metabolism
         cont = lambda e: float(self._continuation(np.array([e]), self.v_next)[0])  # noqa: E731
         return {

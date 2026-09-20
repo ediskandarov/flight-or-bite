@@ -88,10 +88,7 @@ def build_table(arbiter: Arbiter, grid: GridSpec, out_dir: Path, on_point=lambda
     for k, start in enumerate(range(0, len(points), grid.shard_points)):
         chunk = points[start : start + grid.shard_points]
         path = _shard_path(out_dir, k)
-        if (
-            path.is_file()
-            and len(pd.read_parquet(path, columns=["rep"])) == len(chunk) * grid.n_rep
-        ):
+        if path.is_file() and len(pd.read_parquet(path, columns=["rep"])) == len(chunk) * grid.n_rep:
             on_point(start + len(chunk), len(points))
             continue
         rows = []
@@ -101,10 +98,7 @@ def build_table(arbiter: Arbiter, grid: GridSpec, out_dir: Path, on_point=lambda
             source = first_of_key[key_fn(obs)] if key_fn is not None else here
             if source != here:  # an identical request was already made for `source`
                 where = {f"i_{a}": i for a, i in zip(AXES, index, strict=True)}
-                rows += [
-                    {**row, **where, "cache_hit": True, "source_point": source}
-                    for row in rows_of(source)
-                ]
+                rows += [{**row, **where, "cache_hit": True, "source_point": source} for row in rows_of(source)]
                 on_point(here + 1, len(points))
                 continue
             own = []
@@ -172,28 +166,19 @@ class PolicyTable:
         for corner in itertools.product((0, 1), repeat=len(AXES)):
             weight = np.prod([w if c else 1.0 - w for c, (_, w) in zip(corner, cells, strict=True)])
             if weight:
-                p += (
-                    weight
-                    * self.probs[tuple(lo + c for c, (lo, _) in zip(corner, cells, strict=True))]
-                )
+                p += weight * self.probs[tuple(lo + c for c, (lo, _) in zip(corner, cells, strict=True))]
         p = p / p.sum()
         return {a: float(x) for a, x in zip(ACTIONS, p, strict=True)}
 
     def nearest_node(self, obs: Observation) -> tuple[int, ...]:
-        return tuple(
-            int(np.abs(np.asarray(self.grid.axes[a]) - getattr(obs, a)).argmin()) for a in AXES
-        )
+        return tuple(int(np.abs(np.asarray(self.grid.axes[a]) - getattr(obs, a)).argmin()) for a in AXES)
 
-    def sample_latency(
-        self, obs: Observation, action: Action, rng: np.random.Generator
-    ) -> tuple[int, float | None]:
+    def sample_latency(self, obs: Observation, action: Action, rng: np.random.Generator) -> tuple[int, float | None]:
         """(t_wall_ns, t_sim_ms) of one recorded repeat at the nearest node, with the same outcome
         if that node ever produced it, otherwise any repeat of that node."""
         rows = self.latency[self.nearest_node(obs)]
         same = rows[rows["action"] == action.value]
-        pick = (same if len(same) else rows).iloc[
-            int(rng.integers(len(same) if len(same) else len(rows)))
-        ]
+        pick = (same if len(same) else rows).iloc[int(rng.integers(len(same) if len(same) else len(rows)))]
         t_sim = pick["t_sim_ms"]
         return int(pick["t_wall_ns"]), (None if pd.isna(t_sim) else float(t_sim))
 

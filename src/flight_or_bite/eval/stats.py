@@ -21,9 +21,7 @@ class PairedDifference:
         return self.ci_low > 0 or self.ci_high < 0
 
 
-def bootstrap_mean_ci(
-    x: np.ndarray, rng: np.random.Generator, n: int = N_RESAMPLES
-) -> tuple[float, float]:
+def bootstrap_mean_ci(x: np.ndarray, rng: np.random.Generator, n: int = N_RESAMPLES) -> tuple[float, float]:
     x = np.asarray(x, dtype=np.float64)
     means = x[rng.integers(0, len(x), size=(n, len(x)))].mean(axis=1)
     lo, hi = np.percentile(means, [2.5, 97.5])

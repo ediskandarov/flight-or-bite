@@ -39,9 +39,7 @@ def test_early_stop_gives_the_same_decision_and_time_as_the_full_trial():
             assert (a.action, a.t_sim_ms) == (b.action, b.t_sim_ms)
             if a.action.value != "IDLE":
                 assert early.stopped_early
-                assert early.t_sim_ms == pytest.approx(
-                    a.t_sim_ms + PARAMS.dt_ms
-                )  # stops right after
+                assert early.t_sim_ms == pytest.approx(a.t_sim_ms + PARAMS.dt_ms)  # stops right after
                 assert early.spike_i.size <= full.spike_i.size
             seen.add(a.action.value)
     assert {"EAT", "ESCAPE"} <= seen  # both kinds of event were exercised

@@ -195,9 +195,7 @@ def render(d: dict[str, Any]) -> str:
         w = p["full_wall_s_p50"]
         cells = " | ".join(_hours(n, w) for n in GRID_SIMS.values())
         total = sum(GRID_SIMS.values())
-        lines.append(
-            f"| `{p['backend']}` | {cells} | {_hours(total, w)} | {_hours(total, w, workers)} |"
-        )
+        lines.append(f"| `{p['backend']}` | {cells} | {_hours(total, w)} | {_hours(total, w, workers)} |")
     lines += [
         "",
         "Extrapolated from the sugar-only trial above, without early stopping. Trials that also",
@@ -221,9 +219,7 @@ JEV_MODES = 3
 
 def _recommendation(d: dict[str, Any], workers: int) -> list[str]:
     verified = {c["backend"] for c in d["verification"] if c["identical"] == c["union"]}
-    eligible = [
-        p for p in d["backends"] if p["backend"] in verified or p["backend"].startswith("brian2")
-    ]
+    eligible = [p for p in d["backends"] if p["backend"] in verified or p["backend"].startswith("brian2")]
     if not eligible:
         return ["## Recommendation", "", "No backend could be benchmarked; see failures above.", ""]
     best = max(eligible, key=lambda p: p["rtf_p50"])

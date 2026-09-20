@@ -30,9 +30,7 @@ class SystemInfo:
 
 def _sysctl(key: str) -> str | None:
     try:
-        out = subprocess.run(
-            ["sysctl", "-n", key], capture_output=True, text=True, timeout=5, check=True
-        )
+        out = subprocess.run(["sysctl", "-n", key], capture_output=True, text=True, timeout=5, check=True)
     except (OSError, subprocess.SubprocessError):
         return None
     return out.stdout.strip() or None

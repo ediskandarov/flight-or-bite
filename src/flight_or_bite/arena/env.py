@@ -143,11 +143,7 @@ class Arena:
         if self._done:
             raise RuntimeError("episode is over; call reset()")
         cfg, t = self.cfg, self._t
-        missed = (
-            cfg.deadline_ms is not None
-            and decision_time_ms is not None
-            and decision_time_ms > cfg.deadline_ms
-        )
+        missed = cfg.deadline_ms is not None and decision_time_ms is not None and decision_time_ms > cfg.deadline_ms
         if missed:
             action = Action.IDLE  # "did not make it" (SPEC §3)
         info: dict[str, Any] = {

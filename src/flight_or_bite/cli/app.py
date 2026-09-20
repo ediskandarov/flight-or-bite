@@ -135,9 +135,7 @@ def gate(name: str = typer.Argument(..., help="Gate id, G1..G7.")) -> None:
     from flight_or_bite.validation import run_gates
 
     if name.upper() not in run_gates.GATES:
-        console.print(
-            f"[red]unknown gate {name!r}; expected one of {', '.join(run_gates.GATES)}[/]"
-        )
+        console.print(f"[red]unknown gate {name!r}; expected one of {', '.join(run_gates.GATES)}[/]")
         raise typer.Exit(2)
     run_gates.run(console, [name.upper()])
 
@@ -149,11 +147,7 @@ def gates(
     """Run all validity gates and print a pass/fail summary."""
     from flight_or_bite.validation import run_gates
 
-    ok = (
-        run_gates.summary(console)
-        if only_summary
-        else run_gates.run(console, list(run_gates.GATES))
-    )
+    ok = run_gates.summary(console) if only_summary else run_gates.run(console, list(run_gates.GATES))
     raise typer.Exit(0 if ok else 1)
 
 
@@ -295,10 +289,7 @@ def jev_smoke(
             distinct.add(tuple(sorted(ans.probabilities.items())))
             cost_usd += resp.meta.get("cost_usd") or 0.0
             # The API returns options in arbitrary order; print them in ours.
-            probs = "  ".join(
-                f"{k} {ans.probabilities.get(k, float('nan')):.2f}"
-                for k in _SMOKE_QUESTION.criteria
-            )
+            probs = "  ".join(f"{k} {ans.probabilities.get(k, float('nan')):.2f}" for k in _SMOKE_QUESTION.criteria)
             table.add_row(
                 str(i), resp.model, ans.choice, probs, f"{resp.t_wall_ns / 1e6:.1f}",
             )  # fmt: skip
@@ -319,7 +310,6 @@ def jev_smoke(
     )
     # All requests are identical, so this doubles as a determinism check.
     console.print(
-        f"distinct probability vectors over {s.n} identical requests: {len(distinct)} | "
-        f"reported cost: ${cost_usd:.6f}",
+        f"distinct probability vectors over {s.n} identical requests: {len(distinct)} | reported cost: ${cost_usd:.6f}",
         soft_wrap=True,
     )

@@ -34,9 +34,7 @@ def run_graph(shuffle_seed: int | None) -> list[dict]:
     from flight_or_bite.types import Observation
 
     params, enc = load_params(), load_encoding()
-    con = load_connectome(
-        load_manifest(Path("configs/data.yaml")), params.connectome_version, Path("data")
-    )
+    con = load_connectome(load_manifest(Path("configs/data.yaml")), params.connectome_version, Path("data"))
     c = load_circuits()
     sets = {"sugar": resolve(con, c["sugar_grn_right"]),
             "looming": np.concatenate([resolve(con, c["lplc2"]), resolve(con, c["lc4"])])}  # fmt: skip
@@ -47,9 +45,7 @@ def run_graph(shuffle_seed: int | None) -> list[dict]:
     for li, looming in enumerate(LEVELS):
         for rep in range(REPS):
             obs = Observation(sugar=SUGAR, bitter=0.0, looming=looming, hunger=0.0)
-            r = backend.run_trial(
-                enc.stimulus(obs, sets), enc.t_sim_ms, seed=SEED + li * REPS + rep
-            )
+            r = backend.run_trial(enc.stimulus(obs, sets), enc.t_sim_ms, seed=SEED + li * REPS + rep)
             d = decode(
                 r,
                 mn9,
@@ -82,9 +78,7 @@ if __name__ == "__main__":
     real = run_graph(None)
     with mp.get_context("spawn").Pool(workers) as pool:
         shuffled_rows = [row for rows in pool.map(run_graph, SHUFFLES) for row in rows]
-    write_json(
-        run_dir / "trials.json", {"real": real, "shuffled": shuffled_rows, "run_dir": str(run_dir)}
-    )
+    write_json(run_dir / "trials.json", {"real": real, "shuffled": shuffled_rows, "run_dir": str(run_dir)})
     with Path("reports/probe_interaction_trials.csv").open("w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=list(real[0]))
         w.writeheader()

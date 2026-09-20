@@ -5,10 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-G = {
-    n: json.loads(Path(f"reports/gates/{n}.json").read_text())
-    for n in ("G1", "G2", "G3", "G4", "G5", "G6", "G7")
-}
+G = {n: json.loads(Path(f"reports/gates/{n}.json").read_text()) for n in ("G1", "G2", "G3", "G4", "G5", "G6", "G7")}
 TITLE = {
     "G1": "Сахар → MN9",
     "G2": "Горькое подавляет сахар",
@@ -36,9 +33,7 @@ L = [
     "|---|---|---|---|---|",
 ]
 for n, r in G.items():
-    L.append(
-        f"| {n} | {TITLE[n]} | {r['metric']:.4g} | {r['threshold']:.4g} | {yes(r['passed'])} |"
-    )
+    L.append(f"| {n} | {TITLE[n]} | {r['metric']:.4g} | {r['threshold']:.4g} | {yes(r['passed'])} |")
 
 d = G["G1"]["details"]
 L += [
@@ -131,11 +126,7 @@ L += [
     "|---|---|---|---|---|",
 ]
 for v in d["variants"]:
-    g2 = (
-        "—"
-        if "G2" not in v
-        else f"{v['G2']['metric']:.2f} ({v['G2']['p_eat'][0]:.2f} → {v['G2']['p_eat'][-1]:.2f})"
-    )
+    g2 = "—" if "G2" not in v else f"{v['G2']['metric']:.2f} ({v['G2']['p_eat'][0]:.2f} → {v['G2']['p_eat'][-1]:.2f})"
     L.append(
         f"| `{v['variant']}` | {fmt(v.get('G1', {}).get('metric'))} | {g2} | {fmt(v.get('G3', {}).get('metric'))} | {'да' if v['passed'] else '**нет**'} |"
     )
@@ -143,14 +134,9 @@ failed = [v for v in d["variants"] if not v["passed"]]
 for v in failed:
     L += ["", f"Подробно `{v['variant']}`:"]
     if "G1" in v:
-        L.append(
-            "- MN9, Гц по уровням sugar: "
-            + " / ".join(f"{x:g}" for x in v["G1"]["mn9_rate_hz_mean"])
-        )
+        L.append("- MN9, Гц по уровням sugar: " + " / ".join(f"{x:g}" for x in v["G1"]["mn9_rate_hz_mean"]))
     if "G3" in v:
-        L.append(
-            "- p_escape по уровням looming: " + " / ".join(f"{x:.2f}" for x in v["G3"]["p_escape"])
-        )
+        L.append("- p_escape по уровням looming: " + " / ".join(f"{x:.2f}" for x in v["G3"]["p_escape"]))
 d = G["G7"]["details"]
 L += [
     "",

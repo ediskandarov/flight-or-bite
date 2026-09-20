@@ -20,9 +20,7 @@ def chain(count: int = 400):
 
 def random_graph(n=200, e=4000, seed=1):
     rng = np.random.default_rng(seed)
-    return from_edges(
-        0, np.arange(n), rng.integers(0, n, e), rng.integers(0, n, e), rng.integers(-150, 300, e)
-    )
+    return from_edges(0, np.arange(n), rng.integers(0, n, e), rng.integers(0, n, e), rng.integers(-150, 300, e))
 
 
 def kick_at(steps, neuron=0):
@@ -39,9 +37,7 @@ def test_params_match_the_reference_source():
 
 
 def test_graph_is_csr_by_presynaptic_neuron():
-    g = from_edges(
-        7, np.array([10, 20, 30]), np.array([2, 0, 2]), np.array([0, 1, 1]), np.array([5, -3, 9])
-    )
+    g = from_edges(7, np.array([10, 20, 30]), np.array([2, 0, 2]), np.array([0, 1, 1]), np.array([5, -3, 9]))
     assert g.indptr.tolist() == [0, 1, 1, 3]
     assert g.post.tolist() == [1, 0, 1] and g.count.tolist() == [-3, 5, 9]
     assert g.pre().tolist() == [0, 2, 2]
@@ -53,9 +49,7 @@ def test_graph_is_csr_by_presynaptic_neuron():
 
 
 def test_kick_fires_next_step_and_spike_travels_with_the_synaptic_delay():
-    r = EventBackend(chain(), PARAMS).run_trial(
-        Stimulus.uniform(np.array([0]), 0.0), 30.0, seed=0, kicks=kick_at([10])
-    )
+    r = EventBackend(chain(), PARAMS).run_trial(Stimulus.uniform(np.array([0]), 0.0), 30.0, seed=0, kicks=kick_at([10]))
     steps = dict(
         zip(
             r.spike_i.tolist(),
@@ -86,17 +80,13 @@ def test_early_stop_halts_at_the_first_watched_spike():
     backend = EventBackend(chain(), PARAMS)
     stim = Stimulus.uniform(np.array([0]), 0.0)
     full = backend.run_trial(stim, 100.0, seed=0, kicks=kick_at([10, 300]))
-    stopped = backend.run_trial(
-        stim, 100.0, seed=0, kicks=kick_at([10, 300]), stop=StopOnFirstSpike(np.array([2]))
-    )
+    stopped = backend.run_trial(stim, 100.0, seed=0, kicks=kick_at([10, 300]), stop=StopOnFirstSpike(np.array([2])))
     first = full.times_of(2)[0]
     assert stopped.stopped_early
     assert stopped.t_sim_ms == pytest.approx(first + PARAMS.dt_ms)
     assert stopped.times_of(2).tolist() == [first]
     assert stopped.spike_i.size < full.spike_i.size
-    idle = backend.run_trial(
-        stim, 20.0, seed=0, kicks=kick_at([]), stop=StopOnFirstSpike(np.array([2]))
-    )
+    idle = backend.run_trial(stim, 20.0, seed=0, kicks=kick_at([]), stop=StopOnFirstSpike(np.array([2])))
     assert not idle.stopped_early and idle.t_sim_ms == 20.0 and idle.spike_i.size == 0
 
 
@@ -123,9 +113,7 @@ def test_poisson_schedule_rate():
     assert len(steps) / 50 == pytest.approx(100.0, rel=0.05)
     assert set(neurons.tolist()) <= set(range(50))
     with pytest.raises(ValueError):
-        poisson_schedule(
-            Stimulus.uniform(np.array([0]), 20_000.0), 10, 0.1, np.random.default_rng(0)
-        )
+        poisson_schedule(Stimulus.uniform(np.array([0]), 20_000.0), 10, 0.1, np.random.default_rng(0))
 
 
 def test_circuits_resolve_only_declared_absences():

@@ -159,8 +159,6 @@ def test_native_action_of_the_baselines_is_their_argmax():
     from flight_or_bite.arbiters.baselines import FixedPriorityArbiter, RandomArbiter
 
     rng = np.random.default_rng(0)
-    assert (
-        FixedPriorityArbiter().decide(Observation(0.5, 0.0, 0.9, 0.5), rng).action is Action.ESCAPE
-    )
+    assert FixedPriorityArbiter().decide(Observation(0.5, 0.0, 0.9, 0.5), rng).action is Action.ESCAPE
     picks = {RandomArbiter().decide(OBS, rng).action for _ in range(60)}
     assert picks == set(Action)  # exact ties are broken at random

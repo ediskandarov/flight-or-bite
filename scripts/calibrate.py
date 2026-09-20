@@ -21,9 +21,7 @@ from flight_or_bite.types import Action
 cal = yaml.safe_load(Path("configs/calibration.yaml").read_text())
 T_MS = float(yaml.safe_load(Path("configs/encoding.yaml").read_text())["t_sim_ms"])
 params = load_params()
-con = load_connectome(
-    load_manifest(Path("configs/data.yaml")), params.connectome_version, Path("data")
-)
+con = load_connectome(load_manifest(Path("configs/data.yaml")), params.connectome_version, Path("data"))
 circuits = load_circuits()
 sugar_n = resolve(con, circuits["sugar_grn_right"])
 loom_n = np.concatenate([resolve(con, circuits["lplc2"]), resolve(con, circuits["lc4"])])
@@ -38,9 +36,7 @@ sat = []
 for drive in cal["saturation"]["drives_hz"]:
     rates = [backend.run_trial(Stimulus.uniform(sugar_n, drive), T_MS, seed=s).rate_hz(mn9)
              for s in range(cal["saturation"]["n_trials"])]  # fmt: skip
-    sat.append(
-        {"drive_hz": drive, "mn9_rate_hz_mean": float(np.mean(rates)), "sd": float(np.std(rates))}
-    )
+    sat.append({"drive_hz": drive, "mn9_rate_hz_mean": float(np.mean(rates)), "sd": float(np.std(rates))})
     print("saturation", sat[-1], flush=True)
 saturation_hz = max(r["mn9_rate_hz_mean"] for r in sat)
 theta = cal["theta_fraction"] * saturation_hz

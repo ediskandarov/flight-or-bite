@@ -54,10 +54,7 @@ for arbiter in (OracleArbiter(cfg), FixedPriorityArbiter()):
         print(
             arbiter.name,
             label,
-            {
-                k: (round(v, 3) if isinstance(v, float) else v)
-                for k, v in out[arbiter.name]["grids"][label].items()
-            },
+            {k: (round(v, 3) if isinstance(v, float) else v) for k, v in out[arbiter.name]["grids"][label].items()},
             flush=True,
         )
     shutil.rmtree(run_dir / "tables" / arbiter.name)

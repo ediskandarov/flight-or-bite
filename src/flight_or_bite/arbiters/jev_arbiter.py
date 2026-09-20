@@ -99,14 +99,10 @@ class JevArbiter(TimedArbiter):
         response, attempts = None, 0
         while response is None:
             try:
-                response = self.client.evaluate(
-                    self.prompt.state(obs), {QUESTION_ID: self._question}
-                )
+                response = self.client.evaluate(self.prompt.state(obs), {QUESTION_ID: self._question})
             except (JevHTTPError, httpx.TransportError) as e:
                 status = getattr(e, "status", None)
-                if attempts >= self.retries or (
-                    status is not None and status not in self.RETRYABLE
-                ):
+                if attempts >= self.retries or (status is not None and status not in self.RETRYABLE):
                     raise
                 attempts += 1
                 time.sleep(min(30.0, 2.0**attempts))

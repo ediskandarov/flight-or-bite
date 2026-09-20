@@ -62,10 +62,7 @@ for tau in TAUS:
         tdir = run_dir / "tables" / label.split()[0]
         build_table(arb, GridSpec(axes=axes, n_rep=1, shard_points=1000, seed_base=1), tdir)
         life = np.array(
-            [
-                r.lifetime
-                for r in run_split(cfg, TabularArbiter("t", PolicyTable.load(tdir)), seeds)
-            ],
+            [r.lifetime for r in run_split(cfg, TabularArbiter("t", PolicyTable.load(tdir)), seeds)],
             dtype=float,
         )
         d = paired_bootstrap(life, direct, rng)

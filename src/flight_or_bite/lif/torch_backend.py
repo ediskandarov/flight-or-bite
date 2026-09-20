@@ -100,9 +100,7 @@ class TorchBackend:
                     lengths = hi - lo
                     offsets = torch.cumsum(lengths, 0) - lengths
                     total = int(lengths.sum())
-                    edge = torch.arange(total, device=dev) + torch.repeat_interleave(
-                        lo - offsets, lengths
-                    )
+                    edge = torch.arange(total, device=dev) + torch.repeat_interleave(lo - offsets, lengths)
                     tgt = self._post[edge]
                     open_ = (step - last[tgt]) >= refractory[tgt]  # refractory targets drop input
                     g.index_add_(0, tgt[open_], self._w[edge][open_])
@@ -121,9 +119,7 @@ class TorchBackend:
                     steps_done, stopped = step + 1, True
                     break
 
-        spike_i = (
-            torch.cat(out_i).cpu().numpy().astype(np.int32) if out_i else np.empty(0, np.int32)
-        )
+        spike_i = torch.cat(out_i).cpu().numpy().astype(np.int32) if out_i else np.empty(0, np.int32)
         self._sync()
         return TrialResult(
             spike_i=spike_i,

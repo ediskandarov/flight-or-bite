@@ -95,9 +95,7 @@ def run_eval(console: Console, split: str, unlock_test: bool, sweep: bool) -> No
     for arb in arbiters:
         console.print(f"running {arb.name} on {len(seeds)} {split} episodes ...")
         results[arb.name] = run_split(cfg, arb, seeds, unlock_test=unlock_test)
-    pd.DataFrame([r.as_dict() for rs in results.values() for r in rs]).to_parquet(
-        run_dir / "episodes.parquet"
-    )
+    pd.DataFrame([r.as_dict() for rs in results.values() for r in rs]).to_parquet(run_dir / "episodes.parquet")
     summary = summarise(results, np.random.default_rng(BOOTSTRAP_SEED))
     summary.update(split=split, episodes=len(seeds), run_dir=str(run_dir),
                    generated=datetime.now().astimezone().isoformat(timespec="seconds"))  # fmt: skip
@@ -112,9 +110,7 @@ def run_eval(console: Console, split: str, unlock_test: bool, sweep: bool) -> No
     out = Path(f"reports/eval_{split}.md")
     out.write_text(render(summary))
 
-    table = Table(
-        title=f"Mean lifetime, {split} split, {len(seeds)} episodes (censored at {cfg.max_trials})"
-    )
+    table = Table(title=f"Mean lifetime, {split} split, {len(seeds)} episodes (censored at {cfg.max_trials})")
     for col in ("arbiter", "lifetime [95% CI]", "% of oracle", "predator", "starvation", "toxin",
                 "censored", "mean energy"):  # fmt: skip
         table.add_column(col)

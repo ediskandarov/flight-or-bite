@@ -83,9 +83,7 @@ def test_interpolation_is_exact_at_nodes_linear_between_and_normalised(table_dir
     at_node = table.interpolate(Observation(0.0, 1.0, 0.5, 1.0))
     assert at_node[Action.ESCAPE] == pytest.approx(0.5) and at_node[Action.IDLE] == 0.0
     between = table.interpolate(Observation(0.3, 0.7, 0.25, 0.1))
-    assert between[Action.ESCAPE] == pytest.approx(0.25) and between[Action.EAT] == pytest.approx(
-        0.75
-    )
+    assert between[Action.ESCAPE] == pytest.approx(0.25) and between[Action.EAT] == pytest.approx(0.75)
     assert sum(between.values()) == pytest.approx(1.0)
     assert table.interpolate(Observation(0.0, 0.0, 1.0, 0.0))[Action.ESCAPE] == pytest.approx(1.0)
 

@@ -52,9 +52,7 @@ for mode in modes:
     finally:
         client.close()
     life = np.array([e["lifetime"] for e in episodes], dtype=float)
-    lo, hi = (
-        bootstrap_mean_ci(life, np.random.default_rng(1)) if len(life) > 1 else (float("nan"),) * 2
-    )
+    lo, hi = bootstrap_mean_ci(life, np.random.default_rng(1)) if len(life) > 1 else (float("nan"),) * 2
     acts = Counter()
     for e in episodes:
         acts.update(e["actions"])

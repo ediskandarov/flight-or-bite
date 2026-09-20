@@ -24,9 +24,7 @@ def test_degrees_signs_and_weights_are_preserved():
     assert np.array_equal(np.diff(s.indptr), np.diff(g.indptr))  # out-degree
     assert np.array_equal(s.count, g.count)  # per-edge weights stay with their source, in order
     for sign in (1, -1):  # excitatory and inhibitory in-degree separately
-        assert np.array_equal(
-            in_degree(s, np.sign(s.count) == sign), in_degree(g, np.sign(g.count) == sign)
-        )
+        assert np.array_equal(in_degree(s, np.sign(s.count) == sign), in_degree(g, np.sign(g.count) == sign))
     assert np.array_equal(np.sort(s.post), np.sort(g.post))
 
 

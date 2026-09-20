@@ -38,9 +38,7 @@ class Trial:
 
 def load_real_connectome(params: LIFParams | None = None) -> Connectome:
     params = params or load_params()
-    return load_connectome(
-        load_manifest(Path("configs/data.yaml")), params.connectome_version, Path("data")
-    )
+    return load_connectome(load_manifest(Path("configs/data.yaml")), params.connectome_version, Path("data"))
 
 
 class TrialRunner:
@@ -48,22 +46,16 @@ class TrialRunner:
                  encoding: Encoding | None = None, *, looming_fraction: float | None = None) -> None:  # fmt: skip
         self.params = params or load_params()
         self.enc = encoding or load_encoding()
-        self.looming_fraction = (
-            looming_fraction  # None = rate code; else f_max of the fraction code
-        )
+        self.looming_fraction = looming_fraction  # None = rate code; else f_max of the fraction code
         circuits = load_circuits()
         self.sets = {
             "sugar": resolve(connectome, circuits["sugar_grn_right"]),
             "bitter": resolve(connectome, circuits["bitter_grn_shiu"]),
-            "looming": np.concatenate(
-                [resolve(connectome, circuits["lplc2"]), resolve(connectome, circuits["lc4"])]
-            ),
+            "looming": np.concatenate([resolve(connectome, circuits["lplc2"]), resolve(connectome, circuits["lc4"])]),
         }
         self.mn9 = int(resolve(connectome, circuits["mn9"])[0])
         self.dnp01 = resolve(connectome, circuits["dnp01"])
-        self.named = {
-            k: resolve(connectome, circuits[k]) for k in ("m_loom", "cl20", "dnp01", "mn9")
-        }
+        self.named = {k: resolve(connectome, circuits[k]) for k in ("m_loom", "cl20", "dnp01", "mn9")}
         self.backend = EventBackend(connectome, self.params)
         self.n_steps = round(self.enc.t_sim_ms / self.params.dt_ms)
 
@@ -74,9 +66,7 @@ class TrialRunner:
         p = rate_hz * self.params.dt_ms * 1e-3
         if p > 1:
             raise ValueError(f"{channel}: rate {rate_hz} Hz exceeds 1/dt")
-        steps, cols = np.nonzero(
-            self._stream(seed, channel).random((self.n_steps, len(neurons))) < p
-        )
+        steps, cols = np.nonzero(self._stream(seed, channel).random((self.n_steps, len(neurons))) < p)
         return steps.astype(np.int64), neurons[cols].astype(np.int32)
 
     def run(self, obs: Observation, seed: int, *, ablated: np.ndarray | None = None,

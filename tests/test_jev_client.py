@@ -101,9 +101,7 @@ def test_parses_live_response_and_measures_only_client_wall_time():
     assert resp.request_id == LIVE_RESPONSE["id"]
     assert resp.raw == LIVE_RESPONSE
     assert resp.cache_hit is False
-    assert resp.request_bytes == len(
-        build_payload({"sugar": 0.7}, {"action": QUESTION}, client.model)
-    )
+    assert resp.request_bytes == len(build_payload({"sugar": 0.7}, {"action": QUESTION}, client.model))
     assert resp.t_wall_ns > 0
     assert not hasattr(resp, "timings")  # no connection breakdown, no server time (D10)
 
@@ -141,9 +139,7 @@ def test_documented_error_statuses_raise_without_retry(status):
 
     def handler(request: httpx.Request) -> httpx.Response:
         calls.append(request)
-        return httpx.Response(
-            status, json={"error": {"code": status}}, headers={"x-generation-id": "g"}
-        )
+        return httpx.Response(status, json={"error": {"code": status}}, headers={"x-generation-id": "g"})
 
     with make_client(handler) as client:
         with pytest.raises(JevHTTPError) as excinfo:

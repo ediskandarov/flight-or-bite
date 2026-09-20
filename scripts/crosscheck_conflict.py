@@ -65,7 +65,5 @@ for seed in SEEDS:
                  "mn9_spikes": int((a.spike_i == runner.mn9).sum()), "dnp01_spikes": int(np.isin(a.spike_i, runner.dnp01).sum()),
                  "brian2_wall_s": a.t_wall_ns / 1e9, "event_wall_s": b.t_wall_ns / 1e9})  # fmt: skip
     print(rows[-1], flush=True)
-(run_dir / "crosscheck.json").write_text(
-    json.dumps({"rows": rows, "run_dir": str(run_dir)}, indent=2)
-)
+(run_dir / "crosscheck.json").write_text(json.dumps({"rows": rows, "run_dir": str(run_dir)}, indent=2))
 print("DONE", run_dir, flush=True)

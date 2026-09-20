@@ -53,9 +53,7 @@ class Connectome:
         return np.isin(np.asarray(root_ids, dtype=np.int64), self.ids)
 
 
-def from_edges(
-    version: int, ids: np.ndarray, pre: np.ndarray, post: np.ndarray, count: np.ndarray
-) -> Connectome:
+def from_edges(version: int, ids: np.ndarray, pre: np.ndarray, post: np.ndarray, count: np.ndarray) -> Connectome:
     n = len(ids)
     if pre.size and (min(pre.min(), post.min()) < 0 or max(pre.max(), post.max()) >= n):
         raise ValueError("edge index outside the neuron table")

@@ -9,9 +9,7 @@ from pathlib import Path
 
 PREREG = Path("PREREG.md")
 STATUS_FROZEN = "Status: FROZEN"
-STATUS_LINE = re.compile(
-    r"^Status: FROZEN$", re.MULTILINE
-)  # a line of its own, not a mention in prose
+STATUS_LINE = re.compile(r"^Status: FROZEN$", re.MULTILINE)  # a line of its own, not a mention in prose
 HASH_ROW = re.compile(r"^\| `([^`]+)` \| `([0-9a-f]{64})` \|$", re.MULTILINE)
 
 
@@ -40,19 +38,11 @@ def check(path: Path | None = None) -> None:
         raise PreregError("the test split stays locked until PREREG.md is committed (SPEC §8)")
     text = path.read_text()
     if not STATUS_LINE.search(text):
-        raise PreregError(
-            f"{path} is not frozen (no '{STATUS_FROZEN}' line); the test split stays locked"
-        )
+        raise PreregError(f"{path} is not frozen (no '{STATUS_FROZEN}' line); the test split stays locked")
     listed = dict(HASH_ROW.findall(text))
     if not listed:
         raise PreregError(f"{path} lists no file hashes")
     missing = [str(f) for f in hashed_files() if str(f) not in listed]
-    changed = [
-        name
-        for name, digest in listed.items()
-        if not Path(name).is_file() or sha256(Path(name)) != digest
-    ]
+    changed = [name for name, digest in listed.items() if not Path(name).is_file() or sha256(Path(name)) != digest]
     if missing or changed:
-        raise PreregError(
-            f"preregistered hashes do not match: changed {changed}, not listed {missing}"
-        )
+        raise PreregError(f"preregistered hashes do not match: changed {changed}, not listed {missing}")
