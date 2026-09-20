@@ -14,7 +14,7 @@ from flight_or_bite.arbiters.jev_client import ChoiceQuestion, JevClientProtocol
 from flight_or_bite.types import Action, Observation
 
 PROMPT_DIR = Path("configs/jev_prompts")
-MODES = ("naive", "informed", "bucketed")
+MODES = ("naive", "informed", "bucketed", "informed_bucketed")
 QUESTION_ID = "action"
 FIELDS = ("sugar", "bitter", "looming", "hunger")
 
@@ -22,7 +22,7 @@ FIELDS = ("sugar", "bitter", "looming", "hunger")
 class JevPrompt(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
-    mode: Literal["naive", "informed", "bucketed"]
+    mode: Literal["naive", "informed", "bucketed", "informed_bucketed"]
     version: str
     instructions: str
     criteria: dict[str, str | None]
@@ -44,22 +44,23 @@ class JevPrompt(BaseModel):
 
     def state(self, obs: Observation) -> dict[str, Any]:
         values = {f: getattr(obs, f) for f in FIELDS}
-        if self.mode == "bucketed":
-            return {f: self.level(v) for f, v in values.items()}
-        numbers = {f: round(v, self.decimals) for f, v in values.items()}
-        if self.mode == "informed":
-            return {"rules": self.rules, "observation": numbers}
-        return numbers
+        if self.buckets is not None:
+            observation: dict[str, Any] = {f: self.level(v) for f, v in values.items()}
+        else:
+            observation = {f: round(v, self.decimals) for f, v in values.items()}
+        if self.rules is not None:
+            return {"rules": self.rules, "observation": observation}
+        return observation
 
 
 def load_prompt(mode: str, directory: Path = PROMPT_DIR) -> JevPrompt:
     prompt = JevPrompt.model_validate(yaml.safe_load((directory / f"{mode}.yaml").read_text()))
     if prompt.mode != mode:
         raise ValueError(f"{mode}.yaml declares mode {prompt.mode!r}")
-    if prompt.mode == "informed" and not prompt.rules:
-        raise ValueError("the informed prompt needs `rules`")
-    if prompt.mode == "bucketed" and not prompt.buckets:
-        raise ValueError("the bucketed prompt needs `buckets`")
+    if ("informed" in prompt.mode) != bool(prompt.rules):
+        raise ValueError(f"`rules` must be present exactly in the informed modes ({mode})")
+    if ("bucketed" in prompt.mode) != bool(prompt.buckets):
+        raise ValueError(f"`buckets` must be present exactly in the bucketed modes ({mode})")
     return prompt
 
 
@@ -85,9 +86,9 @@ class JevArbiter(TimedArbiter):
         total = sum(answer.probabilities.values())
         if total <= 0:
             raise JevResponseError(f"probabilities sum to {total}")
-        # The API's own `choice` is an argmax; SPEC §4 samples the action from the probabilities.
         probs = {a: answer.probabilities[a.value] / total for a in ACTIONS}
         return probs, {
+            "native_action": Action(answer.choice),  # D27: Jev acts with its own `choice`
             "mode": self.prompt.mode, "prompt_version": self.prompt.version,
             "model_version": response.model, "generation_id": response.request_id,
             "cache_hit": response.cache_hit, "raw_probability_sum": total,

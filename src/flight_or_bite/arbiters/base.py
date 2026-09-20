@@ -20,10 +20,23 @@ def sample_action(probs: dict[Action, float], rng: np.random.Generator) -> Actio
     return ACTIONS[int(rng.choice(len(ACTIONS), p=p / p.sum()))]
 
 
+def argmax_action(probs: dict[Action, float], rng: np.random.Generator) -> Action:
+    """Most probable action; exact ties are broken at random (which keeps `random` random)."""
+    best = max(probs.values())
+    tied = [a for a in ACTIONS if probs.get(a, 0.0) == best]
+    return tied[0] if len(tied) == 1 else tied[int(rng.integers(len(tied)))]
+
+
 class TimedArbiter(ABC):
-    """`decide` = policy + sampling inside one wall-clock measurement: request -> ready action."""
+    """`decide` = policy + choice of action inside one wall-clock measurement.
+
+    The action is the arbiter's **native** one (decision D27): whatever `policy` reports under
+    `meta["native_action"]`, else the argmax of its probabilities. With `sample_from_probs=True`
+    the action is drawn from the probabilities instead (the secondary analysis of SPEC §7).
+    """
 
     name: str
+    sample_from_probs: bool = False
 
     @abstractmethod
     def policy(self, obs: Observation) -> tuple[dict[Action, float], dict[str, Any]]:
@@ -32,7 +45,13 @@ class TimedArbiter(ABC):
     def decide(self, obs: Observation, rng: np.random.Generator) -> Decision:
         t0 = time.perf_counter_ns()
         probs, meta = self.policy(obs)
-        action = sample_action(probs, rng)
+        native = meta.pop("native_action", None)
+        if self.sample_from_probs:
+            action = sample_action(probs, rng)
+        elif native is not None:
+            action = native
+        else:
+            action = argmax_action(probs, rng)
         t_wall_ns = time.perf_counter_ns() - t0
         return Decision(
             probs=probs, action=action, t_wall_ns=t_wall_ns, t_sim_ms=meta.pop("t_sim_ms", None),

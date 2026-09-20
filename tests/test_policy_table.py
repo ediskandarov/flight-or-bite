@@ -26,6 +26,7 @@ class LoomingRamp(TimedArbiter):
 
     name = "ramp"
     calls = 0
+    sample_from_probs = True  # a stochastic arbiter: its outcomes vary between repeats
 
     def policy(self, obs):
         LoomingRamp.calls += 1
@@ -43,9 +44,9 @@ def table_dir(tmp_path):
     return tmp_path / "ramp"
 
 
-def test_project_grid_is_the_specs_default():
+def test_project_grid_is_grid_b():
     grid = load_grid()
-    assert grid.shape == (5, 3, 5, 3) and len(grid.points()) == 225 and grid.n_rep == 20
+    assert grid.shape == (7, 5, 7, 5) and len(grid.points()) == 1225 and grid.n_rep == 20  # D27
 
 
 def test_grid_validation():

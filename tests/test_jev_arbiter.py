@@ -18,7 +18,7 @@ def test_prompts_load_and_hash():
         prompt = load_prompt(mode)
         assert prompt.mode == mode and set(prompt.criteria) == {"EAT", "ESCAPE", "IDLE"}
         assert len(prompt_hash(mode)) == 64
-    assert len({prompt_hash(m) for m in MODES}) == 3
+    assert len({prompt_hash(m) for m in MODES}) == 4 == len(MODES)
 
 
 def test_naive_state_is_only_fields_and_rounded_numbers():
@@ -64,7 +64,7 @@ def test_wire_request_of_each_mode_is_valid_json_with_three_options():
         assert body["questions"]["action"]["type"] == "choice"
 
 
-def test_arbiter_samples_from_renormalised_probabilities_and_is_timed():
+def test_arbiter_acts_with_jevs_own_choice_and_can_sample_for_the_secondary_analysis():
     def probs_fn(state, question):
         return {"EAT": 3.0, "ESCAPE": 1.0, "IDLE": 0.0}
 
@@ -78,9 +78,14 @@ def test_arbiter_samples_from_renormalised_probabilities_and_is_timed():
     assert first.t_wall_ns >= 5_000_000 and first.t_wall_ns >= first.meta["t_http_ns"]
     assert first.t_sim_ms is None and first.meta["cache_hit"] is False
     assert first.meta["mode"] == "naive" and first.meta["model_version"] == "mock-jev-0"
-    share_eat = np.mean([d.action is Action.EAT for d in decisions])
-    assert 0.65 < share_eat < 0.85 and not any(d.action is Action.IDLE for d in decisions)
+    assert all(d.action is Action.EAT for d in decisions)  # D27: the response's `choice` field
     assert client.budget.used == 200
+
+    sampler = JevArbiter(MockJevClient(probs_fn=probs_fn), load_prompt("naive"))
+    sampler.sample_from_probs = True  # secondary analysis (SPEC §7)
+    sampled = [sampler.decide(OBS, rng) for _ in range(300)]
+    share_eat = np.mean([d.action is Action.EAT for d in sampled])
+    assert 0.65 < share_eat < 0.85 and not any(d.action is Action.IDLE for d in sampled)
 
 
 def test_unexpected_options_are_rejected():
@@ -91,3 +96,31 @@ def test_unexpected_options_are_rejected():
 
     with pytest.raises(JevResponseError):
         JevArbiter(Wrong(), load_prompt("naive")).decide(OBS, np.random.default_rng(0))
+
+
+def test_two_by_two_design_of_state_modes():
+    """rules: no / yes  x  observation: numbers / named levels."""
+    states = {m: load_prompt(m).state(OBS) for m in MODES}
+    numbers = {"sugar": 0.64, "bitter": 0.05, "looming": 0.2, "hunger": 0.5}
+    levels = {"sugar": "high", "bitter": "very low", "looming": "low", "hunger": "medium"}
+    assert states["naive"] == numbers and states["bucketed"] == levels
+    assert states["informed"]["observation"] == numbers
+    assert states["informed_bucketed"]["observation"] == levels
+    a, b = states["informed"]["rules"], states["informed_bucketed"]["rules"]
+    assert "four numbers between 0 and 1" in a and "reported as a level" in b
+    # apart from the sentence describing the observation the two rule texts are identical
+    tail = "`sugar` is the amount of food present"
+    assert a[a.index(tail) :] == b[b.index(tail) :]
+    for level in ("none", "very low", "low", "medium", "high", "very high"):
+        assert level in b
+
+
+def test_native_action_of_the_baselines_is_their_argmax():
+    from flight_or_bite.arbiters.baselines import FixedPriorityArbiter, RandomArbiter
+
+    rng = np.random.default_rng(0)
+    assert (
+        FixedPriorityArbiter().decide(Observation(0.5, 0.0, 0.9, 0.5), rng).action is Action.ESCAPE
+    )
+    picks = {RandomArbiter().decide(OBS, rng).action for _ in range(60)}
+    assert picks == set(Action)  # exact ties are broken at random

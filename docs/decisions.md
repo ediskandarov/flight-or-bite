@@ -54,3 +54,14 @@ report" (D18). What the agent did with that latitude, and what it deliberately d
 | D22 | **Draft v0 Jev prompts written blind and committed before any call** (`713fe97`), then a 300-call exploratory probe (`reports/probe_jev.md`, $0.006) | The spec's author had asked for the exact requests, a `p_escape` slice and the spread over repeats and got "no data"; drafting blind keeps decision D7's condition (bucket boundaries fixed before data). Templates were not edited after the data came in |
 | D23 | **Policy-table machinery, call ledger (D8), degree- and sign-preserving shuffle, `fob table` / `fob replay`** implemented; **no Jev or connectome table was built** | All fully specified and parameter-free. Building real tables would spend hours on draft prompts and an undefined decoder |
 | D24 | Exploratory measurements with the oracle as a stand-in (`reports/grid_loss.md`) | The oracle is not an object of study, so probing the tabular mode with it tunes nothing about the comparison |
+
+## 2026-09-20 — the spec author's decisions on `open_questions.md` (N1–N5)
+
+| # | Decision | Effect |
+|---|---|---|
+| D25 | **Calibration, per channel: 50% response at stimulus 0.5.** `theta_eat` = half of MN9's saturation rate, sliding window 50 ms. `R_max` of the sugar and of the looming channel found separately by bisection on single stimuli, dev seeds. `R_max` of the bitter channel = `R_max` of sugar. DNp01 decoder: one spike. Everything into `ENGINEERED.md` | Supersedes the provisional E1 (`R_max` = 200 Hz for every channel). Answers N1 and Q4 |
+| D26 | After calibration: repeat the N2 measurement (suppression of MN9 by looming, slice sugar 0.6) on the real graph and on **20 shuffled graphs** -> `reports/probe_interaction.md`. **Stop after it** | Exploratory; not G4/G7 |
+| D27 | **Main metric: online, native action.** Connectome: the outcome of one simulation; Jev: the response's `choice` field; oracle: argmax. Sampling the action from `probs` becomes a secondary analysis. **T3 is cancelled.** 300 paired episodes. Jev runs online only in its main state mode, which is chosen on dev. Policy tables serve RQ3/RQ4 only, on **grid B** (7 x 5 x 7 x 5) | Deviates from SPEC §4 ("action sampled from probs"), §7 (1000 tabular episodes as the main metric) and §4.5 (default grid). Answers N3 and N3a |
+| D28 | **Environment sweep on dev:** `p_food` in {0.3, 0.4} x `eat_gain` in {8, 10}; the target is a configuration where 25-75% of the oracle's deaths are from starvation. The agent shows the table and does **not** choose. **Stop after it** | `reports/env_sweep.md`. Answers N5 |
+| D29 | Jev: a fourth state mode **`informed_bucketed`** (2 x 2 design: rules yes/no x numbers/levels) | Deviates further from SPEC §4.3 (2 modes -> 4) |
+| D30 | Shiu et al. 2024 and the neuroai.science article are to be read before the gates are implemented | Already done on 2026-09-20; notes in `reports/probe_looming.md` §1 |

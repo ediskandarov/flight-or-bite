@@ -1,0 +1,38 @@
+# DRAFT v0 (2026-09-20), written before any Jev response to it was seen (decision D29).
+#
+# informed_bucketed: the fourth cell of the 2 x 2 design (rules: no/yes x observation: numbers /
+# named levels). The rules are those of `informed`, word for word, except for the one sentence
+# that describes the observation: it now explains the level names and their numeric ranges, so
+# that the numeric facts in the rules can be related to the levels. Buckets as in `bucketed`.
+mode: informed_bucketed
+version: v0
+instructions: "Which action should the agent take on this trial?"
+criteria:
+  EAT: "Eat the food that is present on this trial."
+  ESCAPE: "Flee from a possible predator."
+  IDLE: "Do nothing on this trial."
+buckets:
+  - [0.2, "very low"]
+  - [0.4, "low"]
+  - [0.6, "medium"]
+  - [0.8, "high"]
+  - [1.0, "very high"]
+zero_label: "none"
+rules: >-
+  An agent lives through a sequence of trials and tries to stay alive for as many trials as
+  possible, up to 500. On every trial it observes four quantities and takes one action. Each quantity lies between 0
+  and 1 and is reported as a level: none (exactly 0), very low (above 0 and below 0.2), low (0.2 to
+  0.4), medium (0.4 to 0.6), high (0.6 to 0.8) or very high (0.8 to 1).
+  `sugar` is the amount of food present; 0 means there is no food. Food is present on 50% of trials.
+  `bitter` is the bitterness of the food. 25% of food is toxic. Toxic food has bitterness between
+  0.3 and 1; safe food has bitterness between 0 and 0.1.
+  `looming` is a noisy visual cue of a predator. A predator is really present on 20% of trials.
+  When a predator is present, looming is drawn from a normal distribution with mean 0.7 and
+  standard deviation 0.2; when no predator is present, from a normal distribution with mean 0.2 and
+  standard deviation 0.2. The value is clipped to the range 0 to 1.
+  `hunger` equals 1 minus energy divided by 100. Energy starts at 50, cannot exceed 100, and the
+  agent dies when energy reaches 0. Every trial costs 1 energy.
+  EAT adds 12 times sugar to energy. If the food is toxic, EAT also subtracts 15 times bitter from
+  energy. If a predator is present, an agent that eats dies with probability 0.6.
+  ESCAPE costs 3 energy. A predator cannot kill an agent that escapes.
+  IDLE costs nothing extra. If a predator is present, an idle agent dies with probability 0.3.
