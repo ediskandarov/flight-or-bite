@@ -345,7 +345,9 @@ def replay(
 @app.command()
 def report() -> None:
     """Assemble reports/final_report.md and figures from artifacts."""
-    _not_implemented("report", "M5")
+    from flight_or_bite.report.build import build
+
+    console.print(f"[green]{build()}[/]")
 
 
 # Smoke-test request only. Experiment prompts live in configs/jev_prompts/ (tuned on dev, M4).

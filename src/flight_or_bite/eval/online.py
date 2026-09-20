@@ -68,6 +68,7 @@ def play(arena: Arena, arbiter: Arbiter, seed: int) -> tuple[EpisodeResult, list
         decisions.append({
             "arbiter": arbiter.name, "seed": seed, "trial": len(decisions), "action": d.action.value,
             "t_wall_ns": d.t_wall_ns, "t_sim_ms": d.t_sim_ms, "retried": int(d.meta.get("retried", 0)),
+            "model": d.meta.get("model_version"),
             **{f"p_{a.value.lower()}": d.probs.get(a, 0.0) for a in Action},
             "sugar": obs.sugar, "bitter": obs.bitter, "looming": obs.looming, "hunger": obs.hunger,
         })  # fmt: skip

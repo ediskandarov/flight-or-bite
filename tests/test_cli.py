@@ -9,7 +9,6 @@ runner = CliRunner()
 
 SPEC_COMMANDS = [
     ["live", "--seed", "1"],
-    ["report"],
 ]
 
 
