@@ -114,11 +114,12 @@ def hypotheses(c: dict | None, h5: dict | None) -> list[str]:
             f"Дополнительный исход «DNp01 дал спайк» (в критерий не входит): наименьший p (Холм) {_p(add['min_p_holm'])}; "
             f"тот же критерий дал бы: {'да' if add['confirmed'] else 'нет'}.", "", *mcnemar_table(add, "DNp01 дал спайк"), ""]  # fmt: skip
     out += ["## 4. Плановый анализ устойчивости H1 (PREREG §4; не подтверждающий)", "",
-            "| № | Вариант | исход | b / c по уровням looming | знак сохранён (b > c) | наименьший p (Холм) | значимо |",
-            "|---|---|---|---|---|---|---|"]  # fmt: skip
+            "| № | Вариант | исход | «да» в контроле / в условии (из 100) по уровням looming | b / c по уровням looming | знак сохранён (b > c) | наименьший p (Холм) | значимо |",
+            "|---|---|---|---|---|---|---|---|"]  # fmt: skip
     for r in sorted(c["robustness"], key=lambda r: r["variant"]):
         bc = "; ".join(f"{lv}: {x['b']} / {x['c']}" for lv, x in r["levels"].items())
-        out.append(f"| {r['variant']} | {r['name']} | {r['outcome']} | {bc} | "
+        yes = "; ".join(f"{lv}: {x['control_yes']} / {x['condition_yes']}" for lv, x in r["levels"].items())
+        out.append(f"| {r['variant']} | {r['name']} | {r['outcome']} | {yes} | {bc} | "
                    f"{'да' if r['b_gt_c_wherever_discordant'] else 'нет'} | {_p(r['min_p_holm'])} | "
                    f"{'да' if r['min_p_holm'] < 0.05 else 'нет'} |")  # fmt: skip
     out += ["", "Варианты ослабления ×0.5 (`r_max_sugar × 0.5`, `w_syn × 0.5`) в анализ не входят: **«сеть молчит»** "

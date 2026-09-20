@@ -1,0 +1,547 @@
+{
+  "n_pairs": 100,
+  "looming_levels": [
+    0.6,
+    0.8,
+    1.0
+  ],
+  "H1": {
+    "levels": {
+      "0.6": {
+        "n": 100,
+        "control_yes": 77,
+        "condition_yes": 39,
+        "b": 40,
+        "c": 2,
+        "p": 4.1109160520136356e-10,
+        "p_holm": 8.221832104027271e-10
+      },
+      "0.8": {
+        "n": 100,
+        "control_yes": 92,
+        "condition_yes": 54,
+        "b": 38,
+        "c": 0,
+        "p": 7.275957614183426e-12,
+        "p_holm": 2.1827872842550278e-11
+      },
+      "1.0": {
+        "n": 100,
+        "control_yes": 98,
+        "condition_yes": 87,
+        "b": 11,
+        "c": 0,
+        "p": 0.0009765625,
+        "p_holm": 0.0009765625
+      }
+    },
+    "min_p_holm": 2.1827872842550278e-11,
+    "best_level": "0.8",
+    "alpha": 0.05,
+    "confirmed": true,
+    "b_gt_c_wherever_discordant": true
+  },
+  "H6": {
+    "levels": {
+      "0.6": {
+        "n_pairs": 37,
+        "p": 1.4840377554401304e-05,
+        "median_diff_ms": 1.1999999999999886,
+        "median_control_ms": 206.2,
+        "median_condition_ms": 206.8,
+        "p_holm": 1.4840377554401304e-05
+      },
+      "0.8": {
+        "n_pairs": 54,
+        "p": 3.39567707792884e-07,
+        "median_diff_ms": 0.7500000000000142,
+        "median_control_ms": 145.55,
+        "median_condition_ms": 175.55,
+        "p_holm": 6.79135415585768e-07
+      },
+      "1.0": {
+        "n_pairs": 87,
+        "p": 5.457580492637323e-09,
+        "median_diff_ms": 1.0,
+        "median_control_ms": 79.7,
+        "median_condition_ms": 139.2,
+        "p_holm": 1.6372741477911967e-08
+      }
+    },
+    "min_p_holm": 1.6372741477911967e-08,
+    "best_level": "1.0",
+    "alpha": 0.05,
+    "confirmed": true
+  },
+  "H2": {
+    "levels": {
+      "0.6": {
+        "p": 9.99990000099999e-06,
+        "statistic": 233.0,
+        "spiked_by_dose": {
+          "0.0": 81,
+          "0.3": 80,
+          "0.6": 39,
+          "1.0": 25
+        },
+        "n": 100,
+        "p_holm": 2.999970000299997e-05
+      },
+      "0.8": {
+        "p": 9.99990000099999e-06,
+        "statistic": 349.0,
+        "spiked_by_dose": {
+          "0.0": 95,
+          "0.3": 95,
+          "0.6": 64,
+          "1.0": 42
+        },
+        "n": 100,
+        "p_holm": 2.999970000299997e-05
+      },
+      "1.0": {
+        "p": 9.99990000099999e-06,
+        "statistic": 455.0,
+        "spiked_by_dose": {
+          "0.0": 100,
+          "0.3": 100,
+          "0.6": 83,
+          "1.0": 63
+        },
+        "n": 100,
+        "p_holm": 2.999970000299997e-05
+      }
+    },
+    "min_p_holm": 2.999970000299997e-05,
+    "best_level": "0.6",
+    "alpha": 0.05,
+    "confirmed": true
+  },
+  "H3": {
+    "levels": {
+      "0.6": {
+        "p": 1.1641532182693481e-10,
+        "d_positive": 34,
+        "d_negative": 0,
+        "sum_d": 34,
+        "effect_intact": 31,
+        "effect_ablated": -3,
+        "p_holm": 3.4924596548080444e-10
+      },
+      "0.8": {
+        "p": 5.398760549724102e-09,
+        "d_positive": 36,
+        "d_negative": 2,
+        "sum_d": 34,
+        "effect_intact": 34,
+        "effect_ablated": 0,
+        "p_holm": 1.0797521099448204e-08
+      },
+      "1.0": {
+        "p": 7.62939453125e-06,
+        "d_positive": 18,
+        "d_negative": 0,
+        "sum_d": 18,
+        "effect_intact": 18,
+        "effect_ablated": 0,
+        "p_holm": 7.62939453125e-06
+      }
+    },
+    "min_p_holm": 3.4924596548080444e-10,
+    "best_level": "0.6",
+    "alpha": 0.05,
+    "confirmed": true,
+    "retained_fraction": -0.03614457831325301,
+    "retained_ci95": [
+      -0.08536585365853659,
+      0.0
+    ]
+  },
+  "H4": {
+    "levels": {
+      "0.6": {
+        "n": 100,
+        "control_yes": 19,
+        "condition_yes": 1,
+        "b": 18,
+        "c": 0,
+        "p": 7.62939453125e-06,
+        "p_holm": 7.62939453125e-06
+      },
+      "0.8": {
+        "n": 100,
+        "control_yes": 32,
+        "condition_yes": 3,
+        "b": 29,
+        "c": 0,
+        "p": 3.725290298461914e-09,
+        "p_holm": 7.450580596923828e-09
+      },
+      "1.0": {
+        "n": 100,
+        "control_yes": 42,
+        "condition_yes": 3,
+        "b": 39,
+        "c": 0,
+        "p": 3.637978807091713e-12,
+        "p_holm": 1.0913936421275139e-11
+      }
+    },
+    "min_p_holm": 1.0913936421275139e-11,
+    "best_level": "1.0",
+    "alpha": 0.05,
+    "confirmed": true,
+    "b_gt_c_wherever_discordant": true,
+    "additional_outcome_dnp01_spiked": {
+      "levels": {
+        "0.6": {
+          "n": 100,
+          "control_yes": 32,
+          "condition_yes": 12,
+          "b": 25,
+          "c": 5,
+          "p": 0.0003249142318964005,
+          "p_holm": 0.0009747426956892016
+        },
+        "0.8": {
+          "n": 100,
+          "control_yes": 60,
+          "condition_yes": 46,
+          "b": 22,
+          "c": 8,
+          "p": 0.016124801710247997,
+          "p_holm": 0.016124801710247997
+        },
+        "1.0": {
+          "n": 100,
+          "control_yes": 86,
+          "condition_yes": 67,
+          "b": 24,
+          "c": 5,
+          "p": 0.0005461126565933228,
+          "p_holm": 0.0010922253131866455
+        }
+      },
+      "min_p_holm": 0.0009747426956892016,
+      "best_level": "0.6",
+      "alpha": 0.05,
+      "confirmed": true,
+      "b_gt_c_wherever_discordant": true
+    }
+  },
+  "robustness": [
+    {
+      "variant": 1,
+      "name": "r_max_sugar x1.5",
+      "outcome": "dnp01_spiked",
+      "levels": {
+        "0.6": {
+          "n": 100,
+          "control_yes": 72,
+          "condition_yes": 26,
+          "b": 47,
+          "c": 1,
+          "p": 3.481659405224491e-13,
+          "p_holm": 6.963318810448982e-13
+        },
+        "0.8": {
+          "n": 100,
+          "control_yes": 100,
+          "condition_yes": 37,
+          "b": 63,
+          "c": 0,
+          "p": 2.168404344971009e-19,
+          "p_holm": 6.505213034913027e-19
+        },
+        "1.0": {
+          "n": 100,
+          "control_yes": 100,
+          "condition_yes": 73,
+          "b": 27,
+          "c": 0,
+          "p": 1.4901161193847656e-08,
+          "p_holm": 1.4901161193847656e-08
+        }
+      },
+      "min_p_holm": 6.505213034913027e-19,
+      "best_level": "0.8",
+      "alpha": 0.05,
+      "confirmed": true,
+      "b_gt_c_wherever_discordant": true
+    },
+    {
+      "variant": 2,
+      "name": "r_max_looming x1.5",
+      "outcome": "dnp01_spiked",
+      "levels": {
+        "0.6": {
+          "n": 100,
+          "control_yes": 99,
+          "condition_yes": 78,
+          "b": 21,
+          "c": 0,
+          "p": 9.5367431640625e-07,
+          "p_holm": 2.86102294921875e-06
+        },
+        "0.8": {
+          "n": 100,
+          "control_yes": 100,
+          "condition_yes": 98,
+          "b": 2,
+          "c": 0,
+          "p": 0.5,
+          "p_holm": 1.0
+        },
+        "1.0": {
+          "n": 100,
+          "control_yes": 100,
+          "condition_yes": 98,
+          "b": 2,
+          "c": 0,
+          "p": 0.5,
+          "p_holm": 1.0
+        }
+      },
+      "min_p_holm": 2.86102294921875e-06,
+      "best_level": "0.6",
+      "alpha": 0.05,
+      "confirmed": true,
+      "b_gt_c_wherever_discordant": true
+    },
+    {
+      "variant": 3,
+      "name": "w_syn x1.5",
+      "outcome": "dnp01_spiked",
+      "levels": {
+        "0.6": {
+          "n": 100,
+          "control_yes": 95,
+          "condition_yes": 97,
+          "b": 0,
+          "c": 2,
+          "p": 0.5,
+          "p_holm": 1.0
+        },
+        "0.8": {
+          "n": 100,
+          "control_yes": 100,
+          "condition_yes": 100,
+          "b": 0,
+          "c": 0,
+          "p": 1.0,
+          "p_holm": 1.0
+        },
+        "1.0": {
+          "n": 100,
+          "control_yes": 100,
+          "condition_yes": 100,
+          "b": 0,
+          "c": 0,
+          "p": 1.0,
+          "p_holm": 1.0
+        }
+      },
+      "min_p_holm": 1.0,
+      "best_level": "0.6",
+      "alpha": 0.05,
+      "confirmed": false,
+      "b_gt_c_wherever_discordant": false
+    },
+    {
+      "variant": 4,
+      "name": "alpha 0.5 (hunger 0.5)",
+      "outcome": "dnp01_spiked",
+      "levels": {
+        "0.6": {
+          "n": 100,
+          "control_yes": 74,
+          "condition_yes": 24,
+          "b": 51,
+          "c": 1,
+          "p": 2.353672812205332e-14,
+          "p_holm": 4.707345624410664e-14
+        },
+        "0.8": {
+          "n": 100,
+          "control_yes": 99,
+          "condition_yes": 37,
+          "b": 62,
+          "c": 0,
+          "p": 4.336808689942018e-19,
+          "p_holm": 1.3010426069826053e-18
+        },
+        "1.0": {
+          "n": 100,
+          "control_yes": 100,
+          "condition_yes": 68,
+          "b": 32,
+          "c": 0,
+          "p": 4.656612873077393e-10,
+          "p_holm": 4.656612873077393e-10
+        }
+      },
+      "min_p_holm": 1.3010426069826053e-18,
+      "best_level": "0.8",
+      "alpha": 0.05,
+      "confirmed": true,
+      "b_gt_c_wherever_discordant": true
+    },
+    {
+      "variant": 5,
+      "name": "alpha 1.5 (hunger 0.5)",
+      "outcome": "dnp01_spiked",
+      "levels": {
+        "0.6": {
+          "n": 100,
+          "control_yes": 75,
+          "condition_yes": 29,
+          "b": 47,
+          "c": 1,
+          "p": 3.481659405224491e-13,
+          "p_holm": 6.963318810448982e-13
+        },
+        "0.8": {
+          "n": 100,
+          "control_yes": 98,
+          "condition_yes": 32,
+          "b": 66,
+          "c": 0,
+          "p": 2.710505431213761e-20,
+          "p_holm": 8.131516293641283e-20
+        },
+        "1.0": {
+          "n": 100,
+          "control_yes": 100,
+          "condition_yes": 67,
+          "b": 33,
+          "c": 0,
+          "p": 2.3283064365386963e-10,
+          "p_holm": 2.3283064365386963e-10
+        }
+      },
+      "min_p_holm": 8.131516293641283e-20,
+      "best_level": "0.8",
+      "alpha": 0.05,
+      "confirmed": true,
+      "b_gt_c_wherever_discordant": true
+    },
+    {
+      "variant": 6,
+      "name": "theta 3 spikes",
+      "outcome": "escape",
+      "levels": {
+        "0.6": {
+          "n": 100,
+          "control_yes": 72,
+          "condition_yes": 17,
+          "b": 55,
+          "c": 0,
+          "p": 5.551115123125783e-17,
+          "p_holm": 1.1102230246251565e-16
+        },
+        "0.8": {
+          "n": 100,
+          "control_yes": 94,
+          "condition_yes": 32,
+          "b": 62,
+          "c": 0,
+          "p": 4.336808689942018e-19,
+          "p_holm": 1.3010426069826053e-18
+        },
+        "1.0": {
+          "n": 100,
+          "control_yes": 100,
+          "condition_yes": 50,
+          "b": 50,
+          "c": 0,
+          "p": 1.7763568394002505e-15,
+          "p_holm": 1.7763568394002505e-15
+        }
+      },
+      "min_p_holm": 1.3010426069826053e-18,
+      "best_level": "0.8",
+      "alpha": 0.05,
+      "confirmed": true,
+      "b_gt_c_wherever_discordant": true
+    },
+    {
+      "variant": 7,
+      "name": "theta 5 spikes",
+      "outcome": "escape",
+      "levels": {
+        "0.6": {
+          "n": 100,
+          "control_yes": 71,
+          "condition_yes": 18,
+          "b": 53,
+          "c": 0,
+          "p": 2.220446049250313e-16,
+          "p_holm": 6.661338147750939e-16
+        },
+        "0.8": {
+          "n": 100,
+          "control_yes": 97,
+          "condition_yes": 45,
+          "b": 52,
+          "c": 0,
+          "p": 4.440892098500626e-16,
+          "p_holm": 8.881784197001252e-16
+        },
+        "1.0": {
+          "n": 100,
+          "control_yes": 100,
+          "condition_yes": 64,
+          "b": 36,
+          "c": 0,
+          "p": 2.9103830456733704e-11,
+          "p_holm": 2.9103830456733704e-11
+        }
+      },
+      "min_p_holm": 6.661338147750939e-16,
+      "best_level": "0.6",
+      "alpha": 0.05,
+      "confirmed": true,
+      "b_gt_c_wherever_discordant": true
+    },
+    {
+      "variant": 8,
+      "name": "population looming code",
+      "outcome": "dnp01_spiked",
+      "levels": {
+        "0.6": {
+          "n": 100,
+          "control_yes": 61,
+          "condition_yes": 51,
+          "b": 10,
+          "c": 0,
+          "p": 0.001953125,
+          "p_holm": 0.005859375
+        },
+        "0.8": {
+          "n": 100,
+          "control_yes": 67,
+          "condition_yes": 60,
+          "b": 7,
+          "c": 0,
+          "p": 0.015625,
+          "p_holm": 0.015625
+        },
+        "1.0": {
+          "n": 100,
+          "control_yes": 78,
+          "condition_yes": 69,
+          "b": 9,
+          "c": 0,
+          "p": 0.00390625,
+          "p_holm": 0.0078125
+        }
+      },
+      "min_p_holm": 0.005859375,
+      "best_level": "0.6",
+      "alpha": 0.05,
+      "confirmed": true,
+      "b_gt_c_wherever_discordant": true
+    }
+  ],
+  "run_dir": "runs/20260920T181855_confirm"
+}
