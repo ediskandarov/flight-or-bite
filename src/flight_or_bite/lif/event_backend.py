@@ -34,7 +34,7 @@ NEVER = -(2**40)
 
 @njit(cache=True)
 def _simulate(
-    indptr, post, count, w_syn, silenced,
+    indptr, post, count, w_syn, silenced, ablated,
     kick_ptr, kick_neuron, kick_mv,
     refractory_steps, watched,
     n_steps, delay, v_0, v_rst, v_th, a_v, a_g, c_g,
@@ -69,7 +69,7 @@ def _simulate(
                 dv = v[i] - v_0
                 v[i] = v_0 + dv * a_v + g[i] * c_g
                 g[i] *= a_g
-                if v[i] > v_th:
+                if v[i] > v_th and not ablated[i]:
                     fired[n_fired] = i
                     n_fired += 1
         ring_n[slot] = n_fired
@@ -182,8 +182,13 @@ class EventBackend:
         stop: StopOnFirstSpike | None = None,
         silenced: np.ndarray | None = None,
         kicks: tuple[np.ndarray, np.ndarray] | None = None,
+        ablated: np.ndarray | None = None,
     ) -> TrialResult:
-        """`kicks` = (steps, neurons) replaces the random Poisson schedule (replay mode)."""
+        """`kicks` = (steps, neurons) replaces the random Poisson schedule (replay mode).
+
+        `silenced` neurons keep firing but have no effect on others (model.py's `silence`);
+        `ablated` neurons cannot fire at all — needed when the neuron itself is the read-out.
+        """
         t0 = time.perf_counter_ns()
         p, con = self.params, self.connectome
         n_steps = round(t_max_ms / p.dt_ms)
@@ -201,12 +206,15 @@ class EventBackend:
         silenced_mask = np.zeros(con.n_neurons, dtype=np.bool_)
         if silenced is not None:
             silenced_mask[silenced] = True
+        ablated_mask = np.zeros(con.n_neurons, dtype=np.bool_)
+        if ablated is not None:
+            ablated_mask[ablated] = True
         watched = np.zeros(con.n_neurons, dtype=np.bool_)
         if stop is not None:
             watched[stop.neurons] = True
 
         spike_i, spike_step, steps_done, stopped, n_active = _simulate(
-            con.indptr, con.post, con.count, p.w_syn_mv, silenced_mask,
+            con.indptr, con.post, con.count, p.w_syn_mv, silenced_mask, ablated_mask,
             kick_ptr, kick_neuron, p.poisson_kick_mv,
             refractory_steps, watched,
             n_steps, p.delay_steps, p.v_0_mv, p.v_rst_mv, p.v_th_mv,

@@ -130,28 +130,31 @@ def perf(
 
 
 @app.command()
-def gate(
-    name: str = typer.Argument(..., help="Gate id, G1..G7."),
-    backend: list[str] = typer.Option(
-        None, "--backend", help="Repeatable; default: event, brian2."
-    ),
-    version: list[int] = typer.Option(
-        None, "--version", help="Repeatable; default: lif.yaml + 630."
-    ),
-) -> None:
-    """Run one validity gate."""
-    if name.upper() != "G1":
-        _not_implemented(f"gate {name}", "M3")
-    from flight_or_bite.validation.run_gates import run_g1
+def gate(name: str = typer.Argument(..., help="Gate id, G1..G7.")) -> None:
+    """Run one validity gate (protocol: configs/gates.yaml)."""
+    from flight_or_bite.validation import run_gates
 
-    passed = run_g1(console, backend or ["event", "brian2"], version or None)
-    raise typer.Exit(0 if passed else 1)
+    if name.upper() not in run_gates.GATES:
+        console.print(
+            f"[red]unknown gate {name!r}; expected one of {', '.join(run_gates.GATES)}[/]"
+        )
+        raise typer.Exit(2)
+    run_gates.run(console, [name.upper()])
 
 
 @app.command()
-def gates() -> None:
+def gates(
+    only_summary: bool = typer.Option(False, "--summary", help="Print the table, run nothing."),
+) -> None:
     """Run all validity gates and print a pass/fail summary."""
-    _not_implemented("gates", "M3")
+    from flight_or_bite.validation import run_gates
+
+    ok = (
+        run_gates.summary(console)
+        if only_summary
+        else run_gates.run(console, list(run_gates.GATES))
+    )
+    raise typer.Exit(0 if ok else 1)
 
 
 def _run(op, *args) -> None:

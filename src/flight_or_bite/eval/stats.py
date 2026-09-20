@@ -43,3 +43,36 @@ def paired_bootstrap(a: np.ndarray, b: np.ndarray, rng: np.random.Generator,
 def percent_of_oracle(lifetime: float, lifetime_random: float, lifetime_oracle: float) -> float:
     """(L - L_random) / (L_oracle - L_random), SPEC §7."""
     return (lifetime - lifetime_random) / (lifetime_oracle - lifetime_random)
+
+
+def mcnemar_exact(control: list[bool], condition: list[bool]) -> dict:
+    """Exact two-sided McNemar test on paired yes/no outcomes.
+
+    b = pairs where the control is yes and the condition is no; c = the opposite.
+    """
+    from scipy.stats import binomtest
+
+    if len(control) != len(condition):
+        raise ValueError("paired samples must have the same length")
+    b = sum(x and not y for x, y in zip(control, condition, strict=True))
+    c = sum(y and not x for x, y in zip(control, condition, strict=True))
+    p = float(binomtest(b, b + c, 0.5).pvalue) if b + c else 1.0
+    return {
+        "n": len(control),
+        "control_yes": int(sum(control)),
+        "condition_yes": int(sum(condition)),
+        "b": int(b),
+        "c": int(c),
+        "p": p,
+    }
+
+
+def holm(p_values: list[float]) -> list[float]:
+    """Holm-Bonferroni adjusted p-values, in the order given."""
+    m = len(p_values)
+    order = sorted(range(m), key=p_values.__getitem__)
+    adjusted, running = [0.0] * m, 0.0
+    for rank, i in enumerate(order):
+        running = max(running, min(1.0, (m - rank) * p_values[i]))
+        adjusted[i] = running
+    return adjusted

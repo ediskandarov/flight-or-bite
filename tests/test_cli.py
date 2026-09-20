@@ -8,8 +8,6 @@ from flight_or_bite.cli.app import EXIT_NOT_IMPLEMENTED, app
 runner = CliRunner()
 
 SPEC_COMMANDS = [
-    ["gate", "G2"],
-    ["gates"],
     ["latency", "bench", "--arbiter", "all", "--n", "1000"],
     ["latency", "show"],
     ["live", "--seed", "1"],

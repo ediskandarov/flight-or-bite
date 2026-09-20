@@ -1,3 +1,7 @@
+# FROZEN by the spec's author on 2026-09-20 (decision D36): rate code, R_max sugar 102.8 Hz,
+# R_max looming 2.34 Hz, theta_eat = 4 spikes / 50 ms, alpha 1.0. The population (fraction) code
+# for looming appears only as a robustness check in G6.
+#
 # Sensory encoding / motor decoding constants (SPEC §4.1), calibrated by decision D25.
 # Protocol: configs/calibration.yaml; script: scripts/calibrate.py; run: runs/20260920T104933_calibration.
 # All of these are hand-made assumptions registered in docs/ENGINEERED.md (E6-E11).

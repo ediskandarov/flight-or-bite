@@ -497,3 +497,53 @@ bitter_grn_shiu:
     - 720575940614281266
     - 720575940613061118
     - 720575940604027168
+
+# ---- Added for the M3 gates (decision D37), 2026-09-20 ----
+
+m_loom:
+  description: >-
+    Candidate mediators of the sugar -> DNp01 suppression: inhibitory neurons that spike under
+    sugar-only stimulation (sugar 0.6) and have at least one edge onto a looming-active presynaptic
+    partner of DNp01 or onto DNp01 itself
+  provenance: >-
+    Derived by our own procedure in the exploratory probe R5 (scripts/probe_r5.py part C, run
+    runs/20260920T131530_probe-r5, table in reports/probe_r5.md); NOT an annotation from a
+    primary source. Cell types of the members come from flyconnectome/flywire_annotations @ 8587524c17
+  verified:
+    783: all 25 ids present in Completeness_783.csv
+  ids:
+    - 720575940621148948
+    - 720575940616018956
+    - 720575940623478115
+    - 720575940610803554
+    - 720575940624163303
+    - 720575940609405635
+    - 720575940623072013
+    - 720575940609133269
+    - 720575940628755815
+    - 720575940611160930
+    - 720575940631168057
+    - 720575940629855787
+    - 720575940631340815
+    - 720575940620473547
+    - 720575940620474278
+    - 720575940621777390
+    - 720575940615623867
+    - 720575940621057702
+    - 720575940634756203
+    - 720575940612537061
+    - 720575940620714150
+    - 720575940628446010
+    - 720575940631714119
+    - 720575940635211115
+    - 720575940644758308
+
+cl20:
+  description: The single cL20 neuron of `m_loom` (visual centrifugal, GABA, right) — the member with most synapses onto looming-active DNp01 partners (361)
+  provenance: >-
+    flyconnectome/flywire_annotations @ 8587524c17, cell_type == 'cL20', side == 'right';
+    selected as a member of `m_loom` (reports/probe_r5.md, part C)
+  verified:
+    783: present
+  ids:
+    - 720575940621148948

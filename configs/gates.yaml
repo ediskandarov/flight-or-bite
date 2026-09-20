@@ -1,10 +1,80 @@
-# Validity gates (SPEC §5). Thresholds come from the spec; the protocol details below were fixed
-# before the first gate run and must not be tuned afterwards.
+# Validity gates (SPEC §5; decisions D36, D37). Thresholds are the spec's where it gives them.
+# THE WHOLE FILE WAS FIXED AND COMMITTED BEFORE THE FORMAL GATES WERE RUN and must not be tuned.
+#
+# Common: connectome v783, event backend, frozen rate code (configs/encoding.yaml), decoder of
+# D25, full 500 ms trials, hunger = 0 unless a gate says otherwise. Each channel draws its input
+# from its own RNG stream, so conditions on one seed are paired. p_eat / p_escape = share of
+# trials the decoder calls EAT / ESCAPE.
 
-G1:
+G1:   # sugar -> MN9. MN9 rate (whole window) grows with sugar.
   threshold: 0.8        # Spearman rho, SPEC §5
-  levels: 11            # sugar = 0.0, 0.1, ..., 1.0
-  n_rep: 10             # trials per level
-  seed_base: 2000000    # trial seed = seed_base + level_index * n_rep + rep
-  # metric: Spearman rho between sugar level and MN9 rate over ALL trials (levels * n_rep points),
-  # not over per-level means — trial noise counts against the gate.
+  levels: 11            # sugar = 0.0 .. 1.0
+  n_rep: 10
+  seed_base: 2000000
+  # metric: rho between sugar and MN9 rate over ALL trials (110 points), not over level means
+
+G2:   # bitter suppresses sugar. Relative drop of p_eat from bitter 0 to bitter 1.
+  threshold: 0.2        # p_eat(bitter 1) <= 0.8 * p_eat(bitter 0), SPEC §5 ("at least 20%")
+  sugar: 0.6
+  bitter_levels: [0.0, 0.25, 0.5, 0.75, 1.0]
+  n_rep: 40
+  seed_base: 2200000
+  # metric: 1 - p_eat(bitter 1) / p_eat(bitter 0); 0 if p_eat(bitter 0) = 0
+
+G3:   # looming -> DNp01. p_escape grows with looming.
+  threshold: 0.8        # Spearman rho, SPEC §5
+  levels: 11
+  n_rep: 40
+  seed_base: 2300000
+  # metric: rho between looming and the per-level p_escape (11 points); NaN counts as 0
+
+G4:   # real vs shuffled. G1-G3 metrics of the real graph against 20 degree- and sign-preserving
+      # shuffles (seeds 1..20), same protocol, same seeds, same encoding (no recalibration).
+  shuffle_seeds: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+  percentile: 95        # a metric passes if the real value exceeds this percentile of the 20 nulls
+  # undefined null metrics (constant response) count as 0. passed = all three metrics pass
+
+G5:   # ablations: the ablated neuron cannot fire.
+  n_rep: 40
+  seed_base: 2500000
+  dnp01: {looming: 1.0, max_p_escape: 0.05}     # both DNp01 ablated -> p_escape ~ 0
+  mn9: {sugar: 1.0, max_p_eat: 0.05}            # MN9 ablated -> p_eat ~ 0
+  m_loom:                                        # 25 neurons (data/circuits.yaml)
+    sugar: 0.6
+    looming_levels: [0.6, 0.8, 1.0]
+    max_retained: 0.2
+    # effect = (b - c) pooled over the three looming levels, DNp01 spiked yes/no, looming-only vs
+    # sugar 0.6 + looming. retained = effect with m_loom ablated in BOTH arms / effect intact.
+  cl20: {report_only: true}                      # same measurement with the single cL20 ablated;
+                                                 # no expectation was stated, so no pass criterion
+  # passed = dnp01 and mn9 and m_loom criteria
+
+G6:   # robustness to the hand-set parameters: G1-G3 re-run with one thing changed at a time.
+  seed_base_offset: 100000    # added to the seed bases of G1-G3
+  n_rep: {G1: 10, G2: 20, G3: 20}
+  variants:                   # affected gates in brackets
+    r_max_sugar_x0.5: {r_max_sugar_scale: 0.5}       # [G1, G2]; bitter R_max is tied to sugar
+    r_max_sugar_x1.5: {r_max_sugar_scale: 1.5}       # [G1, G2]
+    r_max_looming_x0.5: {r_max_looming_scale: 0.5}   # [G3]
+    r_max_looming_x1.5: {r_max_looming_scale: 1.5}   # [G3]
+    w_syn_x0.5: {w_syn_scale: 0.5}                   # [G1, G2, G3] — the model's global constant
+    w_syn_x1.5: {w_syn_scale: 1.5}                   # [G1, G2, G3]
+    alpha_0.5: {alpha: 0.5, hunger: 0.5}             # [G1, G2] at hunger 0.5, where alpha acts
+    alpha_1.5: {alpha: 1.5, hunger: 0.5}             # [G1, G2]
+    theta_3_spikes: {eat_spikes: 3}                  # [G2] decoder only (E9)
+    theta_5_spikes: {eat_spikes: 5}                  # [G2]
+    looming_population_code: {looming_fraction: 0.025390625}   # [G3], f_max from probe_r5 part D
+  # a variant passes if every affected gate keeps sign and monotonicity: G1 rho > 0.8,
+  # G3 rho > 0.8, G2 drop > 0. passed = all variants pass. Failing G6 does not stop the project:
+  # the report then says "conclusions depend on hand-set parameters" (SPEC §5).
+
+G7:   # conflict vs independent race (answers RQ1). Under independent circuits the sugar input
+      # cannot change whether DNp01 spikes. Paired exact McNemar, as in reports/probe_r5.md.
+  sugar: 0.6
+  looming_levels: [0.6, 0.8, 1.0]
+  n_rep: 40
+  seed_base: 2700000
+  alpha_level: 0.05
+  # outcome: DNp01 spiked yes/no; control = looming only on the same seeds; two-sided exact
+  # McNemar per level, Holm-adjusted over the three levels. passed = smallest adjusted p < 0.05.
+  # metric = smallest Holm-adjusted p.

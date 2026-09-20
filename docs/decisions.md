@@ -75,3 +75,13 @@ report" (D18). What the agent did with that latitude, and what it deliberately d
 | D33 | **Bitter GRNs: the 20 of the model authors' list** | E12 |
 | D34 | `theta_eat` kept; its justification in `ENGINEERED.md` rewritten as "a burst criterion, chosen by us". Tie rule (R7) accepted | E9, E10 |
 | D35 | Exploratory probe `reports/probe_r5.md` with a pre-specified test (paired McNemar on "DNp01 spiked", identical seeds, 40 repeats, looming 0.6 / 0.8 / 1.0): specificity, dose, mediators, alternative looming encoding. Nothing tuned. **Stop after the report** | Protocol committed before the run |
+
+## 2026-09-20 — `probe_r5` accepted, exploration closed
+
+| # | Decision | Effect |
+|---|---|---|
+| D36 | **Encoding frozen:** rate code, `R_max` sugar 102.8 Hz, looming 2.34 Hz, `theta_eat` = 4 spikes / 50 ms, `alpha` 1.0. The population (fraction-of-neurons) code is used only as a robustness check in G6 | `configs/encoding.yaml` |
+| D37 | **M3: formal gates G1-G7.** G5 additionally ablates `M_loom` (25 neurons) and the single cL20. G7 = paired McNemar as in `probe_r5` | `configs/gates.yaml` fixed and committed before the gates are run |
+| D38 | **Draft of `PREREG.md`** with confirmatory hypotheses on fresh seeds, Holm across levels: H1 sugar 0.6 lowers P(DNp01); H2 monotone in dose; H3 silencing `M_loom` removes the effect; H4 hunger 1 vs 0 at sugar 0.6 lowers P(ESCAPE); H5 shift of the escape curve by sugar in Jev: sign and size against the oracle | Kept as `PREREG.draft.md`: a file named `PREREG.md` would unlock the test split |
+| D39 | Random sensory set 5 and the targets through which `M_loom` acts are **not** investigated; they go under "not established" | — |
+| D40 | The Jev templates are sent to the author for review before M4. **Stop after M3 and the PREREG draft** | — |
