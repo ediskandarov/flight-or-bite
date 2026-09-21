@@ -40,3 +40,10 @@ what waits for the author. Committed together with the step.
 - **If the agent's session died overnight**: just run `caffeinate -i ./runs/jev_pass2.sh` again (from any terminal) - finished shards are kept, the 12 h guard is enforced by the code.
 - The author had not started the test runs by 20:41 (`reports/online/` absent, `runs/test_access.log` absent).
 - Next: after pass 2 -> commit `reports/tables`; after the author's runs -> commit `reports/online`, `reports/latency`; then `uv run fob report`, read it through, commit. Remember: the author's latency bench must not overlap with pass 2 (instructions §2 say so).
+
+## 2026-09-21 09:30 — Jev tables pass 2 done (step e complete); interim report builds on real tables
+
+- Done: pass 2 of the four Jev tables, 07:07-09:22, gap >= 12 h for every mode; `reports/tables/jev_*/session_2/` (commit `a4fc549`). 21 252 attempts: two `naive` calls needed one retry each (flagged `retried`, excluded from latency). Model `typesafe/jev-1.13-20260917` everywhere. Ledger 52 285 of 100 000.
+- `uv run fob report` works on the real tables + confirm + H5: `reports/final_report.md` is an INTERIM version (its header says which artefacts are missing).
+- The author had not started any of the three runs by 09:22 on 2026-09-21: `reports/online/`, `reports/latency/`, `runs/test_access.log` do not exist. Remaining budget need: ~20 000 + ~6 500 + ~4 100 calls; 47 715 left - enough.
+- Next: wait for the author's "главный готов" / "латентность готова" / "sampled готов" -> check line counts (1500 / 500), `stops.jsonl`, commit `reports/online`, `reports/latency` -> `uv run fob report` -> read the whole report once -> commit. Nothing else is owed.

@@ -181,7 +181,10 @@ def tables_section(t: dict | None, figs: dict) -> list[str]:
         for n, r in psy[key].items():
             th = "—" if r["threshold"] is None else f"{r['threshold']:.3f}"
             k = "—" if r["slope"] is None else f"{r['slope']:.2f}"
-            out.append(f"| `{n}` | {th} | {k} | {'ступенька: середина между узлами' if r['degenerate'] else ''} |")
+            note = "ступенька: середина между узлами" if r["degenerate"] else ""
+            if r["threshold"] is not None and not 0 <= r["threshold"] <= 1:
+                note = "порог вне диапазона стимула [0, 1]: экстраполяция фита"
+            out.append(f"| `{n}` | {th} | {k} | {note} |")
     out += ["", "Средняя дивергенция Дженсена—Шеннона по сетке B (основание 2):", "", "| Пара | JS |", "|---|---|"]
     out += [f"| {k} | {v:.4f} |" for k, v in psy["js_mean"].items()]
     out += [
@@ -262,7 +265,7 @@ def time_section(d: dict[str, Any], figs: dict) -> list[str]:
     c = d["confirm"]
     if c:
         h = c["H6"]
-        out += [f"**Основной тест (сахар задерживает первый спайк DNp01) — {_yes(h['confirmed'])}**; парный критерий Уилкоксона "
+        out += [f"Основной тест (сахар задерживает первый спайк DNp01) — {_yes(h['confirmed'])}; парный критерий Уилкоксона "
                 f"по парам H1 со спайком в обоих плечах; наименьший p (Холм): {_p(h['min_p_holm'])}.", "",
                 "| looming | пар | медиана t_sim: контроль, мс | условие, мс | медиана разностей, мс | p | p (Холм) |",
                 "|---|---|---|---|---|---|---|"]  # fmt: skip
