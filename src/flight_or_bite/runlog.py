@@ -7,6 +7,7 @@ import subprocess
 import sys
 from datetime import datetime
 from importlib import metadata
+from itertools import count
 from pathlib import Path
 from typing import Any
 
@@ -48,8 +49,14 @@ RUNS_ROOT = Path("runs")  # resolved at call time, so that tests can redirect it
 def start_run(name: str, config: dict[str, Any], seeds: Any = None, root: Path | None = None) -> Path:
     """Create runs/<timestamp>_<name>/ and write meta.json into it."""
     root = root or RUNS_ROOT
-    run_dir = root / f"{datetime.now().strftime('%Y%m%dT%H%M%S')}_{name}"
-    run_dir.mkdir(parents=True, exist_ok=False)
+    basename = f"{datetime.now().strftime('%Y%m%dT%H%M%S')}_{name}"
+    for attempt in count():
+        run_dir = root / (basename if attempt == 0 else f"{basename}_{attempt}")
+        try:
+            run_dir.mkdir(parents=True, exist_ok=False)
+        except FileExistsError:
+            continue  # A fast resume or concurrent start must keep its own metadata.
+        break
     status = _git("status", "--porcelain")
     meta = {
         "name": name,

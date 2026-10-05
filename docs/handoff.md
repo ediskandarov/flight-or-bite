@@ -47,3 +47,13 @@ what waits for the author. Committed together with the step.
 - `uv run fob report` works on the real tables + confirm + H5: `reports/final_report.md` is an INTERIM version (its header says which artefacts are missing).
 - The author had not started any of the three runs by 09:22 on 2026-09-21: `reports/online/`, `reports/latency/`, `runs/test_access.log` do not exist. Remaining budget need: ~20 000 + ~6 500 + ~4 100 calls; 47 715 left - enough.
 - Next: wait for the author's "главный готов" / "латентность готова" / "sampled готов" -> check line counts (1500 / 500), `stops.jsonl`, commit `reports/online`, `reports/latency` -> `uv run fob report` -> read the whole report once -> commit. Nothing else is owed.
+
+## 2026-10-05 — project resumed; readiness audit and run-log collision fixed
+
+- Restored state from PREREG, decisions and this handoff (README and open_questions still described M3). Verified the frozen preregistration and all 14 hashes. Confirmatory results are present; they were not rerun.
+- Checked parquet metadata: connectome 24,500 rows; each of four Jev modes 12,250 rows; all sessions contain 49 shards. Each Jev pass-2 start is at least 12 h after its pass-1 finish. Ledger remains 52,285 / 100,000.
+- Still absent: reports/online/test/episodes.jsonl, reports/online/test_sampled/episodes.jsonl, reports/latency/, runs/test_access.log. No new live API calls or experiments were made.
+- Readiness tests exposed a runlog bug: resuming within the same second raised FileExistsError before the runner could resume. start_run now atomically creates a separate suffixed directory on a name collision, preserving prior metadata. A regression test holds the clock fixed and verifies three independent metadata records.
+- Updated README and marked open_questions as a historical log. Frozen files, scientific parameters, hypotheses and existing results are unchanged.
+- Validation: 46 tests passed (runlog, online, bench, report, Jev client, policy table); ruff and git diff --check passed; prereg.check() passed after the fix. Tests used mock Jev and temporary outputs only.
+- Next: the author runs the three commands in reports/run_instructions.md from their terminal (D59), starting with the main online test run. Then validate outputs and build the final report from artifacts. Current API availability and balance have not been checked.

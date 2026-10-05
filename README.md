@@ -10,9 +10,20 @@ decision time:
 The full specification is in [SPEC.md](SPEC.md). A negative result is a valid result.
 Every hand-made assumption is recorded in [docs/ENGINEERED.md](docs/ENGINEERED.md).
 
-Status: **M3 done** — validity gates in [reports/gates.md](reports/gates.md): G1–G5 and G7 passed,
-G6 (robustness) failed for 2 of 11 variants. Preregistration, `Status: DRAFT`: [PREREG.md](PREREG.md). Jev templates for approval:
-[reports/jev_templates.md](reports/jev_templates.md). Brian2 cross-check: [reports/crosscheck_brian2.md](reports/crosscheck_brian2.md).
+Status (verified 2026-10-05): **preregistration frozen; confirmatory analyses and policy tables complete**.
+All 14 hashes in [PREREG.md](PREREG.md) match. The connectome table has 24,500 rows;
+each of the four Jev tables has 12,250 rows across two passes separated by at least 12 hours.
+The [interim report](reports/final_report.md) still lacks the main online test run,
+the secondary sampled run, and the latency benchmark. Follow the author's
+[terminal run instructions](reports/run_instructions.md) (D59); do not repeat the completed
+confirmatory analyses. The call ledger is 52,285 / 100,000 as of this check.
+Current handoff: [docs/handoff.md](docs/handoff.md); approved protocol changes:
+[docs/decisions.md](docs/decisions.md).
+
+Validity gates in [reports/gates.md](reports/gates.md): G1–G5 and G7 passed;
+G6 (robustness) failed for 2 of 11 variants, accepted with the stated limitation (D41).
+Jev templates [v1 are approved](reports/jev_templates.md) (D46).
+Brian2 cross-check: [reports/crosscheck_brian2.md](reports/crosscheck_brian2.md).
 M1: [reports/perf.md](reports/perf.md). M2: [reports/eval_dev.md](reports/eval_dev.md).
 Exploratory reports: `reports/probe_*.md`, `reports/calibration.md`, `reports/grid_loss.md`, `reports/env_sweep.md`.
 See SPEC §11 for milestones.
