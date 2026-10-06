@@ -1,0 +1,19 @@
+{
+  "runs": [
+    {
+      "run_dir": "runs/20261006T125343_latency-bench",
+      "which": "all",
+      "n": 1000,
+      "mock": false,
+      "throttle": {
+        "sleep_10ms_overshoot_ms_median": 2.52,
+        "sleep_10ms_overshoot_ms_max": 2.55,
+        "timer_throttled": false,
+        "power": "Now drawing from 'AC Power'"
+      },
+      "t_load_s": {
+        "connectome": 0.4654942909255624
+      }
+    }
+  ]
+}

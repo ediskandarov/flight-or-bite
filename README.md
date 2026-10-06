@@ -16,9 +16,12 @@ each of the four Jev tables has 12,250 rows across two passes separated by at le
 The main online test run is complete: 300 paired episodes across five arbiters, with no
 Jev retries or stops. Mean lifetime is 55.39 trials for Jev informed and 23.90 for the
 connectome; paired difference +31.49 trials (95% CI [28.06, 34.91]). The
-[interim report](reports/final_report.md) still lacks the secondary sampled run and the latency benchmark. Follow the author's
+[interim report](reports/final_report.md) now includes the completed latency benchmark:
+1,000 timed decisions per arbiter, no failures, AC power and timer checks passed.
+Median wall time is 54.4 ms for the connectome and 354.7 ms for Jev informed
+(including network and OpenRouter). Only the secondary sampled run remains. Follow the author's
 [terminal run instructions](reports/run_instructions.md) (D59); do not repeat the completed
-confirmatory analyses. The call ledger is 69,202 / 100,000 as of this check.
+confirmatory analyses. The call ledger is 73,282 / 100,000 as of this check.
 Current handoff: [docs/handoff.md](docs/handoff.md); approved protocol changes:
 [docs/decisions.md](docs/decisions.md).
 

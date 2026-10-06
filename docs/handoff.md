@@ -65,3 +65,11 @@ what waits for the author. Committed together with the step.
 - Main preregistered comparison: Jev informed lifetime 55.39 vs connectome 23.90 trials; paired difference +31.49, bootstrap 95% CI [28.0598, 34.91]. Jev wins this specified comparison. Fixed priority averages 56.6633; its descriptive difference from Jev (+1.2733, CI [-3.3236, 5.8734]) is not significant. These are survival results in the specified environment, not a general intelligence ranking.
 - Rebuilt reports/final_report.md and figures from artifacts only. Report remains explicitly INTERIM: latency bench and the secondary sampled run are absent. No new API calls or simulations. README updated.
 - Next: author runs reports/run_instructions.md section 2 (latency bench) on AC power, then section 3 (100 sampled episodes). Preserve main results; do not rerun or tune parameters based on them. After both outputs arrive, audit and rebuild the complete report.
+
+## 2026-10-06 — protocol latency benchmark complete and audited
+
+- Author ran fob latency bench --arbiter all from their terminal, 12:53–13:18 Asia/Tbilisi, starting from clean commit 8a2c53f. reports/latency contains all eight arbiter files and bench_meta.json. One run, mock=false, AC Power, timer_throttled=false; connectome graph load 0.4655 s.
+- Audit: exactly 1,000 timed decisions per arbiter; each Jev mode has 20 warm-up calls and one cold-call marker. All timed observations match the fixed state sequence from configs/timing.yaml. No failures, retries, cache hits or nonpositive wall times. All Jev responses use typesafe/jev-1.13-20260917. All 14 preregistration hashes still match.
+- Wall latency p50 / p95: connectome 54.424 / 262.922 ms; Jev informed 354.686 / 479.109 ms. Ratio of medians 6.517. These are local runtime versus network-inclusive API latency, not intrinsic model speeds. Connectome t_sim p50 / p95: 187.4 / 500 ms (reported separately).
+- Ledger 73,282 / 100,000 after exactly 4,080 additional Jev calls; 26,718 remain. Rebuilt the intermediate report from saved artifacts only; only the secondary sampled run is missing.
+- Next: author runs reports/run_instructions.md section 3 (100 paired episodes with --sample-from-probs). Expected 500 episode records. Then audit, rebuild and review the complete final report. No main or latency rerun is needed.
