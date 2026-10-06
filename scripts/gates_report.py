@@ -7,29 +7,29 @@ from pathlib import Path
 
 G = {n: json.loads(Path(f"reports/gates/{n}.json").read_text()) for n in ("G1", "G2", "G3", "G4", "G5", "G6", "G7")}
 TITLE = {
-    "G1": "Сахар → MN9",
-    "G2": "Горькое подавляет сахар",
+    "G1": "Sugar → MN9",
+    "G2": "Bitter suppresses sugar",
     "G3": "Looming → DNp01",
-    "G4": "Настоящая против перемешанной",
-    "G5": "Абляция",
-    "G6": "Устойчивость",
-    "G7": "Конфликт против независимой гонки",
+    "G4": "Real versus shuffled",
+    "G5": "Ablation",
+    "G6": "Robustness",
+    "G7": "Conflict versus independent race",
 }
-yes = lambda b: "**пройдены**" if b else "**НЕ пройдены**"  # noqa: E731
+yes = lambda b: "**passed**" if b else "**FAILED**"  # noqa: E731
 fmt = lambda x: "—" if x is None else (f"{x:.3g}" if isinstance(x, float) else str(x))  # noqa: E731
 
 
 def mc(x: dict) -> str:
-    holm = f", p(Холм) = {x['p_holm']:.2g}" if "p_holm" in x else ""
+    holm = f", p(Holm) = {x['p_holm']:.2g}" if "p_holm" in x else ""
     return f"{x['control_yes']}/{x['n']} → {x['condition_yes']}/{x['n']}; b = {x['b']}, c = {x['c']}; p = {x['p']:.2g}{holm}"
 
 
 L = [
-    "# Ворота валидности (M3)",
+    "# Validity gates (M3)",
     "",
-    f"Протокол — `configs/gates.yaml`, зафиксирован коммитом `921ffaf` **до** прогона; до него выполнялась только проверка на падения на посторонних сидах (вывод не просматривался). Прогон: `{G['G1']['run_dir']}`. Коннектом v783, бэкенд `event`, замороженное частотное кодирование (D36), декодер D25, полные триалы 500 мс. После просмотра результатов ничего не менялось. Сырые результаты — `reports/gates/G*.json`.",
+    f"Protocol: `configs/gates.yaml`, fixed in commit `921ffaf` **before** the run; only crash testing on unrelated seeds preceded it (outputs were not inspected). Run: `{G['G1']['run_dir']}`. Connectome v783, `event` backend, frozen rate encoding (D36), D25 decoder, full 500 ms trials. Nothing was changed after viewing results. Raw results: `reports/gates/G*.json`.",
     "",
-    "| # | Ворота | Метрика | Порог | Статус |",
+    "| # | Gate | Metric | Threshold | Status |",
     "|---|---|---|---|---|",
 ]
 for n, r in G.items():
@@ -38,74 +38,74 @@ for n, r in G.items():
 d = G["G1"]["details"]
 L += [
     "",
-    "## G1. Сахар → MN9",
+    "## G1. Sugar → MN9",
     "",
-    f"ρ Спирмена по всем {len(d['sugar']) * d['n_rep']} триалам: **{G['G1']['metric']:.3f}** (по средним уровней: {d['rho_over_level_means']:.3f}).",
+    f"Spearman ρ across all {len(d['sugar']) * d['n_rep']} trials: **{G['G1']['metric']:.3f}** (over level means: {d['rho_over_level_means']:.3f}).",
     "",
     "| sugar | " + " | ".join(f"{s:g}" for s in d["sugar"]) + " |",
     "|---|" + "---|" * len(d["sugar"]),
-    "| MN9, Гц | " + " | ".join(f"{x:g}" for x in d["mn9_rate_hz_mean"]) + " |",
+    "| MN9, Hz | " + " | ".join(f"{x:g}" for x in d["mn9_rate_hz_mean"]) + " |",
 ]
 d = G["G2"]["details"]
 L += [
     "",
-    "## G2. Горькое подавляет сахар",
+    "## G2. Bitter suppresses sugar",
     "",
-    f"sugar = 0.6, {d['n_rep']} парных триалов на уровень. Снижение `p_eat` от bitter 0 к bitter 1: **{G['G2']['metric']:.0%}**.",
+    f"sugar = 0.6, {d['n_rep']} paired trials per level. Reduction in `p_eat` from bitter 0 to bitter 1: **{G['G2']['metric']:.0%}**.",
     "",
     "| bitter | " + " | ".join(f"{b:g}" for b in d["bitter"]) + " |",
     "|---|" + "---|" * len(d["bitter"]),
     "| p_eat | " + " | ".join(f"{x:.2f}" for x in d["p_eat"]) + " |",
-    "| MN9, Гц | " + " | ".join(f"{x:.1f}" for x in d["mn9_rate_hz_mean"]) + " |",
+    "| MN9, Hz | " + " | ".join(f"{x:.1f}" for x in d["mn9_rate_hz_mean"]) + " |",
 ]
 d = G["G3"]["details"]
 L += [
     "",
     "## G3. Looming → DNp01",
     "",
-    f"ρ Спирмена между looming и `p_escape` по {len(d['looming'])} уровням ({d['n_rep']} триалов на уровень): **{G['G3']['metric']:.3f}**.",
+    f"Spearman ρ between looming and `p_escape` across {len(d['looming'])} levels ({d['n_rep']} trials per level): **{G['G3']['metric']:.3f}**.",
     "",
     "| looming | " + " | ".join(f"{s:g}" for s in d["looming"]) + " |",
     "|---|" + "---|" * len(d["looming"]),
     "| p_escape | " + " | ".join(f"{x:.2f}" for x in d["p_escape"]) + " |",
-    "| t_sim ESCAPE p50, мс | " + " | ".join(fmt(x) for x in d["t_sim_ms_p50"]) + " |",
+    "| t_sim ESCAPE p50, ms | " + " | ".join(fmt(x) for x in d["t_sim_ms_p50"]) + " |",
 ]
 d = G["G4"]["details"]
 L += [
     "",
-    "## G4. Настоящая против перемешанной",
+    "## G4. Real versus shuffled",
     "",
-    "20 перемешиваний с сохранением степеней и знаков (сиды 1–20), тот же протокол, те же сиды триалов, то же кодирование (без повторной калибровки). **На перемешанных графах сигнал не доходит до выходных нейронов:** MN9 и DNp01 не отвечают, поэтому все три метрики на каждом из 20 графов равны 0 (неопределённая метрика при постоянном отклике считается равной 0).",
+    "20 degree- and sign-preserving shuffles (seeds 1–20), identical protocol, trial seeds, and encoding (no recalibration). **Signals do not reach the output neurons in shuffled graphs:** MN9 and DNp01 do not respond, so all three metrics equal 0 on each of the 20 graphs (an undefined metric for a constant response is treated as 0).",
     "",
-    "| Метрика | Настоящий граф | 95-й процентиль нулевых | максимум нулевых | нулевых > 0 | вне нулевого распределения |",
+    "| Metric | Real graph | Null 95th percentile | Null maximum | Null values > 0 | Outside null distribution |",
     "|---|---|---|---|---|---|",
 ]
 for g in ("G1", "G2", "G3"):
     x = d[g]
     L.append(
-        f"| {g} | {x['real']:.3f} | {x['null_percentile']:.3f} | {x['null_max']:.3f} | {sum(v > 0 for v in x['null'])} из {len(x['null'])} | {'да' if x['outside'] else 'нет'} |"
+        f"| {g} | {x['real']:.3f} | {x['null_percentile']:.3f} | {x['null_max']:.3f} | {sum(v > 0 for v in x['null'])} of {len(x['null'])} | {'yes' if x['outside'] else 'no'} |"
     )
 d = G["G5"]["details"]
 L += [
     "",
-    "## G5. Абляция",
+    "## G5. Ablation",
     "",
-    "Аблированный нейрон не может дать спайк.",
+    "An ablated neuron cannot spike.",
     "",
-    f"- DNp01 (оба) аблированы, looming = 1.0: `p_escape` = **{d['dnp01_ablated']['p_escape']:.2f}** (без абляции {d['dnp01_ablated']['p_escape_intact']:.2f}; критерий ≤ {d['dnp01_ablated']['max']}) — {'выполнен' if d['criteria']['dnp01'] else 'НЕ выполнен'}.",
-    f"- MN9 аблирован, sugar = 1.0: `p_eat` = **{d['mn9_ablated']['p_eat']:.2f}** (без абляции {d['mn9_ablated']['p_eat_intact']:.2f}; критерий ≤ {d['mn9_ablated']['max']}) — {'выполнен' if d['criteria']['mn9'] else 'НЕ выполнен'}.",
-    f"- M_loom (25 нейронов): доля сохранённого эффекта **{d['m_loom_ablated']['retained']:.2f}** (критерий ≤ {d['m_loom_ablated']['max_retained']}) — {'выполнен' if d['criteria']['m_loom'] else 'НЕ выполнен'}.",
-    f"- Один cL20: доля сохранённого эффекта **{d['cl20_ablated']['retained']:.2f}** (без критерия). **Абляция cL20 не снимает эффект.** Его цели на этом пути — LC4 (343 синапса) и LPLC2 (2) из 361 синапса на looming-активных партнёров DNp01; в модели это clamped-источники (каждый пуассоновский толчок вызывает спайк независимо от торможения), поэтому путь через них невидим по построению. Проверено отдельно (`runs/cl20_check.json`): 17 916 спайков LPLC2/LC4 в 60 парных триалах, отличающихся пар с сахаром и без — 0. Механизм в модели несут остальные 24 нейрона M_loom: при их абляции и целом cL20 эффект исчезает (b − c: 34 → 0, те же сиды).",
+    f"- Both DNp01 neurons ablated, looming = 1.0: `p_escape` = **{d['dnp01_ablated']['p_escape']:.2f}** (intact {d['dnp01_ablated']['p_escape_intact']:.2f}; criterion ≤ {d['dnp01_ablated']['max']}) — {'met' if d['criteria']['dnp01'] else 'NOT met'}.",
+    f"- MN9 ablated, sugar = 1.0: `p_eat` = **{d['mn9_ablated']['p_eat']:.2f}** (intact {d['mn9_ablated']['p_eat_intact']:.2f}; criterion ≤ {d['mn9_ablated']['max']}) — {'met' if d['criteria']['mn9'] else 'NOT met'}.",
+    f"- M_loom (25 neurons): retained effect fraction **{d['m_loom_ablated']['retained']:.2f}** (criterion ≤ {d['m_loom_ablated']['max_retained']}) — {'met' if d['criteria']['m_loom'] else 'NOT met'}.",
+    f"- cL20 alone: retained effect fraction **{d['cl20_ablated']['retained']:.2f}** (no criterion). **Ablating cL20 does not remove the effect.** Its targets on this path are LC4 (343 synapses) and LPLC2 (2), out of 361 synapses onto looming-active DNp01 partners; these are clamped sources in the model (each Poisson input forces a spike regardless of inhibition), so this pathway is invisible by construction. Separate verification (`runs/cl20_check.json`): 17,916 LPLC2/LC4 spikes in 60 paired trials, zero differing sugar/no-sugar pairs. The model mechanism is carried by the other 24 M_loom neurons: ablating them while retaining cL20 removes the effect (b − c: 34 → 0, identical seeds).",
     "",
-    "Эффект = b − c по трём уровням looming вместе (исход «DNp01 дал спайк», looming-only против sugar 0.6 + looming, одни сиды; абляция в обоих плечах). Формат: контроль → условие.",
+    "Effect = b − c pooled over three looming levels (outcome: DNp01 spiked, looming-only versus sugar 0.6 + looming, identical seeds; ablation in both arms). Format: control → condition.",
     "",
-    "| Условие | looming 0.6 | looming 0.8 | looming 1.0 | вместе | b − c |",
+    "| Condition | looming 0.6 | looming 0.8 | looming 1.0 | Pooled | b − c |",
     "|---|---|---|---|---|---|",
 ]
 for label, key in (
-    ("без абляции", "suppression_intact"),
-    ("M_loom аблирован", "m_loom_ablated"),
-    ("cL20 аблирован", "cl20_ablated"),
+    ("intact", "suppression_intact"),
+    ("M_loom ablated", "m_loom_ablated"),
+    ("cL20 ablated", "cl20_ablated"),
 ):
     x = d[key]
     L.append(
@@ -116,35 +116,35 @@ for label, key in (
 d = G["G6"]["details"]
 L += [
     "",
-    "## G6. Устойчивость",
+    "## G6. Robustness",
     "",
-    "**Провал.** По SPEC §5 в итоговом отчёте пишется дословно: **«выводы зависят от ручных параметров»**. Уточнение: оба упавших варианта — ослабление ×0.5 (`r_max_sugar × 0.5` и `w_syn × 0.5`); при них сеть молчит (сигнал не доходит до считываемых нейронов), смены знака нет.",
+    "**Failed.** Under SPEC §5 the final report must explicitly state: **“conclusions depend on manually chosen parameters.”** Both failed variants are ×0.5 weakening (`r_max_sugar × 0.5` and `w_syn × 0.5`); the network is silent (signals do not reach readout neurons), with no sign reversal.",
     "",
-    f"Вариант проходит, если затронутые ворота сохраняют знак и монотонность: G1 ρ > 0.8, G3 ρ > 0.8, G2 снижение > 0. Прошло **{int(G['G6']['metric'])} из {int(G['G6']['threshold'])}**. Число повторов меньше, чем в основных воротах (G1 10, G2 20, G3 20); сиды сдвинуты на 100 000.",
+    f"A variant passes if affected gates retain direction and monotonicity: G1 ρ > 0.8, G3 ρ > 0.8, G2 reduction > 0. Passed: **{int(G['G6']['metric'])} of {int(G['G6']['threshold'])}**. Fewer repetitions than in the main gates (G1 10, G2 20, G3 20); seeds offset by 100,000.",
     "",
-    "| Вариант | G1: ρ | G2: снижение p_eat (p_eat при bitter 0 → 1) | G3: ρ | проходит |",
+    "| Variant | G1: ρ | G2: p_eat reduction (p_eat at bitter 0 → 1) | G3: ρ | Passes |",
     "|---|---|---|---|---|",
 ]
 for v in d["variants"]:
     g2 = "—" if "G2" not in v else f"{v['G2']['metric']:.2f} ({v['G2']['p_eat'][0]:.2f} → {v['G2']['p_eat'][-1]:.2f})"
     L.append(
-        f"| `{v['variant']}` | {fmt(v.get('G1', {}).get('metric'))} | {g2} | {fmt(v.get('G3', {}).get('metric'))} | {'да' if v['passed'] else '**нет**'} |"
+        f"| `{v['variant']}` | {fmt(v.get('G1', {}).get('metric'))} | {g2} | {fmt(v.get('G3', {}).get('metric'))} | {'yes' if v['passed'] else '**no**'} |"
     )
 failed = [v for v in d["variants"] if not v["passed"]]
 for v in failed:
-    L += ["", f"Подробно `{v['variant']}`:"]
+    L += ["", f"Details for `{v['variant']}`:"]
     if "G1" in v:
-        L.append("- MN9, Гц по уровням sugar: " + " / ".join(f"{x:g}" for x in v["G1"]["mn9_rate_hz_mean"]))
+        L.append("- MN9, Hz by sugar level: " + " / ".join(f"{x:g}" for x in v["G1"]["mn9_rate_hz_mean"]))
     if "G3" in v:
-        L.append("- p_escape по уровням looming: " + " / ".join(f"{x:.2f}" for x in v["G3"]["p_escape"]))
+        L.append("- p_escape by looming level: " + " / ".join(f"{x:.2f}" for x in v["G3"]["p_escape"]))
 d = G["G7"]["details"]
 L += [
     "",
-    "## G7. Конфликт против независимой гонки (RQ1)",
+    "## G7. Conflict versus independent race (RQ1)",
     "",
-    "Нулевая модель: контуры независимы, значит сахарный вход не может изменить, даст ли DNp01 спайк. sugar = 0.6, контроль — looming-only на тех же сидах, 40 пар на уровень, точный двусторонний тест Макнемара, поправка Холма по трём уровням.",
+    "Null model: circuits are independent, so sugar input cannot change whether DNp01 spikes. sugar = 0.6, looming-only control on identical seeds, 40 pairs per level, exact two-sided McNemar test, Holm correction across three levels.",
     "",
-    "| looming | DNp01 дал спайк: контроль → условие; b, c; p | решения в контроле EAT / ESCAPE / IDLE | решения в условии |",
+    "| looming | DNp01 spiked: control → condition; b, c; p | Control decisions EAT / ESCAPE / IDLE | Condition decisions |",
     "|---|---|---|---|",
 ]
 for lv, x in d["levels"].items():
@@ -153,16 +153,16 @@ for lv, x in d["levels"].items():
         f"| {lv} | {mc(x)} | {a['EAT']} / {a['ESCAPE']} / {a['IDLE']} | {b['EAT']} / {b['ESCAPE']} / {b['IDLE']} |"
     )
 L += [
-    f"| вместе | {mc(d['pooled'])} | | |",
+    f"| pooled | {mc(d['pooled'])} | | |",
     "",
-    f"Наименьший p с поправкой Холма: **{G['G7']['metric']:.2g}** (порог {G['G7']['threshold']}).",
+    f"Minimum Holm-adjusted p: **{G['G7']['metric']:.2g}** (threshold {G['G7']['threshold']}).",
 ]
 L += [
     "",
-    "## Что следует из статусов по SPEC §5",
+    "## Consequences under SPEC §5",
     "",
-    "- Провал G1–G3 или G5 → стоп и вопрос человеку. Провал G4 → публикуется негатив. Провал G6 → в отчёте «выводы зависят от ручных параметров». Непройденный G7 → «коннектом = гонка рефлексов».",
-    "- Не сделано в M3: G1 на Brian2 при замороженном кодировании (эталон проверен в M1 при `R_max` = 200 Гц: `reports/gates/G1_m1_r200.json`); повторная калибровка на перемешанных графах.",
+    "- Failure of G1–G3 or G5 → stop and ask the human author. Failure of G4 → publish the negative result. Failure of G6 → state “conclusions depend on manually chosen parameters.” Failure of G7 → label “connectome = race of reflexes.”",
+    "- Not done in M3: G1 on Brian2 with frozen encoding (reference checked in M1 at `R_max` = 200 Hz: `reports/gates/G1_m1_r200.json`); recalibration on shuffled graphs.",
     "",
 ]
 Path("reports/gates.md").write_text("\n".join(L))

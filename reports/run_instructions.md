@@ -1,115 +1,115 @@
-# Инструкция автору: прогоны из своего терминала (D5, D59)
+# Author instructions: runs from your own terminal (D5, D59)
 
-**Статус на 2026-10-06: все прогоны завершены и проверены, включая дополнительный прямой TypeSafe API. Повторный запуск не нужен. [Итоговый отчёт](final_report.md). Инструкции ниже сохранены для воспроизводимости.**
+**Status as of 2026-10-06: all runs are complete and verified, including the additional direct TypeSafe API benchmark. No rerun is needed. [Final report](final_report.md). Instructions below are retained for reproducibility.**
 
-Дата: 2026-09-20. `PREREG.md` заморожен коммитом `4a6f048`. Всё ниже запускается **из обычного терминала** (Terminal / iTerm), не из сессии агента: в процессе агента таймеры искажены. Три прогона, в таком порядке: **1) главный онлайн-прогон → 2) замер латентности → 3) вторичный прогон с сэмплированием**. Порядок 1 и 2 можно поменять; 3 — в любой момент после 1.
+Date: 2026-09-20. `PREREG.md` was frozen in commit `4a6f048`. Run everything below **from a normal terminal** (Terminal / iTerm), not the agent session: timers are distorted in the agent process. Three runs: **1) main online run → 2) latency benchmark → 3) secondary sampled run**. Runs 1 and 2 may be swapped; run 3 may occur any time after run 1.
 
-## 0. Перед каждым прогоном (1 минута)
+## 0. Before each run (1 minute)
 
 ```bash
 cd ~/workspace/flight-or-bite
-pmset -g batt | head -1                      # должно быть: Now drawing from 'AC Power'
-git status --short                           # пусто (или только reports/, появившиеся от прогонов)
+pmset -g batt | head -1                      # expected: Now drawing from 'AC Power'
+git status --short                           # empty, or only reports/ created by runs
 uv run python -c "from flight_or_bite import prereg; prereg.check(); print('PREREG frozen, hashes match')"
-pgrep -fl "fob (confirm|table build --arbiter connectome)" || echo "тяжёлых расчётов агента нет — можно запускать"
-cat runs/jev_ledger.json                     # расход вызовов Jev; лимит 100 000
+pgrep -fl "fob (confirm|table build --arbiter connectome)" || echo "No heavy agent computation; ready to run"
+cat runs/jev_ledger.json                     # Jev call usage; limit 100,000
 ```
 
-- **Питание от сети, крышка открыта**, тяжёлые приложения закрыты (браузер с видео, Docker, сборки).
-- Если `pgrep` что-то показал — агент ещё считает H1–H4 или таблицу коннектома; они занимают ядра и исказят `t_wall` коннектома. **Дождитесь их окончания** (агент сообщит; обычно < 1 ч после заморозки). Построение таблиц Jev (`fob table build --arbiter jev …`) — сетевое и почти не грузит процессор; главному прогону оно не мешает, но **замер латентности (раздел 2) запускайте, когда таблицы Jev не строятся**: `pgrep -fl "fob table build --arbiter jev" || echo ok`.
-- Ключ `OPENROUTER_API_KEY` читается из `.env` в корне репозитория (как и раньше).
+- **AC power, lid open**, heavy applications closed (video playback, Docker, builds).
+- If `pgrep` returns a process, the agent is still computing H1–H4 or the connectome table, occupying cores and distorting connectome `t_wall`. **Wait for completion** (the agent will report it; usually < 1 h after freezing). Jev table building (`fob table build --arbiter jev …`) is network-bound and uses little CPU; it does not obstruct the main run, but **start the latency benchmark (section 2) only when Jev tables are not being built**: `pgrep -fl "fob table build --arbiter jev" || echo ok`.
+- `OPENROUTER_API_KEY` is read from `.env` in the repository root, as before.
 
-## 1. Главный онлайн-прогон на `test` (PREREG §2) — первый доступ к тестовому сплиту
+## 1. Main online `test` run (PREREG §2) — first access to the test split
 
 ```bash
 caffeinate -i uv run fob eval --split test --unlock-test --online 2>&1 | tee -a runs/main_test.log
 ```
 
-- Что делает: 300 парных эпизодов, сиды 100000–100299, пять арбитров (`connectome`, `jev_informed`, `oracle`, `fixed_priority`, `random`), нативное действие, без дедлайна. Сид за сидом, все арбитры на одном сиде.
-- Пишет: `reports/online/test/episodes.jsonl` (строка на завершённый эпизод), `decisions.jsonl` (строка на решение, с `t_wall_ns`, `t_sim_ms`, `retried`), при остановках `stops.jsonl`; метаданные — `runs/<время>_online-test/meta.json`; доступ к test — `runs/test_access.log`; сырые ответы Jev — `runs/jev_raw/<дата>.jsonl`.
-- **Ожидаемое время: 2–2.5 часа** (≈ 20 000 вызовов Jev × ~0.4 с; коннектом и базлайны — минуты). Прогресс печатается каждые 10 сидов. Расход Jev ≈ 20 000 вызовов.
-- В конце печатается таблица средней жизни с ДИ и строка `300 paired episodes in reports/online/test`.
+- Runs 300 paired episodes, seeds 100000–100299, five arbiters (`connectome`, `jev_informed`, `oracle`, `fixed_priority`, `random`), native actions, no deadline. All arbiters play each seed before proceeding.
+- Writes `reports/online/test/episodes.jsonl` (one row per completed episode), `decisions.jsonl` (one row per decision, including `t_wall_ns`, `t_sim_ms`, `retried`), and `stops.jsonl` if stopped; metadata: `runs/<timestamp>_online-test/meta.json`; test access: `runs/test_access.log`; raw Jev responses: `runs/jev_raw/<date>.jsonl`.
+- **Expected time: 2–2.5 hours** (approximately 20,000 Jev calls × ~0.4 s; connectome and baselines take minutes). Progress every 10 seeds. Expected Jev usage: approximately 20,000 calls.
+- Finishes with mean lifetime and CI table and `300 paired episodes in reports/online/test`.
 
-**Если прогон остановился** (сбой Jev по политике §2b — красная строка `stopped at seed …`; Ctrl-C; сон; обрыв сети):
+**If interrupted** (Jev failure under §2b, shown as red `stopped at seed …`; Ctrl-C; sleep; network loss):
 
-1. Ничего не удалять и не править. Незавершённый эпизод в файлы не попал — он будет переигран с начала на том же сиде; завершённые эпизоды сохраняются.
-2. Посмотреть причину: `tail -1 reports/online/test/stops.jsonl`. HTTP 401/402 — ключ или баланс OpenRouter; `JevModelMismatch` — OpenRouter ответил моделью не из семейства `jev-1.13`: **не перезапускать, написать агенту**; 5xx/сеть — подождать несколько минут.
-3. Запустить **ту же команду** ещё раз. Она напечатает `N episode(s) already done` и продолжит с первого недоигранного эпизода.
-4. После Ctrl-C перезапуск такой же. Каждая остановка по сбою Jev попадает в `stops.jsonl` и будет сообщена в отчёте.
+1. Do not delete or edit anything. The incomplete episode was not saved and will replay from the beginning on the same seed; completed episodes are retained.
+2. Inspect the cause: `tail -1 reports/online/test/stops.jsonl`. HTTP 401/402 indicates an OpenRouter key or balance issue. `JevModelMismatch` means a response outside `jev-1.13`: **do not restart; tell the agent**. For 5xx/network failures, wait a few minutes.
+3. Run **the same command** again. It prints `N episode(s) already done` and resumes at the first incomplete episode.
+4. Resume identically after Ctrl-C. Every Jev failure stop is recorded in `stops.jsonl` and reported.
 
-Проверка после окончания:
+After completion:
 
 ```bash
-wc -l reports/online/test/episodes.jsonl     # 1500 = 300 сидов × 5 арбитров
+wc -l reports/online/test/episodes.jsonl     # 1500 = 300 seeds × 5 arbiters
 cat runs/test_access.log
 ```
 
-## 2. Замер латентности (PREREG §8, `configs/timing.yaml`)
+## 2. Latency benchmark (PREREG §8, `configs/timing.yaml`)
 
 ```bash
-pgrep -fl "fob table build --arbiter jev" || echo ok     # должно быть ok
+pgrep -fl "fob table build --arbiter jev" || echo ok     # expected: ok
 caffeinate -i uv run fob latency bench --arbiter all 2>&1 | tee -a runs/latency_bench.log
 ```
 
-- Что делает: по 1000 замеренных решений на арбитра. Jev — четыре режима состояния по очереди, у каждого своя keep-alive-сессия, 20 вызовов прогрева (первый — «холодный», приводится отдельно), кэш выключен, **без повторов**: сбойный вызов записывается и исключается. Затем коннектом (один процесс, граф в памяти, `t_load` отдельно, ранняя остановка), затем `oracle`, `fixed_priority`, `random`. Состояния — узлы сетки B в фиксированном перемешанном порядке.
-- Пишет: `reports/latency/<арбитр>.jsonl`, `reports/latency/bench_meta.json` (питание, самопроверка троттлинга, `t_load`).
-- **Ожидаемое время: ≈ 35 минут** (Jev 4 × 1020 × ~0.4 с ≈ 28 мин; коннектом ≈ 2–3 мин; остальное — секунды). Расход Jev ≈ 4 100 вызовов.
-- В начале печатается `throttle check: {...}`. Жёлтое предупреждение «not on AC power or timers are throttled» — остановить (Ctrl-C), устранить причину, удалить `reports/latency/` и начать заново.
-- **Возобновление:** та же команда. Она досчитывает недостающее до 1000 по каждому арбитру; у Jev при возобновлении режима заново делается прогрев (новое соединение холодное), поэтому «холодных» вызовов в таблице может оказаться больше одного на режим — это нормально и будет видно в отчёте.
-- Если у режима Jev доля сбоев > 5%, в таблице он помечается «замер недействителен» — тогда написать агенту, не удаляя файлы.
-- Посмотреть результат ещё раз: `uv run fob latency show`.
+- Measures 1,000 decisions per arbiter. Jev: four state modes sequentially, each with its own keep-alive session and 20 warm-up calls (first is cold, reported separately); caching disabled, **no retries**: failed calls are logged and excluded. Then connectome (one process, graph in memory, separate `t_load`, early stopping), then `oracle`, `fixed_priority`, `random`. States are grid B nodes in a fixed shuffled order.
+- Writes `reports/latency/<arbiter>.jsonl` and `reports/latency/bench_meta.json` (power, timer-throttling check, `t_load`).
+- **Expected time: approximately 35 minutes** (Jev 4 × 1020 × ~0.4 s ≈ 28 min; connectome ≈ 2–3 min; others take seconds). Expected Jev usage: approximately 4,100 calls.
+- Prints `throttle check: {...}` at startup. If the yellow “not on AC power or timers are throttled” warning appears, stop with Ctrl-C, resolve the cause, remove `reports/latency/`, and restart. This historical recovery instruction applies only to an invalid, unfinished benchmark, not the preserved completed results.
+- **Resume:** the same command fills each arbiter to 1,000 measurements. A resumed Jev mode repeats warm-up because the new connection is cold; multiple cold calls per mode are therefore possible and will appear in the report.
+- If a Jev mode exceeds 5% failures, the table marks it “invalid benchmark”; tell the agent without deleting files.
+- View results again: `uv run fob latency show`.
 
-## 3. Вторичный прогон: действие сэмплируется из `probs` (PREREG §2)
+## 3. Secondary run: actions sampled from `probs` (PREREG §2)
 
 ```bash
 caffeinate -i uv run fob eval --split test --unlock-test --online --sample-from-probs 2>&1 | tee -a runs/sampled_test.log
 ```
 
-- 100 парных эпизодов, сиды 100000–100099; пишет в `reports/online/test_sampled/`. **Ожидаемое время: 30–50 минут**, расход Jev ≈ 6 500 вызовов (оценка из PREREG §9). Остановка и возобновление — как в разделе 1.
-- Проверка: `wc -l reports/online/test_sampled/episodes.jsonl` → 500.
+- 100 paired episodes, seeds 100000–100099; writes to `reports/online/test_sampled/`. **Expected time: 30–50 minutes**, approximately 6,500 Jev calls (PREREG §9 estimate). Stop/resume behavior as in section 1.
+- Check: `wc -l reports/online/test_sampled/episodes.jsonl` → 500.
 
-## 4. Чего не делать
+## 4. What not to do
 
-- Не запускать прогоны 1 и 3 одновременно друг с другом или с замером 2.
-- Не менять файлы из таблицы хэшей `PREREG.md` §11 — замок закроется (`preregistered hashes do not match`).
-- Не удалять `reports/online/test/*` после начала прогона: подтверждающий прогон играется один раз на сидах из PREREG. Если что-то пошло не так — сначала написать агенту.
-- Не закрывать крышку ноутбука: `caffeinate -i` не спасает от сна по закрытию крышки без внешнего монитора.
+- Do not run 1 and 3 concurrently with each other or with benchmark 2.
+- Do not change files listed in `PREREG.md` §11: the guard will fail (`preregistered hashes do not match`).
+- Do not delete `reports/online/test/*` after a run begins: the confirmatory run is performed once on PREREG seeds. If anything goes wrong, tell the agent first.
+- Do not close the laptop lid: `caffeinate -i` does not prevent lid-close sleep without an external display.
 
-## 5. После прогонов
+## 5. After the runs
 
-Сообщить агенту «главный прогон готов» / «латентность готова» / «sampled готов». Файлы в `reports/online/` и `reports/latency/` агент закоммитит сам и соберёт из них `fob report`. Таблицы Jev (проход 2) будут достроены не раньше чем через 12 часов после конца прохода 1 — отчёт собирается после этого.
+Tell the agent “main run done,” “latency done,” or “sampled done.” The agent will commit `reports/online/` and `reports/latency/` and build `fob report`. Jev pass 2 cannot finish earlier than 12 hours after pass 1; the report is assembled afterward. All of these steps are now complete.
 
-## 6. Дополнительный полный замер Jev напрямую через TypeSafe (D64)
+## 6. Additional full Jev benchmark directly through TypeSafe (D64)
 
-Запрошен автором 2026-10-06 после основного эксперимента. Это дополнительное сравнение,
-отдельное от замороженного основного эксперимента. Старые данные OpenRouter сохраняются
-в `reports/latency/`; новая серия пишется в `reports/latency_typesafe/`.
+Requested by the author on 2026-10-06 after the main experiment. An additional comparison,
+separate from the frozen primary experiment. Original OpenRouter data remain
+in `reports/latency/`; the new series writes to `reports/latency_typesafe/`.
 
-Запуск из обычного терминала, от сети, без других прогонов и тяжёлой нагрузки:
+Run in a normal terminal, on AC power, without concurrent experiments or heavy load:
 
 ```bash
 cd ~/workspace/flight-or-bite
 caffeinate -i .venv/bin/python scripts/jev_direct_bench.py 2>&1 | tee -a runs/latency_typesafe.log
 ```
 
-- Четыре режима Jev, по 1000 измеряемых запросов и 20 прогревочных: всего 4080 вызовов.
-  Тот же порядок режимов, состояния, шаблоны и измеритель `JevArbiter`/`bench_one`, что у OpenRouter.
-  Модель закреплена как `jev-1.13.0`, запросы идут только в `https://api.typesafe.ai/v1/systemone`.
-- Ключ читается из `TYPESAFE_API_KEY` в окружении или `.env`. В журнал ключ не записывается.
-- Ориентир: 20–30 минут; ожидаемый расход меньше $0.15 по тарифу $0.042/M входных токенов.
-  Учёт включает прогрев и продолжения: `reports/direct_typesafe/spend.json`.
-  Все попытки также входят в общий лимит 100000 вызовов проекта.
-- Проверка питания и таймеров обязательна: при проблеме скрипт остановится до API-вызовов.
-- Повтор этой же команды продолжает недостающие запросы. Завершённые режимы не пересчитываются.
-  Каждое продолжение незавершённого режима добавляет новый прогрев; расход учитывается.
-  При HTTP 401/402/403 или несовпадении версии модели исправить причину до продолжения.
-  Не удалять частичные результаты: они входят в учёт расходов и ошибок.
-- Метаданные `protocol.json` не позволяют смешать разные протоколы при продолжении.
-  `bench_meta.json` сохраняет условия и статус каждого запуска, включая прерванный.
-- После завершения сравнение появится в `reports/latency_typesafe/comparison.md`.
-  Оно сопоставляет p50/p95 по каждому режиму; отличие нельзя целиком приписать OpenRouter:
-  время запусков разное, тождество снапшотов двух провайдеров не подтверждено.
-- Основной отчёт по-прежнему берёт исходный OpenRouter benchmark. Дополнительное сравнение
-  сохраняется отдельно; открытые результаты не используются для настройки параметров.
+- Four Jev modes, 1,000 timed requests and 20 warm-up calls each: 4,080 calls total.
+  Same mode order, states, templates, and `JevArbiter`/`bench_one` timer as OpenRouter.
+  Model pinned to `jev-1.13.0`; requests go only to `https://api.typesafe.ai/v1/systemone`.
+- Key from `TYPESAFE_API_KEY` in the environment or `.env`; never logged.
+- Estimate: 20–30 minutes; expected spend under $0.15 at $0.042/M input tokens.
+  Accounting includes warm-up and resumed runs: `reports/direct_typesafe/spend.json`.
+  All attempts also count toward the project-wide 100,000-call limit.
+- Power and timer checks are mandatory; a problem stops the script before API calls.
+- Repeating the same command resumes missing requests. Completed modes are not rerun.
+  Resuming an incomplete mode adds another warm-up, included in spend accounting.
+  Resolve HTTP 401/402/403 or model-version mismatch before resuming.
+  Do not delete partial results: they contribute to spend and failure accounting.
+- `protocol.json` prevents mixing protocols during resume.
+  `bench_meta.json` records conditions and status for every run, including interruptions.
+- On completion, the comparison appears in `reports/latency_typesafe/comparison.md`.
+  It compares p50/p95 for each mode; differences cannot be attributed entirely to OpenRouter:
+  runs occurred at different times and provider snapshot identity is unverified.
+- The main report continues to use the original OpenRouter benchmark. The additional comparison
+  is stored separately; observed results are not used for parameter tuning.
 
-После завершения сообщить «прямой замер готов». Затем остаётся вторичный эксперимент из раздела 3.
+Historical next step after this benchmark was the section 3 secondary experiment; both are now complete.

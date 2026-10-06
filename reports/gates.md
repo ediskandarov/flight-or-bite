@@ -1,111 +1,111 @@
-# Ворота валидности (M3)
+# Validity gates (M3)
 
-Протокол — `configs/gates.yaml`, зафиксирован коммитом `921ffaf` **до** прогона; до него выполнялась только проверка на падения на посторонних сидах (вывод не просматривался). Прогон: `runs/20260920T135908_gates`. Коннектом v783, бэкенд `event`, замороженное частотное кодирование (D36), декодер D25, полные триалы 500 мс. После просмотра результатов ничего не менялось. Сырые результаты — `reports/gates/G*.json`.
+Protocol: `configs/gates.yaml`, fixed in commit `921ffaf` **before** the run; only crash testing on unrelated seeds preceded it (outputs were not inspected). Run: `runs/20260920T135908_gates`. Connectome v783, `event` backend, frozen rate encoding (D36), D25 decoder, full 500 ms trials. Nothing was changed after viewing results. Raw results: `reports/gates/G*.json`.
 
-| # | Ворота | Метрика | Порог | Статус |
+| # | Gate | Metric | Threshold | Status |
 |---|---|---|---|---|
-| G1 | Сахар → MN9 | 0.9509 | 0.8 | **пройдены** |
-| G2 | Горькое подавляет сахар | 1 | 0.2 | **пройдены** |
-| G3 | Looming → DNp01 | 0.9954 | 0.8 | **пройдены** |
-| G4 | Настоящая против перемешанной | 3 | 3 | **пройдены** |
-| G5 | Абляция | 3 | 3 | **пройдены** |
-| G6 | Устойчивость | 9 | 11 | **НЕ пройдены** |
-| G7 | Конфликт против независимой гонки | 0.001465 | 0.05 | **пройдены** |
+| G1 | Sugar → MN9 | 0.9509 | 0.8 | **passed** |
+| G2 | Bitter suppresses sugar | 1 | 0.2 | **passed** |
+| G3 | Looming → DNp01 | 0.9954 | 0.8 | **passed** |
+| G4 | Real versus shuffled | 3 | 3 | **passed** |
+| G5 | Ablation | 3 | 3 | **passed** |
+| G6 | Robustness | 9 | 11 | **FAILED** |
+| G7 | Conflict versus independent race | 0.001465 | 0.05 | **passed** |
 
-## G1. Сахар → MN9
+## G1. Sugar → MN9
 
-ρ Спирмена по всем 110 триалам: **0.951** (по средним уровней: 0.991).
+Spearman ρ across all 110 trials: **0.951** (over level means: 0.991).
 
 | sugar | 0 | 0.1 | 0.2 | 0.3 | 0.4 | 0.5 | 0.6 | 0.7 | 0.8 | 0.9 | 1 |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| MN9, Гц | 0 | 0 | 0 | 0.2 | 5.4 | 14.2 | 34.2 | 39.4 | 51.8 | 56.4 | 60.6 |
+| MN9, Hz | 0 | 0 | 0 | 0.2 | 5.4 | 14.2 | 34.2 | 39.4 | 51.8 | 56.4 | 60.6 |
 
-## G2. Горькое подавляет сахар
+## G2. Bitter suppresses sugar
 
-sugar = 0.6, 40 парных триалов на уровень. Снижение `p_eat` от bitter 0 к bitter 1: **100%**.
+sugar = 0.6, 40 paired trials per level. Reduction in `p_eat` from bitter 0 to bitter 1: **100%**.
 
 | bitter | 0 | 0.25 | 0.5 | 0.75 | 1 |
 |---|---|---|---|---|---|
 | p_eat | 0.97 | 0.80 | 0.20 | 0.03 | 0.00 |
-| MN9, Гц | 30.5 | 17.5 | 4.8 | 0.8 | 0.1 |
+| MN9, Hz | 30.5 | 17.5 | 4.8 | 0.8 | 0.1 |
 
 ## G3. Looming → DNp01
 
-ρ Спирмена между looming и `p_escape` по 11 уровням (40 триалов на уровень): **0.995**.
+Spearman ρ between looming and `p_escape` across 11 levels (40 trials per level): **0.995**.
 
 | looming | 0 | 0.1 | 0.2 | 0.3 | 0.4 | 0.5 | 0.6 | 0.7 | 0.8 | 0.9 | 1 |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | p_escape | 0.00 | 0.00 | 0.03 | 0.05 | 0.28 | 0.42 | 0.65 | 0.80 | 0.93 | 1.00 | 1.00 |
-| t_sim ESCAPE p50, мс | — | — | 239 | 439 | 360 | 187 | 255 | 203 | 153 | 119 | 122 |
+| t_sim ESCAPE p50, ms | — | — | 239 | 439 | 360 | 187 | 255 | 203 | 153 | 119 | 122 |
 
-## G4. Настоящая против перемешанной
+## G4. Real versus shuffled
 
-20 перемешиваний с сохранением степеней и знаков (сиды 1–20), тот же протокол, те же сиды триалов, то же кодирование (без повторной калибровки). **На перемешанных графах сигнал не доходит до выходных нейронов:** MN9 и DNp01 не отвечают, поэтому все три метрики на каждом из 20 графов равны 0 (неопределённая метрика при постоянном отклике считается равной 0).
+20 degree- and sign-preserving shuffles (seeds 1–20), identical protocol, trial seeds, and encoding (no recalibration). **Signals do not reach the output neurons in shuffled graphs:** MN9 and DNp01 do not respond, so all three metrics equal 0 on each of the 20 graphs (an undefined metric for a constant response is treated as 0).
 
-| Метрика | Настоящий граф | 95-й процентиль нулевых | максимум нулевых | нулевых > 0 | вне нулевого распределения |
+| Metric | Real graph | Null 95th percentile | Null maximum | Null values > 0 | Outside null distribution |
 |---|---|---|---|---|---|
-| G1 | 0.951 | 0.000 | 0.000 | 0 из 20 | да |
-| G2 | 1.000 | 0.000 | 0.000 | 0 из 20 | да |
-| G3 | 0.995 | 0.000 | 0.000 | 0 из 20 | да |
+| G1 | 0.951 | 0.000 | 0.000 | 0 of 20 | yes |
+| G2 | 1.000 | 0.000 | 0.000 | 0 of 20 | yes |
+| G3 | 0.995 | 0.000 | 0.000 | 0 of 20 | yes |
 
-## G5. Абляция
+## G5. Ablation
 
-Аблированный нейрон не может дать спайк.
+An ablated neuron cannot spike.
 
-- DNp01 (оба) аблированы, looming = 1.0: `p_escape` = **0.00** (без абляции 1.00; критерий ≤ 0.05) — выполнен.
-- MN9 аблирован, sugar = 1.0: `p_eat` = **0.00** (без абляции 1.00; критерий ≤ 0.05) — выполнен.
-- M_loom (25 нейронов): доля сохранённого эффекта **0.00** (критерий ≤ 0.2) — выполнен.
-- Один cL20: доля сохранённого эффекта **1.00** (без критерия). **Абляция cL20 не снимает эффект.** Его цели на этом пути — LC4 (343 синапса) и LPLC2 (2) из 361 синапса на looming-активных партнёров DNp01; в модели это clamped-источники (каждый пуассоновский толчок вызывает спайк независимо от торможения), поэтому путь через них невидим по построению. Проверено отдельно (`runs/cl20_check.json`): 17 916 спайков LPLC2/LC4 в 60 парных триалах, отличающихся пар с сахаром и без — 0. Механизм в модели несут остальные 24 нейрона M_loom: при их абляции и целом cL20 эффект исчезает (b − c: 34 → 0, те же сиды).
+- Both DNp01 neurons ablated, looming = 1.0: `p_escape` = **0.00** (intact 1.00; criterion ≤ 0.05) — met.
+- MN9 ablated, sugar = 1.0: `p_eat` = **0.00** (intact 1.00; criterion ≤ 0.05) — met.
+- M_loom (25 neurons): retained effect fraction **0.00** (criterion ≤ 0.2) — met.
+- cL20 alone: retained effect fraction **1.00** (no criterion). **Ablating cL20 does not remove the effect.** Its targets on this path are LC4 (343 synapses) and LPLC2 (2), out of 361 synapses onto looming-active DNp01 partners; these are clamped sources in the model (each Poisson input forces a spike regardless of inhibition), so this pathway is invisible by construction. Separate verification (`runs/cl20_check.json`): 17,916 LPLC2/LC4 spikes in 60 paired trials, zero differing sugar/no-sugar pairs. The model mechanism is carried by the other 24 M_loom neurons: ablating them while retaining cL20 removes the effect (b − c: 34 → 0, identical seeds).
 
-Эффект = b − c по трём уровням looming вместе (исход «DNp01 дал спайк», looming-only против sugar 0.6 + looming, одни сиды; абляция в обоих плечах). Формат: контроль → условие.
+Effect = b − c pooled over three looming levels (outcome: DNp01 spiked, looming-only versus sugar 0.6 + looming, identical seeds; ablation in both arms). Format: control → condition.
 
-| Условие | looming 0.6 | looming 0.8 | looming 1.0 | вместе | b − c |
+| Condition | looming 0.6 | looming 0.8 | looming 1.0 | Pooled | b − c |
 |---|---|---|---|---|---|
-| без абляции | 28/40 → 13/40; b = 15, c = 0; p = 6.1e-05 | 38/40 → 22/40; b = 16, c = 0; p = 3.1e-05 | 40/40 → 37/40; b = 3, c = 0; p = 0.25 | 106/120 → 72/120; b = 34, c = 0; p = 1.2e-10 | 34 |
-| M_loom аблирован | 28/40 → 27/40; b = 1, c = 0; p = 1 | 38/40 → 39/40; b = 0, c = 1; p = 1 | 40/40 → 40/40; b = 0, c = 0; p = 1 | 106/120 → 106/120; b = 1, c = 1; p = 1 | 0 |
-| cL20 аблирован | 28/40 → 13/40; b = 15, c = 0; p = 6.1e-05 | 38/40 → 22/40; b = 16, c = 0; p = 3.1e-05 | 40/40 → 37/40; b = 3, c = 0; p = 0.25 | 106/120 → 72/120; b = 34, c = 0; p = 1.2e-10 | 34 |
+| intact | 28/40 → 13/40; b = 15, c = 0; p = 6.1e-05 | 38/40 → 22/40; b = 16, c = 0; p = 3.1e-05 | 40/40 → 37/40; b = 3, c = 0; p = 0.25 | 106/120 → 72/120; b = 34, c = 0; p = 1.2e-10 | 34 |
+| M_loom ablated | 28/40 → 27/40; b = 1, c = 0; p = 1 | 38/40 → 39/40; b = 0, c = 1; p = 1 | 40/40 → 40/40; b = 0, c = 0; p = 1 | 106/120 → 106/120; b = 1, c = 1; p = 1 | 0 |
+| cL20 ablated | 28/40 → 13/40; b = 15, c = 0; p = 6.1e-05 | 38/40 → 22/40; b = 16, c = 0; p = 3.1e-05 | 40/40 → 37/40; b = 3, c = 0; p = 0.25 | 106/120 → 72/120; b = 34, c = 0; p = 1.2e-10 | 34 |
 
-## G6. Устойчивость
+## G6. Robustness
 
-**Провал.** По SPEC §5 в итоговом отчёте пишется дословно: **«выводы зависят от ручных параметров»**. Уточнение: оба упавших варианта — ослабление ×0.5 (`r_max_sugar × 0.5` и `w_syn × 0.5`); при них сеть молчит (сигнал не доходит до считываемых нейронов), смены знака нет.
+**Failed.** Under SPEC §5 the final report must explicitly state: **“conclusions depend on manually chosen parameters.”** Both failed variants are ×0.5 weakening (`r_max_sugar × 0.5` and `w_syn × 0.5`); the network is silent (signals do not reach readout neurons), with no sign reversal.
 
-Вариант проходит, если затронутые ворота сохраняют знак и монотонность: G1 ρ > 0.8, G3 ρ > 0.8, G2 снижение > 0. Прошло **9 из 11**. Число повторов меньше, чем в основных воротах (G1 10, G2 20, G3 20); сиды сдвинуты на 100 000.
+A variant passes if affected gates retain direction and monotonicity: G1 ρ > 0.8, G3 ρ > 0.8, G2 reduction > 0. Passed: **9 of 11**. Fewer repetitions than in the main gates (G1 10, G2 20, G3 20); seeds offset by 100,000.
 
-| Вариант | G1: ρ | G2: снижение p_eat (p_eat при bitter 0 → 1) | G3: ρ | проходит |
+| Variant | G1: ρ | G2: p_eat reduction (p_eat at bitter 0 → 1) | G3: ρ | Passes |
 |---|---|---|---|---|
-| `r_max_sugar_x0.5` | 0.744 | 0.00 (0.00 → 0.00) | — | **нет** |
-| `r_max_sugar_x1.5` | 0.963 | 1.00 (1.00 → 0.00) | — | да |
-| `r_max_looming_x0.5` | — | — | 0.848 | да |
-| `r_max_looming_x1.5` | — | — | 0.915 | да |
-| `w_syn_x0.5` | 0 | 0.00 (0.00 → 0.00) | 0 | **нет** |
-| `w_syn_x1.5` | 0.937 | 0.95 (1.00 → 0.05) | 0.966 | да |
-| `alpha_0.5` | 0.963 | 1.00 (1.00 → 0.00) | — | да |
-| `alpha_1.5` | 0.965 | 0.95 (1.00 → 0.05) | — | да |
-| `theta_3_spikes` | — | 1.00 (1.00 → 0.00) | — | да |
-| `theta_5_spikes` | — | 1.00 (0.65 → 0.00) | — | да |
-| `looming_population_code` | — | — | 0.961 | да |
+| `r_max_sugar_x0.5` | 0.744 | 0.00 (0.00 → 0.00) | — | **no** |
+| `r_max_sugar_x1.5` | 0.963 | 1.00 (1.00 → 0.00) | — | yes |
+| `r_max_looming_x0.5` | — | — | 0.848 | yes |
+| `r_max_looming_x1.5` | — | — | 0.915 | yes |
+| `w_syn_x0.5` | 0 | 0.00 (0.00 → 0.00) | 0 | **no** |
+| `w_syn_x1.5` | 0.937 | 0.95 (1.00 → 0.05) | 0.966 | yes |
+| `alpha_0.5` | 0.963 | 1.00 (1.00 → 0.00) | — | yes |
+| `alpha_1.5` | 0.965 | 0.95 (1.00 → 0.05) | — | yes |
+| `theta_3_spikes` | — | 1.00 (1.00 → 0.00) | — | yes |
+| `theta_5_spikes` | — | 1.00 (0.65 → 0.00) | — | yes |
+| `looming_population_code` | — | — | 0.961 | yes |
 
-Подробно `r_max_sugar_x0.5`:
-- MN9, Гц по уровням sugar: 0 / 0 / 0 / 0 / 0 / 0 / 0 / 0.4 / 2 / 10.8 / 11.8
+Details for `r_max_sugar_x0.5`:
+- MN9, Hz by sugar level: 0 / 0 / 0 / 0 / 0 / 0 / 0 / 0.4 / 2 / 10.8 / 11.8
 
-Подробно `w_syn_x0.5`:
-- MN9, Гц по уровням sugar: 0 / 0 / 0 / 0 / 0 / 0 / 0 / 0 / 0 / 0 / 0
-- p_escape по уровням looming: 0.00 / 0.00 / 0.00 / 0.00 / 0.00 / 0.00 / 0.00 / 0.00 / 0.00 / 0.00 / 0.00
+Details for `w_syn_x0.5`:
+- MN9, Hz by sugar level: 0 / 0 / 0 / 0 / 0 / 0 / 0 / 0 / 0 / 0 / 0
+- p_escape by looming level: 0.00 / 0.00 / 0.00 / 0.00 / 0.00 / 0.00 / 0.00 / 0.00 / 0.00 / 0.00 / 0.00
 
-## G7. Конфликт против независимой гонки (RQ1)
+## G7. Conflict versus independent race (RQ1)
 
-Нулевая модель: контуры независимы, значит сахарный вход не может изменить, даст ли DNp01 спайк. sugar = 0.6, контроль — looming-only на тех же сидах, 40 пар на уровень, точный двусторонний тест Макнемара, поправка Холма по трём уровням.
+Null model: circuits are independent, so sugar input cannot change whether DNp01 spikes. sugar = 0.6, looming-only control on identical seeds, 40 pairs per level, exact two-sided McNemar test, Holm correction across three levels.
 
-| looming | DNp01 дал спайк: контроль → условие; b, c; p | решения в контроле EAT / ESCAPE / IDLE | решения в условии |
+| looming | DNp01 spiked: control → condition; b, c; p | Control decisions EAT / ESCAPE / IDLE | Condition decisions |
 |---|---|---|---|
-| 0.6 | 29/40 → 15/40; b = 15, c = 1; p = 0.00052, p(Холм) = 0.0015 | 0 / 29 / 11 | 29 / 8 / 3 |
-| 0.8 | 39/40 → 27/40; b = 12, c = 0; p = 0.00049, p(Холм) = 0.0015 | 0 / 39 / 1 | 26 / 14 / 0 |
-| 1.0 | 40/40 → 34/40; b = 6, c = 0; p = 0.031, p(Холм) = 0.031 | 0 / 40 / 0 | 18 / 22 / 0 |
-| вместе | 108/120 → 76/120; b = 33, c = 1; p = 4.1e-09 | | |
+| 0.6 | 29/40 → 15/40; b = 15, c = 1; p = 0.00052, p(Holm) = 0.0015 | 0 / 29 / 11 | 29 / 8 / 3 |
+| 0.8 | 39/40 → 27/40; b = 12, c = 0; p = 0.00049, p(Holm) = 0.0015 | 0 / 39 / 1 | 26 / 14 / 0 |
+| 1.0 | 40/40 → 34/40; b = 6, c = 0; p = 0.031, p(Holm) = 0.031 | 0 / 40 / 0 | 18 / 22 / 0 |
+| pooled | 108/120 → 76/120; b = 33, c = 1; p = 4.1e-09 | | |
 
-Наименьший p с поправкой Холма: **0.0015** (порог 0.05).
+Minimum Holm-adjusted p: **0.0015** (threshold 0.05).
 
-## Что следует из статусов по SPEC §5
+## Consequences under SPEC §5
 
-- Провал G1–G3 или G5 → стоп и вопрос человеку. Провал G4 → публикуется негатив. Провал G6 → в отчёте «выводы зависят от ручных параметров». Непройденный G7 → «коннектом = гонка рефлексов».
-- Не сделано в M3: G1 на Brian2 при замороженном кодировании (эталон проверен в M1 при `R_max` = 200 Гц: `reports/gates/G1_m1_r200.json`); повторная калибровка на перемешанных графах.
+- Failure of G1–G3 or G5 → stop and ask the human author. Failure of G4 → publish the negative result. Failure of G6 → state “conclusions depend on manually chosen parameters.” Failure of G7 → label “connectome = race of reflexes.”
+- Not done in M3: G1 on Brian2 with frozen encoding (reference checked in M1 at `R_max` = 200 Hz: `reports/gates/G1_m1_r200.json`); recalibration on shuffled graphs.

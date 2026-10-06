@@ -31,6 +31,6 @@ def test_secondary_comparison_does_not_declare_a_primary_winner():
                    "jev_informed - connectome": {"mean_diff": 5.91, "ci95": [0.63, 11.03], "significant": True}}}
     secondary = "\n".join(main_metric(summary, "Secondary", False))
     primary = "\n".join(main_metric(summary, "Primary", True))
-    assert "вторичный анализ" in secondary and "победитель: `" not in secondary
-    assert "победитель: `jev_informed`" in primary
-    assert "решений с повтором после сетевой ошибки: 0." in secondary
+    assert "secondary analysis" in secondary and "winner under PREREG §2: `" not in secondary
+    assert "winner under PREREG §2: `jev_informed`" in primary
+    assert "decisions retried after a network error: 0." in secondary

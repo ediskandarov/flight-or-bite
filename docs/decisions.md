@@ -90,7 +90,7 @@ report" (D18). What the agent did with that latitude, and what it deliberately d
 
 | # | Decision | Effect |
 |---|---|---|
-| D41 | **M3 accepted. G6 stands as a failure.** The final report carries SPEC §5's sentence verbatim — "выводы зависят от ручных параметров" — plus the clarification: both failed variants are a weakening by x0.5, the network is silent, there is no change of sign | `reports/gates.md`, `PREREG.md` §6. No threshold was changed after the results |
+| D41 | **M3 accepted. G6 stands as a failure.** The final report carries SPEC §5's required statement — “conclusions depend on manually chosen parameters” (English translation; D65) — plus the clarification: both failed variants are a weakening by x0.5, the network is silent, there is no change of sign | `reports/gates.md`, `PREREG.md` §6. No threshold was changed after the results |
 | D42 | Wording. **cL20:** ablation does not remove the effect; its targets on this path (LC4 / LPLC2) are clamped sources in the model, so the path is invisible by construction; the mechanism is carried by the other 24 neurons. **G4:** "on the shuffled graphs the signal does not reach the output neurons" | Checked against data before being written down: 345 of cL20's 361 synapses onto looming-active DNp01 partners land on LC4 (343) / LPLC2 (2); the stimulated neurons' spikes are identical with and without sugar (0 differing pairs of 17 916); ablating the other 24 with cL20 intact removes the effect (34 -> 0). `runs/cl20_check.json` |
 | D43 | Spike-for-spike check of `event` against Brian2 on 10 conflict trials (sugar 0.6 + looming 0.8, frozen encoding, identical input) | `reports/crosscheck_brian2.md` |
 | D44 | `PREREG.md` gains a planned robustness analysis of H1 (r_max x1.5, w_syn x1.5, alpha 0.5 / 1.5, theta 3 / 5 spikes, population code); the x0.5 variants are reported as "the network is silent" | `PREREG.md` §4. The file is named `PREREG.md` with `Status: DRAFT`; the test split opens only on a `Status: FROZEN` line of its own plus matching hashes (`src/flight_or_bite/prereg.py`) |
@@ -144,3 +144,9 @@ Agent's judgement, open to reversal:
 | # | Decision | Effect |
 |---|---|---|
 | D64 | User requested rerunning Jev timing through the direct API while retaining OpenRouter results for comparison. | Four modes, 1000 timed + 20 warm-up calls per mode using the existing timing configuration, state sequence and JevArbiter timer. Separate reports/latency_typesafe output; reports/latency remains the original reference. D5/D59 terminal/AC requirements remain. This is an additional post-primary-results comparison, not a change to PREREG. TypeSafe spend includes probes plus full benchmark raw logs. |
+
+## 2026-10-06 — English documentation edition after experiment completion
+
+| # | Decision | Effect |
+|---|---|---|
+| D65 | The user explicitly requested an up-to-date English README and English versions of all reports and documentation. | Translate prose, report generators, figure labels, and historical records. Preserve numerical results, raw data, prompts, statistical logic, and all 14 frozen hashes. PREREG and SPEC receive explicit translation notices; the original frozen PREREG is preserved at `4a6f04850036e154f4f87e72e0509a8ff20a33cb`, and the complete pre-translation state at `02b66fc9d1797c3be77a4d9319a4143837bb8f5a`. This is an authorized post-freeze editorial deviation, not a new preregistration or experiment. Translate the required G6 sentence as “conclusions depend on manually chosen parameters.” |

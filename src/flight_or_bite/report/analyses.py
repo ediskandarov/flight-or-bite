@@ -25,20 +25,20 @@ MAIN = ("connectome", "jev_informed")
 BOOT, SEED = 10_000, 20260920
 
 READINGS = [
-    "RQ3, срезы для логистического фита: `p_escape(looming)` при sugar = 0, bitter = 0, hunger = 0.5; "
-    "`p_eat(bitter)` при sugar = 0.667 (узел сетки, ближайший к 0.6), looming = 0, hunger = 0.5. Фит "
-    "p = 1 / (1 + exp(−k·(x − x0))) методом наименьших квадратов по узлам; порог = x0, крутизна = k. "
-    "Для детерминированного оракула фит вырожден: приводится середина между узлами, где решение меняется.",
-    "RQ3, дивергенция Дженсена—Шеннона: по основанию 2, между политиками в узле (средними по повторам), "
-    "невзвешенное среднее по 1 225 узлам сетки B.",
-    "RQ4: прогноз — `probabilities[ESCAPE]` каждого повтора в каждом узле (копии в бакетных режимах "
-    "включены: узлы разные, метка оракула у каждого своя); исход — «ESCAPE оптимально по оракулу» в узле; "
-    "reliability-таблица — 10 равных интервалов вероятности.",
-    "H6, Jev: как и у коннектома, ρ Спирмена считается между d в узле (по политике самого Jev) и медианой "
-    "`t_wall` в узле, бутстреп по узлам; ρ по отдельным вызовам приводится дополнительно и в критерий не входит.",
-    "Рисунок «скорость против качества»: ДИ по оси X — бутстреп p50 по решениям (2 000 ресэмплов), по оси Y — "
-    "бутстреп `% от оракула` по эпизодам (сиды ресэмплируются совместно для всех арбитров).",
-    "«Цена решения» (SPEC §7): среднее `t_wall` на решение и суммарное `t_wall` на эпизод в главном прогоне.",
+    "RQ3, logistic-fit slices: `p_escape(looming)` at sugar = 0, bitter = 0, hunger = 0.5; "
+    "`p_eat(bitter)` at sugar = 0.667 (grid node nearest 0.6), looming = 0, hunger = 0.5. Fit "
+    "p = 1 / (1 + exp(−k·(x − x0))) by least squares over nodes; threshold = x0, slope = k. "
+    "For the deterministic oracle the fit is degenerate: report the midpoint between nodes where the decision changes.",
+    "RQ3, Jensen–Shannon divergence: base 2, between node policies (means over repetitions), "
+    "unweighted mean over the 1,225 nodes of grid B.",
+    "RQ4: prediction is `probabilities[ESCAPE]` for each repetition at each node (copies in bucketed modes "
+    "are included: nodes differ and each has its own oracle label); outcome is “ESCAPE is optimal according to the oracle” at that node; "
+    "reliability table uses 10 equal probability intervals.",
+    "H6, Jev: as for connectome, Spearman ρ is computed between node difficulty d (from Jev's own policy) and median "
+    "node `t_wall`, bootstrapping over nodes; per-call ρ is reported additionally and is excluded from the criterion.",
+    "Speed-versus-quality figure: X-axis CI from bootstrapping decision p50 (2,000 resamples); Y-axis CI from "
+    "bootstrapping `% of oracle` over episodes (seeds resampled jointly for all arbiters).",
+    "Decision cost (SPEC §7): mean `t_wall` per decision and total `t_wall` per episode in the main run.",
 ]
 
 

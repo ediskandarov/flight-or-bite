@@ -1,12 +1,12 @@
-# Взаимодействие путей после калибровки (exploratory, решение D26)
+# Pathway interaction after calibration (exploratory, decision D26)
 
-Дата: 2026-09-20. Разведка, **не** ворота G4/G7. Кодирование откалибровано по D25 (`reports/calibration.md`): `R_max` сахара 102.8 Гц, looming 2.34 Гц; декодер: EAT — 4 спайка MN9 в окне 50 мс (θ = 74.8 Гц), ESCAPE — один спайк любого DNp01, побеждает первый; `alpha` не задан, hunger = 0. Коннектом v783, бэкенд `event`, полные триалы 500 мс. После просмотра результатов ничего не менялось.
+Date: 2026-09-20. Exploratory, **not** G4/G7 gates. Encoding calibrated under D25 (`reports/calibration.md`): sugar `R_max` 102.8 Hz, looming 2.34 Hz; decoder: EAT — 4 MN9 spikes in 50 ms (θ = 74.8 Hz), ESCAPE — one spike from either DNp01, first event wins; `alpha` unset, hunger = 0. Connectome v783, `event` backend, full 500 ms trials. Nothing changed after viewing results.
 
-Срез: sugar = 0.6 × looming 0…1 (11 уровней) × 20 повторов, сиды 7 100 000+. Скрипт `scripts/probe_interaction.py`; данные `runs/20260920T111444_probe-interaction/`; все триалы (настоящий граф и 20 перемешанных) — `reports/probe_interaction_trials.csv`.
+Slice: sugar = 0.6 × looming 0…1 (11 levels) × 20 repetitions, seeds 7,100,000+. Script: `scripts/probe_interaction.py`; data: `runs/20260920T111444_probe-interaction/`; all trials (real graph and 20 shuffles): `reports/probe_interaction_trials.csv`.
 
-## 1. Настоящий граф: конфликтный срез
+## 1. Real graph: conflict slice
 
-| looming | решения EAT / ESCAPE / IDLE (из 20) | частота MN9, Гц: среднее (SD) | MN9 пересёк порог | t_sim пересечения, мс: p50 [min–max] | DNp01 дал спайк | t_sim первого спайка DNp01, мс | активных нейронов |
+| looming | EAT / ESCAPE / IDLE decisions (out of 20) | MN9 rate, Hz: mean (SD) | MN9 crossed threshold | Crossing t_sim, ms: p50 [min–max] | DNp01 spiked | First DNp01 spike t_sim, ms | Active neurons |
 |---|---|---|---|---|---|---|---|
 | 0.0 | 18 / 0 / 2 | 26.9 (8.3) | 18/20 | 142 [77–498] | 0/20 | — | 254 |
 | 0.1 | 18 / 0 / 2 | 28.2 (9.2) | 18/20 | 228 [67–488] | 0/20 | — | 288 |
@@ -20,19 +20,19 @@
 | 0.9 | 12 / 7 / 1 | 31.1 (7.7) | 17/20 | 123 [71–340] | 16/20 | 240 [31–430] | 506 |
 | 1.0 | 13 / 7 / 0 | 28.7 (6.5) | 20/20 | 197 [64–400] | 17/20 | 230 [44–456] | 517 |
 
-Точных ничьих (EAT и ESCAPE в один шаг 0.1 мс) — 0 из 220.
+Exact ties (EAT and ESCAPE in the same 0.1 ms step): 0 of 220.
 
-## 2. Подавление MN9 тенью (повтор N2)
+## 2. Looming suppression of MN9 (repeat of N2)
 
-- Частота MN9 при sugar = 0.6 по уровням looming 0 … 1: 26.9 / 28.2 / 29.6 / 29.7 / 29.1 / 26.5 / 28.2 / 29.7 / 27.5 / 31.1 / 28.7 Гц. При looming = 0 — 26.9 Гц, при looming = 1 — 28.7 Гц. Минимум по уровням 26.5, максимум 31.1 Гц.
-- В ночной разведке (`reports/probe_looming.md` §5, `R_max` = 200 Гц для обоих каналов) та же величина падала с 69.5 Гц до 0. Вход в LPLC2/LC4 там был 20–200 Гц на нейрон, здесь — не более 2.34 Гц.
-- Доля триалов, где MN9 пересёк порог EAT, — от 17/20 до 20/20 без тренда по looming.
+- MN9 rate at sugar = 0.6 by looming level 0 … 1: 26.9 / 28.2 / 29.6 / 29.7 / 29.1 / 26.5 / 28.2 / 29.7 / 27.5 / 31.1 / 28.7 Hz. At looming = 0: 26.9 Hz; at looming = 1: 28.7 Hz. Minimum across levels 26.5, maximum 31.1 Hz.
+- In the overnight probe (`reports/probe_looming.md` §5, `R_max` = 200 Hz for both channels), the same quantity fell from 69.5 Hz to 0. LPLC2/LC4 input there was 20–200 Hz per neuron; here it is at most 2.34 Hz.
+- MN9 crossed the EAT threshold in 17/20 to 20/20 trials, without a looming trend.
 
-## 3. Обратное направление: DNp01 при добавлении сахара
+## 3. Reverse direction: DNp01 after adding sugar
 
-Контроль: те же уровни looming и **те же сиды триалов**, но sugar = 0 (`runs/20260920T111444_probe-interaction/looming_only.json`).
+Control: the same looming levels and **same trial seeds**, but sugar = 0 (`runs/20260920T111444_probe-interaction/looming_only.json`).
 
-| looming | DNp01 дал спайк, looming-only | t_sim, мс | DNp01 дал спайк, sugar 0.6 + looming | t_sim, мс | активных нейронов: looming-only | sugar + looming |
+| looming | DNp01 spiked, looming-only | t_sim, ms | DNp01 spiked, sugar 0.6 + looming | t_sim, ms | Active neurons: looming-only | sugar + looming |
 |---|---|---|---|---|---|---|
 | 0.0 | 0/20 | — | 0/20 | — | 0 | 254 |
 | 0.1 | 0/20 | — | 0/20 | — | 35 | 288 |
@@ -46,14 +46,14 @@
 | 0.9 | 20/20 | 150 [31–406] | 16/20 | 240 [31–430] | 240 | 506 |
 | 1.0 | 20/20 | 98 [44–371] | 17/20 | 230 [44–456] | 254 | 517 |
 
-- На уровнях looming ≥ 0.5 (6 уровней × 20 триалов): DNp01 дал спайк в **104 из 120** триалов без сахара и в **70 из 120** с сахаром 0.6. Точный тест Фишера (двусторонний): p = 1.2e-06. Тест выбран после просмотра данных — это exploratory.
-- Прямые связи sugar-активных нейронов на DNp01 (из ночной разведки, при другом `R_max`): 4 тормозных ребра, 7 синапсов; на пресинаптических партнёров DNp01 — 599 тормозных рёбер (3 859 синапсов) и 188 возбуждающих (992). При откалиброванном входе состав активных множеств не пересчитывался.
+- At looming ≥ 0.5 (6 levels × 20 trials), DNp01 spiked in **104 of 120** trials without sugar and **70 of 120** at sugar 0.6. Two-sided Fisher exact test: p = 1.2e-06. The test was selected after viewing data; exploratory.
+- Direct sugar-active connections to DNp01 (from the overnight probe, at a different `R_max`): 4 inhibitory edges, 7 synapses; onto DNp01 presynaptic partners: 599 inhibitory edges (3,859 synapses) and 188 excitatory edges (992). Active sets were not recomputed under calibrated input.
 
-## 4. Сопоставление с независимой гонкой
+## 4. Comparison with an independent race
 
-Предсказание: каждый из 20 триалов sugar-only (looming = 0) спарен с каждым из 20 триалов looming-only данного уровня (400 пар); в паре побеждает более раннее событие. Это упрощённый вариант нулевой модели G7 (SPEC §5), не сами ворота.
+Prediction: pair each of 20 sugar-only trials (looming = 0) with each of 20 looming-only trials at that level (400 pairs); the earlier event wins. This simplifies the G7 null model (SPEC §5); it is not the gate itself.
 
-| looming | независимая гонка: EAT / ESCAPE / IDLE | наблюдалось при конфликте: EAT / ESCAPE / IDLE |
+| looming | Independent race: EAT / ESCAPE / IDLE | Observed conflict: EAT / ESCAPE / IDLE |
 |---|---|---|
 | 0.0 | 0.90 / 0.00 / 0.10 | 0.90 / 0.00 / 0.10 |
 | 0.1 | 0.90 / 0.00 / 0.10 | 0.90 / 0.00 / 0.10 |
@@ -67,11 +67,11 @@
 | 0.9 | 0.39 / 0.61 / 0.00 | 0.60 / 0.35 / 0.05 |
 | 1.0 | 0.28 / 0.72 / 0.00 | 0.65 / 0.35 / 0.00 |
 
-## 5. Двадцать перемешанных графов
+## 5. Twenty shuffled graphs
 
-Перемешивание с сохранением степеней и знаков (`lif/shuffle.py`, сиды 1–20): цели рёбер переставлены отдельно среди возбуждающих и среди тормозных рёбер. Те же стимулы, те же сиды триалов, те же параметры кодирования и декодера (калибровка на перемешанных графах **не** повторялась). 220 триалов на граф, 4 400 всего.
+Degree- and sign-preserving shuffling (`lif/shuffle.py`, seeds 1–20): edge targets permuted separately within excitatory and inhibitory edges. Identical stimuli, trial seeds, encoding, and decoder parameters (shuffled graphs were **not** recalibrated). 220 trials per graph, 4,400 total.
 
-| граф | триалов со спайком MN9 | макс. частота MN9, Гц | триалов со спайком DNp01 | решения EAT / ESCAPE / IDLE | активных нейронов (среднее) |
+| Graph | Trials with MN9 spikes | Maximum MN9 rate, Hz | Trials with DNp01 spikes | EAT / ESCAPE / IDLE decisions | Active neurons (mean) |
 |---|---|---|---|---|---|
 | shuffle_01 | 0/220 | 0.0 | 0/220 | 0 / 0 / 220 | 166 |
 | shuffle_02 | 0/220 | 0.0 | 0/220 | 0 / 0 / 220 | 167 |
@@ -94,13 +94,13 @@
 | shuffle_19 | 0/220 | 0.0 | 0/220 | 0 / 0 / 220 | 166 |
 | shuffle_20 | 0/220 | 0.0 | 0/220 | 0 / 0 / 220 | 166 |
 
-- MN9 дал хотя бы один спайк в **0 из 4 400** триалов; DNp01 — в **5 из 4 400** (все — один граф).
-- Среднее число активных нейронов: 401 на настоящем графе против 169 на перемешанных (из них 20 сахарных GRN и до 314 LPLC2/LC4 — сами стимулируемые).
-- На перемешанных графах ни один из двух контуров не доводит активность до считываемого нейрона, поэтому вопрос о взаимодействии путей на них не ставится: взаимодействовать нечему.
+- MN9 emitted at least one spike in **0 of 4,400** trials; DNp01 in **5 of 4,400** (all in one graph).
+- Mean active-neuron count: 401 on the real graph versus 169 on shuffled graphs (including the 20 sugar GRNs and up to 314 directly stimulated LPLC2/LC4).
+- Neither circuit propagates activity to its readout neuron in shuffled graphs, so pathway interaction cannot be assessed there: no output activity is available to interact.
 
-## 6. Чего здесь нет
+## 6. Not included
 
-- Пересчёта множеств активных нейронов и межпутевых синапсов при откалиброванном входе (раздел 4 ночной разведки сделан при `R_max` = 200 Гц).
-- Других уровней sugar; горького канала; голода; срезов по sugar при фиксированном looming.
-- Формальной проверки G7 (заранее заданная статистика, нужное число повторов) и G4 (метрики G1–G3 против нулевого распределения).
-- Калибровки на перемешанных графах.
+- Recomputed active-neuron sets and cross-pathway synapses under calibrated input (section 4 of the overnight probe used `R_max` = 200 Hz).
+- Other sugar levels; bitter input; hunger; sugar slices at fixed looming.
+- Formal G7 testing (prespecified statistics and repetition count) or G4 (G1–G3 metrics against a null distribution).
+- Recalibration of shuffled graphs.

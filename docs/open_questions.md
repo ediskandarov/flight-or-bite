@@ -1,128 +1,128 @@
-# Открытые вопросы человеку
+# Questions for the human author
 
-> Исторический журнал вопросов M1–M3, не текущий список блокеров. Шаблоны v1
-> утверждены (D46), предрегистрация заморожена (D58), G6 принят как провал (D41).
-> Актуальное состояние — в [handoff.md](handoff.md) и [decisions.md](decisions.md).
-> На 2026-10-05 остаются три прогона автора по D59:
-> [инструкция](../reports/run_instructions.md).
+> Historical M1–M3 question log, not the current blocker list. Templates v1
+> were approved (D46), preregistration frozen (D58), and G6 accepted as a failure (D41).
+> Current status: [handoff.md](handoff.md) and [decisions.md](decisions.md).
+> As of 2026-10-06, all three author-run experiments under D59 are complete.
+> The [run instructions](../reports/run_instructions.md) are retained for reference.
 
-Формат по SPEC §12: что блокирует → варианты → рекомендация и почему.
-Обновлено: 2026-09-20 (ночь), после M2 и разведок.
+Format under SPEC §12: blocker → options → recommendation and rationale.
+Historical entries updated: 2026-09-20 (overnight), after M2 and the probes.
 
-## Закрыто
+## Resolved
 
-- **Доступ к Jev** — через OpenRouter Decisions (`jev_api_notes.md` §1a, §11).
-- **Вопросы конца M0 (Q1–Q10)** — все рекомендации приняты 2026-09-19, см. `decisions.md` D1–D9.
-- **Раздел 6 упрощён** 2026-09-20 (D10–D15): только `t_wall` (+ `t_sim` у коннектома), OpenRouter —
-  единственный путь, модель `jev-1.13`, p50/p95. Отменены `t_server`/`t_gateway`, разбивка
-  соединения, тест параллельных запросов, метаданные сети, прямой API TypeSafe.
+- **Jev access** — through OpenRouter Decisions (`jev_api_notes.md` §1a, §11).
+- **End-of-M0 questions (Q1–Q10)** — all recommendations accepted on 2026-09-19; see `decisions.md` D1–D9.
+- **Section 6 simplified** on 2026-09-20 (D10–D15): only `t_wall` (+ connectome `t_sim`), OpenRouter as
+  the sole route, model `jev-1.13`, p50/p95. Removed: `t_server`/`t_gateway`, connection
+  breakdown, concurrent-request testing, network metadata, and direct TypeSafe API access.
 
-## Ждёт автора перед M4 (2026-09-20)
+## Awaiting the author before M4 (2026-09-20)
 
-1. **Утвердить тексты шаблонов Jev** — `reports/jev_templates.md` (в конце — 5 вопросов по формулировкам). M4 не начинается до утверждения (D45). После утверждения — повтор разведки Jev на новых числах среды и с четвёртым режимом (≈ 440 вызовов).
-2. **Пометки «РЕШИТЬ» в `PREREG.md`:** правило выбора основного режима Jev; число парных повторов в H1–H4; общий hunger и направленность H5; объём таблиц Jev; судьба сверки «50 живых эпизодов».
-3. **К сведению:** сверка с Brian2 на конфликтных триалах — 26 502 из 26 502 спайков, решения 10 из 10 (`reports/crosscheck_brian2.md`). Она вскрыла хрупкость декодера (сравнение интервалов в float-миллисекундах); декодер переведён на целые шаги (E13). Ворота M3 посчитаны до исправления; исходы «DNp01 дал спайк» от него не зависят. Пересчитать ли ворота после исправления — на усмотрение автора (≈ 1.5 часа).
+1. **Approve Jev template wording** — `reports/jev_templates.md` (five wording questions at the end). M4 does not start before approval (D45). After approval, repeat the Jev probe with the new environment values and fourth mode (approximately 440 calls).
+2. **“DECIDE” markers in `PREREG.md`:** primary Jev mode selection rule; paired repetition count for H1–H4; shared hunger and H5 directionality; Jev table size; whether to retain the “50 live episodes” cross-check.
+3. **For information:** conflict-trial Brian2 cross-check — 26,502 of 26,502 spikes and 10 of 10 decisions matched (`reports/crosscheck_brian2.md`). It exposed decoder fragility from comparing intervals in floating-point milliseconds; the decoder now uses integer steps (E13). M3 gates predate this fix; “DNp01 spiked” outcomes are unaffected. Rerunning gates after the fix is the author's decision (approximately 1.5 hours).
 
-## Конец M3 (2026-09-20): ворота и черновик предрегистрации
+## End of M3 (2026-09-20): gates and draft preregistration
 
-Отчёты: `reports/gates.md`, `PREREG.draft.md`. Требует решения автора:
+Reports: `reports/gates.md`, `PREREG.draft.md`. Author decisions needed:
 
-- **M3-1. G6 не пройдены (9 из 11).** Не проходят `r_max_sugar × 0.5` (MN9 не достигает критерия EAT ни при каком sugar: максимум 11.8 Гц, ρ = 0.74) и `w_syn × 0.5` (сеть молчит: MN9 и DNp01 не дают ни одного спайка). Остальные девять вариантов, включая ±50% по `R_max` looming, `w_syn × 1.5`, `alpha` 0.5/1.5, критерии 3 и 5 спайков и популяционный код looming, сохраняют знак и монотонность. По SPEC §5 это не стоп: в отчёте пишется «выводы зависят от ручных параметров». Вопрос: принять как есть или сузить диапазон G6 (например ±30%, как у авторов модели для `W_syn`) — второе было бы изменением порога после просмотра результата.
-- **M3-2. Одиночный cL20 не нужен для эффекта:** при его абляции сохраняется 100% подавления (те же 34 пары); абляция всех 25 M_loom снимает эффект полностью (0 из 34).
-- **M3-3. Пометки «РЕШИТЬ» в `PREREG.draft.md`:** правило выбора основного режима Jev на dev; число парных повторов в H1–H4 (40 или больше); общий hunger для H5 и направленная формулировка H5; объём таблиц Jev (98 000 вызовов при 4 режимах × N_rep 20 исчерпывают `--max-calls`); нужна ли сверка «50 живых эпизодов против таблицы» после D27.
-- **M3-4. Перемешанные графы считаются в ~10 раз дольше настоящего** (входы без структуры разлетаются по всему мозгу, и активное множество ядра разрастается): G4 занял около часа на 5 процессах. Для M4 (таблица `shuffled`: 2 000 симуляций) это терпимо.
+- **M3-1. G6 failed (9 of 11 passed).** Failures: `r_max_sugar × 0.5` (MN9 never meets EAT at any sugar level: maximum 11.8 Hz, ρ = 0.74) and `w_syn × 0.5` (network silent: no MN9 or DNp01 spikes). The other nine variants, including ±50% looming `R_max`, `w_syn × 1.5`, `alpha` 0.5/1.5, thresholds of 3 and 5 spikes, and population looming coding, preserve direction and monotonicity. SPEC §5 does not require stopping: report “conclusions depend on manually chosen parameters.” Accept as is or narrow G6's range (e.g. ±30%, as the original model authors used for `W_syn`)? The latter would change a threshold after viewing the result.
+- **M3-2. cL20 alone is not required for the effect:** ablating it retains 100% of suppression (the same 34 pairs); ablating all 25 M_loom neurons removes the effect completely (0 of 34).
+- **M3-3. “DECIDE” markers in `PREREG.draft.md`:** primary Jev mode selection on dev; paired repetition count for H1–H4 (40 or more); shared hunger and directional wording for H5; Jev table size (98,000 calls at 4 modes × N_rep 20 exhausts `--max-calls`); whether the “50 live episodes versus table” cross-check is needed after D27.
+- **M3-4. Shuffled graphs take approximately 10 times longer than the real graph** (unstructured input spreads across the brain, enlarging the kernel's active set): G4 took about an hour with 5 processes. This is manageable for M4 (`shuffled` table: 2,000 simulations).
 
-## Утро 2026-09-20: исполнение решений автора D25–D30 (стоп после пунктов 2 и 4)
+## Morning of 2026-09-20: implementing author decisions D25–D30 (stop after items 2 and 4)
 
-Отчёты: `reports/calibration.md`, `reports/probe_interaction.md`, `reports/env_sweep.md`. Что требует решения:
+Reports: `reports/calibration.md`, `reports/probe_interaction.md`, `reports/env_sweep.md`. Decisions needed:
 
-- **R1. Среда.** Ни одна из четырёх запрошенных конфигураций не даёт 25–75% голодных смертей у оракула (9–18%); отрыв оракула от `fixed_priority` при этом падает до 7–17% (порог приёмки M2 — 10%). В справочной таблице в коридор попадают `p_food` 0.2 (G 8 или 10) и `escape_cost` 1 при `p_food` 0.3, G 8. Конфигурация не выбрана. После выбора нужно обновить числа в тексте `informed`.
-- **R2. «Насыщение MN9» не имеет плато** в ряду до 3200 Гц (+7% на последнем удвоении); `theta_eat` = 74.8 Гц получен от максимума ряда. На окне 50 мс это 4 спайка (фактически 80 Гц).
-- **R3. `alpha` не задан** — голод не участвует в кодировании, и калибровка сделана без него.
-- **R4. Набор горьких GRN** (65 по аннотациям FlyWire, обе стороны, или 20 из списка авторов модели, одна сторона) не выбран; `R_max` горечи = `R_max` сахара по D25.
-- **R5. Взаимодействие после калибровки сменило знак.** Подавления MN9 тенью больше нет (27–31 Гц на всех уровнях looming), зато сахар снижает срабатывание DNp01: 104/120 триалов без сахара против 70/120 с сахаром 0.6 (looming ≥ 0.5, те же сиды; Фишер p ≈ 1e-6, тест выбран post hoc). Наблюдаемые решения расходятся с независимой гонкой: при looming 1.0 гонка даёт ESCAPE 72%, наблюдается 35%.
-- **R6. Перемешанные графы молчат:** MN9 — 0 из 4 400 триалов, DNp01 — 5 из 4 400. Калибровка на них не повторялась.
-- **R7. Правило ничьей** (EAT и ESCAPE в один шаг → ESCAPE) задано исполнителем (E10); ничьих пока не было.
+- **R1. Environment.** None of the four requested configurations produces 25–75% oracle starvation deaths (observed 9–18%); the oracle's lead over `fixed_priority` falls to 7–17% (M2 acceptance threshold: 10%). In the reference table, `p_food` 0.2 (G 8 or 10), and `escape_cost` 1 with `p_food` 0.3 and G 8 meet the range. No configuration selected. Update numbers in `informed` after selection.
+- **R2. “MN9 saturation” has no plateau** in the tested series through 3200 Hz (+7% at the final doubling); `theta_eat` = 74.8 Hz comes from the series maximum. In a 50 ms window this means 4 spikes (effectively 80 Hz).
+- **R3. `alpha` is unset** — hunger does not affect encoding, and calibration excluded it.
+- **R4. Bitter GRN set** has not been chosen (65 from FlyWire annotations, bilateral, or 20 from the model authors' list, unilateral); bitter `R_max` equals sugar `R_max` under D25.
+- **R5. Interaction changed sign after calibration.** Looming no longer suppresses MN9 (27–31 Hz at all looming levels), but sugar reduces DNp01 responses: 104/120 trials without sugar versus 70/120 at sugar 0.6 (looming ≥ 0.5, same seeds; Fisher p ≈ 1e-6, test selected post hoc). Observed decisions differ from the independent race: at looming 1.0 the race predicts ESCAPE 72%, versus 35% observed.
+- **R6. Shuffled graphs are silent:** MN9 responds in 0 of 4,400 trials, DNp01 in 5 of 4,400. They were not recalibrated.
+- **R7. Tie rule** (EAT and ESCAPE in the same step → ESCAPE) was chosen by the implementer (E10); no ties so far.
 
-## 0. Ночь 2026-09-20: что сделано по «proceed, I trust your judgement» и что требует решения автора
+## 0. Night of 2026-09-20: work under “proceed, I trust your judgement” and decisions still needed
 
-Сделано: разведка looming (`reports/probe_looming.md`), M2 (`reports/eval_dev.md`), черновые шаблоны Jev и разведка по ним (`reports/probe_jev.md`), инфраструктура таблиц политик и измерение потерь сетки (`reports/grid_loss.md`). Намеренно **не** сделано: выбор `R_max`, `theta_eat`, `alpha`, кодирования looming; построение таблиц Jev и коннектома.
+Completed: looming probe (`reports/probe_looming.md`), M2 (`reports/eval_dev.md`), draft Jev templates and their probe (`reports/probe_jev.md`), policy-table infrastructure, and grid-loss measurements (`reports/grid_loss.md`). Deliberately **not** done: choosing `R_max`, `theta_eat`, `alpha`, or looming encoding; building Jev and connectome tables.
 
-### N1. Looming-канал при кодировании по спеке насыщен
-- **Факты** (`reports/probe_looming.md`): вход во все 314 LPLC2+LC4 на `looming · 200 Гц` заставляет DNp01 спайковать в 100% триалов на всех ненулевых уровнях сетки, начиная с 0.1; первый спайк на 4–12 мс. В конфликтном срезе DNp01 первым в 200 из 200 триалов. Для сравнения: у Jev `p_escape` на том же срезе плавно растёт от ~0 до ~0.75, у оракула граница между looming 0.3 и 0.4.
-- **Следствие для дизайна:** при декодере «побеждает первый пересёкший порог» коннектом-арбитр выберет ESCAPE почти при любом ненулевом looming. Среда выдаёт looming ≥ 0.1 в 75% триалов (расчёт по распределениям SPEC §3: 0.8 · P(N(0.2, 0.2) ≥ 0.1) + 0.2 · P(N(0.7, 0.2) ≥ 0.1)).
-- **Что можно менять (решение автора, я ничего не выбирал):** `R_max` для looming-канала отдельно от сахарного; долю стимулируемых LPLC2/LC4; одностороннюю стимуляцию; декодер DNp01 по частоте вместо первого спайка; нелинейное отображение looming → частота. Любой вариант — ручное допущение для `ENGINEERED.md` и кандидат на проверку в G6.
-- **Рекомендация:** выбрать правило заранее и записать его до прогонов (например: «`R_max` looming-канала = частота, при которой P(спайк DNp01) = 0.5 при looming = 0.45, точке равенства правдоподобий среды») — это калибровка по свойству среды, а не по результату сравнения с Jev. Но само правило должен утвердить автор.
+### N1. The looming channel saturates under the specified encoding
+- **Facts** (`reports/probe_looming.md`): stimulating all 314 LPLC2+LC4 at `looming · 200 Hz` makes DNp01 spike in 100% of trials at every nonzero grid level starting at 0.1; first spike at 4–12 ms. In the conflict slice DNp01 wins in 200 of 200 trials. By comparison, Jev `p_escape` rises smoothly from ~0 to ~0.75 on the same slice; the oracle boundary lies between looming 0.3 and 0.4.
+- **Design implication:** a first-threshold-crossing decoder makes the connectome choose ESCAPE at almost any nonzero looming. The environment produces looming ≥ 0.1 in 75% of trials (from SPEC §3 distributions: 0.8 · P(N(0.2, 0.2) ≥ 0.1) + 0.2 · P(N(0.7, 0.2) ≥ 0.1)).
+- **Possible changes (author decision; none selected):** separate looming and sugar `R_max`; fraction of stimulated LPLC2/LC4; unilateral stimulation; rate-based rather than first-spike DNp01 decoding; nonlinear looming-to-rate mapping. Each is a manual assumption for `ENGINEERED.md` and a G6 candidate.
+- **Recommendation:** choose and record a rule before running (e.g. “looming `R_max` is the rate giving P(DNp01 spike) = 0.5 at looming = 0.45, the environment's equal-likelihood point”). This calibrates to an environment property rather than the Jev comparison. The author must approve the rule itself.
 
-### N2. В проводке есть взаимодействие путей (к RQ1)
-- **Факты:** при sugar = 0.6 частота MN9 падает с ростом looming: 69.5 → 8.6 Гц (looming 0.3) → 0 (0.9–1.0). От looming-активных нейронов на MN9 идёт 21 тормозное ребро (1 246 синапсов). В обратную сторону (sugar-активные → DNp01) — 4 тормозных ребра, 7 синапсов. Пересечение активных множеств — 23 нейрона.
-- Это разведка, не G7: модель независимой гонки не строилась.
+### N2. Pathways interact in the wiring (relevant to RQ1)
+- **Facts:** at sugar = 0.6, MN9 firing falls as looming rises: 69.5 → 8.6 Hz (looming 0.3) → 0 (0.9–1.0). Looming-active neurons send 21 inhibitory edges (1,246 synapses) to MN9. In the reverse direction (sugar-active → DNp01): 4 inhibitory edges, 7 synapses. Active sets overlap in 23 neurons.
+- Exploratory, not G7: no independent race model was built.
 
-### N3. Табличный режим теряет большую часть выживаемости резких политик
-- **Факты** (`reports/grid_loss.md`): оракул, сыгранный из таблицы на сетке спеки (225 точек), сохраняет 40% своей выживаемости (60.1 против 151.2) — меньше, чем `fixed_priority` при прямой игре (75.3). Сетка на 5 670 точек — 94%, на 20 910 — 96%. Причина — интерполяция one-hot вероятностей плюс сэмплирование.
-- **Почему это важно:** главная метрика проекта (SPEC §7) считается в табличном режиме. Коннектом при нынешнем кодировании — резкая политика, Jev — плавная; потери сетки у них будут разными, и сравнение исказится.
-- **Варианты:** (a) выровненная по среде сетка с частой осью looming (G: 5 670 точек; Jev ~19 ч последовательно, коннектом ~113 тыс. симуляций); (b) в табличном режиме брать вероятности ближайшего узла вместо линейной интерполяции (отклонение от SPEC §4.5; не измерялось); (c) главную метрику считать онлайн для части эпизодов; (d) оставить как есть и сообщить потери сетки в отчёте как поправку.
-- **Рекомендация:** (a) для осей sugar/bitter (это бесплатно: 6 и 5 узлов) и измерить потери для **плавной** политики, прежде чем выбирать число узлов по looming — на детерминированных политиках потери завышены относительно Jev.
+### N3. Table mode loses much of sharp policies' survival
+- **Facts** (`reports/grid_loss.md`): the oracle played from the specified 225-point grid retains 40% of its survival (60.1 versus 151.2), below direct `fixed_priority` (75.3). A 5,670-point grid retains 94%; 20,910 points retain 96%. Cause: interpolation of one-hot probabilities plus sampling.
+- **Why it matters:** the primary metric (SPEC §7) is computed in table mode. With current encoding, connectome has a sharp policy and Jev a smooth one; different grid losses would distort their comparison.
+- **Options:** (a) environment-aligned grid with a dense looming axis (G: 5,670 points; Jev ~19 hours sequentially, connectome ~113,000 simulations); (b) nearest-node probabilities rather than linear interpolation (deviation from SPEC §4.5; unmeasured); (c) online primary evaluation for a subset of episodes; (d) retain the design and report grid losses as a correction.
+- **Recommendation:** (a) for sugar/bitter axes (free: 6 and 5 nodes), then measure loss for a **smooth** policy before choosing looming resolution; deterministic-policy losses overstate those expected for Jev.
 
-### N3a. Потери сетки зависят от резкости политики; сама плавность дорого стоит
-- **Факты** (`reports/grid_loss.md`, «мягкий оракул» P ∝ exp(Q/τ)): на сетке спеки резкая политика сохраняет 37% выживаемости, плавная с кривой `p_escape`, похожей на Jev, — 91%. При нынешнем дизайне табличный режим штрафует резкий коннектом гораздо сильнее, чем плавный Jev.
-- **Отдельный факт:** при прямой игре тот же «мягкий оракул» с пологой кривой живёт 22.6 триала против 145.7 у резкого и 14.1 у `random`. Требование SPEC §4 «действие сэмплируется из probs» в этой среде наказывает любую неуверенную политику, даже построенную на оптимальных ценностях.
-- **Вопрос автору:** оставить ли сэмплирование основной метрикой, а argmax — вторичной (как в SPEC §7), или наоборот. Я ничего не менял.
+### N3a. Grid loss depends on policy sharpness; smoothness itself is costly
+- **Facts** (`reports/grid_loss.md`, “soft oracle” P ∝ exp(Q/τ)): on the specified grid a sharp policy retains 37% of survival, a smooth policy with a Jev-like `p_escape` curve retains 91%. The current table design penalizes a sharp connectome much more than a smooth Jev.
+- **Separate finding:** played directly, the same gently sloped soft oracle survives 22.6 trials versus 145.7 for the sharp oracle and 14.1 for `random`. In this environment, SPEC §4's requirement to sample actions from probs penalizes any uncertain policy, even one built on optimal values.
+- **Question for the author:** keep sampling primary and argmax secondary (SPEC §7), or reverse them? Nothing changed.
 
-### N4. Шаблоны Jev — черновик v0, написан вслепую
-Три шаблона в `configs/jev_prompts/` закоммичены до первого вызова (`713fe97`). `bucketed` = `naive` с заменой чисел на 5 равных уровней, без правил среды. Вопросы автору: устраивают ли формулировки `informed`; нужен ли четвёртый режим «informed + бакеты»; оставить ли 5 равных уровней.
+### N4. Jev templates — draft v0, written before observing responses
+Three templates in `configs/jev_prompts/` were committed before the first call (`713fe97`). `bucketed` = `naive` with numbers replaced by 5 equal-width levels, without environment rules. Questions: is `informed` wording acceptable; add a fourth informed + bucketed mode; retain 5 equal-width levels?
 
-### N5. Прочтение спеки в M2 (V1–V8 в `ENGINEERED.md`)
-Главное: токсичной бывает только еда (V1); оракул действует по стационарной политике, т.к. интерфейс арбитра не содержит номера триала (V2). Даже оракул гибнет от хищника в 93% эпизодов и живёт в среднем 151 триал из 500 — это свойство параметров среды из SPEC §3.
+### N5. M2 specification interpretations (V1–V8 in `ENGINEERED.md`)
+Main points: only food can be toxic (V1); the oracle uses a stationary policy because the arbiter interface has no trial number (V2). Even the oracle dies to predators in 93% of episodes and survives an average of 151 out of 500 trials, a consequence of SPEC §3 environment parameters.
 
-## A. Конец M1 — нужно ваше решение, прежде чем идти в M2
+## A. End of M1 — a decision is needed before M2
 
-### Q1. Бэкенд LIF
-- **Факты** (`reports/perf.md`, триал 500 мс, v783): `event` 0.174 с (RTF 2.88); `brian2` 1.355 с
-  (0.37); `torch-cpu` 2.147 с (0.23); `torch-mps` 4.627 с (0.11). `event` побитово совпадает с
-  Brian2 при одинаковом входе (12 804 из 12 804 спайков по всей сети); `torch-mps` расходится
-  (2 из 12 805) из-за float32. С ранней остановкой решение стоит `event` ≈ 2 мс.
-- **Рекомендация:** `event`. Brian2 остаётся эталоном в тестах. PyTorch-бэкенды оставить в
-  репозитории как измеренных и отвергнутых кандидатов, дальше не развивать.
-- **От вас:** по решению D5 перезапустить `uv run fob perf` из своего терминала **от сети** под
-  `caffeinate -i`: мой замер сделан на батарее. Ранжирование вряд ли изменится (разрыв 8×), но
-  абсолютные цифры `t_wall` для отчёта должны быть ваши.
+### Q1. LIF backend
+- **Facts** (`reports/perf.md`, 500 ms trial, v783): `event` 0.174 s (RTF 2.88); `brian2` 1.355 s
+  (0.37); `torch-cpu` 2.147 s (0.23); `torch-mps` 4.627 s (0.11). With identical input, `event` matches
+  Brian2 bit for bit (12,804 of 12,804 whole-network spikes); `torch-mps` differs
+  (2 of 12,805) due to float32. With early stopping, an `event` decision costs approximately 2 ms.
+- **Recommendation:** `event`. Keep Brian2 as the test reference. Retain PyTorch backends in
+  the repository as measured and rejected candidates, without further development.
+- **Author action:** under D5, rerun `uv run fob perf` in your terminal **on AC power** under
+  `caffeinate -i`; my measurement used battery power. Ranking is unlikely to change (8× gap), but
+  reportable absolute `t_wall` values must come from your run.
 
-### Q2. Размер сетки
-- **Факты:** коннектом больше не узкое место — сетка по умолчанию считается за ~2 мин на 6 ядрах.
-  Узкое место — последовательная латентность Jev (~0.4 с на вызов, 3 режима состояния).
-- **Варианты:** A) 5×3×5×3 = 225 точек (спека): Jev 13 500 вызовов, ~1.5 ч; B) 7×5×7×5 = 1 225:
-  Jev 36 750 вызовов (N_rep 10), ~4.1 ч; C) 9×5×9×5 = 2 025: ~6.8 ч.
-- **Рекомендация:** B, с окончательным подтверждением после M3, когда станет известна цена
-  триалов с looming-каналом (он возбудит гораздо большую часть сети). Более частые оси sugar и
-  looming важнее всего для RQ3 и для ошибки интерполяции. Учтите форму отклика MN9 (см. Q4): если
-  оставить равномерную ось sugar, почти вся информация сидит между 0.2 и 0.5.
+### Q2. Grid size
+- **Facts:** connectome is no longer the bottleneck; the default grid takes ~2 minutes on 6 cores.
+  Sequential Jev latency is the bottleneck (~0.4 s per call, 3 state modes).
+- **Options:** A) 5×3×5×3 = 225 points (specification): Jev 13,500 calls, ~1.5 h; B) 7×5×7×5 = 1,225:
+  Jev 36,750 calls (N_rep 10), ~4.1 h; C) 9×5×9×5 = 2,025: ~6.8 h.
+- **Recommendation:** B, subject to final approval after M3 when the cost of looming trials is known
+  (they will excite much more of the network). Denser sugar and
+  looming axes matter most for RQ3 and interpolation error. Note MN9 response shape (Q4): with
+  a uniform sugar axis, almost all information lies between 0.2 and 0.5.
 
-### Q3. Версия коннектома и потерянный сахарный GRN
-- **Факты:** статья сделана на **630**, публичная версия — **783** (`Readme.md` авторов). G1
-  проходит на обеих (ρ 0.944–0.966). В 783 нет id `720575940620900446` — одного из 21 сахарного
-  GRN примера; сейчас на 783 стимулируются 20. Это зафиксировано в `data/circuits.yaml`.
-- **Варианты:** (a) 783 и найти id-преемник в Codex/FlyWire; (b) 783 с 20 GRN как есть;
-  (c) вернуться на 630.
-- **Рекомендация:** (a). Остальные наборы (горькие GRN, LPLC2, LC4, DNp01) на M3 всё равно
-  придётся брать из аннотаций Codex, а они опубликованы для 783. Преемника искать по первоисточнику
-  на M3; если не найдётся — (b) с записью в `ENGINEERED.md`. Угадывать id не буду.
+### Q3. Connectome version and missing sugar GRN
+- **Facts:** the paper used **630**; the public version is **783** (authors' `Readme.md`). G1
+  passes on both (ρ 0.944–0.966). Version 783 lacks ID `720575940620900446`, one of the example's 21 sugar
+  GRNs; currently 20 are stimulated on v783. Recorded in `data/circuits.yaml`.
+- **Options:** (a) v783 and locate the successor ID in Codex/FlyWire; (b) v783 with 20 GRNs as is;
+  (c) return to v630.
+- **Recommendation:** (a). Other sets (bitter GRNs, LPLC2, LC4, DNp01) must be obtained at M3
+  from Codex annotations, which are published for v783. Search primary sources for the successor
+  at M3; if absent, use (b) and document it in `ENGINEERED.md`. Do not guess IDs.
 
-### Q4. `R_max` и узкий рабочий диапазон сахарной оси (к сведению, решение на M3)
-При временном `R_max` = 200 Гц (E1) отклик MN9 сигмоидален: тишина ниже sugar 0.2, крутой рост на
-0.2–0.4, насыщение ~90 Гц. Порог `theta_eat` и `R_max` задают, где на оси sugar проходит граница
-решения, — это самые влиятельные ручные параметры проекта. Предлагаю на M3 выбирать их по заранее
-записанному правилу (например, «граница EAT при sugar = 0.5 без конфликта»), а не на глаз.
+### Q4. `R_max` and the narrow operating range of the sugar axis (information; decision at M3)
+At temporary `R_max` = 200 Hz (E1), MN9 has a sigmoid response: silence below sugar 0.2, steep growth at
+0.2–0.4, saturation around 90 Hz. `theta_eat` and `R_max` place the decision boundary on the sugar axis
+and are the project's most influential manual parameters. At M3, choose them using a rule recorded
+in advance (e.g. “EAT boundary at sugar = 0.5 without conflict”), rather than by eye.
 
-### Q5. Коммит M1
-Изменения M1 не закоммичены. Сделать коммит?
+### Q5. M1 commit
+M1 changes are uncommitted. Commit them?
 
-## B. До предрегистрации (перенесено, решения приняты — контроль исполнения)
+## B. Before preregistration (carried forward; decisions made, execution to verify)
 
-- D2: `N_rep = 20` для Jev, кэш хранит повторы. D7: третий режим `bucketed`. D8: сквозной счётчик
-  вызовов. Срок — M4. (D9 исполнено и уточнено решением D13; D3 отменено решением D11.)
+- D2: `N_rep = 20` for Jev, cache retains repetitions. D7: third mode `bucketed`. D8: shared call
+  counter. Due at M4. (D9 implemented and clarified by D13; D3 superseded by D11.)
 
-## C. Что ещё не прочитано из обязательного
+## C. Required reading not yet completed
 
-- Статья Shiu et al. (Nature 2024) — пока всё взято из кода авторов; прочитать до M3 вместе с
-  методологической статьёй neuroai.science (SPEC §13 требует её до M3).
+- Shiu et al. (Nature 2024): so far, implementation is based on the authors' code; read before M3 together with
+  the neuroai.science methodology article (required before M3 by SPEC §13).

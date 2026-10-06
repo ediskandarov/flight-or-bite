@@ -1,43 +1,43 @@
-# Статус-отчёт для автора спецификации
+# Status report for the specification author
 
-Дата: 2026-09-20. Репозиторий `flight-or-bite`. Только факты и числа; интерпретаций и исправлений нет.
+Date: 2026-09-20. Repository `flight-or-bite`. Facts and numbers only; no interpretations or fixes.
 
-> **Снимок на утро 2026-09-20.** С тех пор появились: `reports/probe_looming.md` (ID looming-контура, дозовая кривая, конфликтный срез — закрывает «нет данных» в §1.3 и §2), `reports/eval_dev.md` (среда и оракул — закрывает §5), `reports/probe_jev.md` (точные запросы и срез `p_escape` — закрывает §3), `reports/grid_loss.md`. Сводка для автора — в начале `docs/open_questions.md`.
-«Нет данных» означает, что соответствующий код или измерение не существуют.
+> **Historical snapshot from the morning of 2026-09-20, not current status.** Later additions: `reports/probe_looming.md` (looming-circuit IDs, dose curve, conflict slice; fills the gaps in §1.3 and §2), `reports/eval_dev.md` (environment and oracle; fills §5), `reports/probe_jev.md` (exact requests and `p_escape` slice; fills §3), and `reports/grid_loss.md`. All planned experiments are now complete; see [final report](final_report.md) and [current README](../README.md).
+“No data” means the corresponding code or measurement did not exist at this snapshot.
 
-## 0. Текущая веха
+## 0. Milestone at the time of this snapshot
 
-- M0 — закоммичена (`2d29c62`).
-- M1 — критерии приёмки выполнены (G1 пройден; `reports/perf.md` с рекомендацией бэкенда и сетки). По SPEC §11 после M1 стоп до подтверждения человеком; подтверждения нет. Изменения M1 и упрощение раздела 6 **не закоммичены** (43 изменённых/новых путей в `git status`, включая этот отчёт).
-- M2–M5 — не начаты.
-- Тесты: 81, все проходят. `SPEC.md` не изменялся (30 579 байт, как в исходнике).
+- M0 committed (`2d29c62`).
+- M1 acceptance criteria met (G1 passed; `reports/perf.md` recommends backend and grid). SPEC §11 requires stopping after M1 for human confirmation; not yet received. M1 changes and the section 6 simplification are **uncommitted** (43 modified/new paths in `git status`, including this report).
+- M2–M5 not started.
+- Tests: 81, all passing. `SPEC.md` unchanged (30,579 bytes, matching the original at this snapshot).
 
-## 1. Ворота
+## 1. Gates
 
-| Ворота | Статус | Метрика |
+| Gate | Status | Metric |
 |---|---|---|
-| G1 сахар → MN9 | **пройдены** | минимум по 4 прогонам ρ = 0.944, порог 0.8 |
-| G2 горькое подавляет сахар | нет данных: не реализованы; ID горьких GRN не получены | — |
-| G3 looming → DNp01 | нет данных: не реализованы; ID LPLC2, LC4, DNp01 не получены | — |
-| G4 настоящая против перемешанной | нет данных: перемешивание графа не реализовано | — |
-| G5 абляция | нет данных: ворота не реализованы (механизм заглушения нейрона в бэкендах есть, покрыт тестом на игрушечном графе) | — |
-| G6 устойчивость | нет данных | — |
-| G7 конфликт | нет данных | — |
+| G1 sugar → MN9 | **passed** | Minimum ρ across 4 runs = 0.944, threshold 0.8 |
+| G2 bitter suppresses sugar | No data: not implemented; bitter GRN IDs not obtained | — |
+| G3 looming → DNp01 | No data: not implemented; LPLC2, LC4, DNp01 IDs not obtained | — |
+| G4 real versus shuffled | No data: graph shuffling not implemented | — |
+| G5 ablation | No data: gates not implemented (backend neuron silencing exists and is tested on a toy graph) | — |
+| G6 robustness | No data | — |
+| G7 conflict | No data | — |
 
-### 1.1 G1, прогон ворот (`reports/gates/G1.json`)
+### 1.1 G1 gate run (`reports/gates/G1.json`)
 
-Протокол: 11 уровней sugar × 10 повторов, окно 500 мс, частота входа GRN = sugar · 200 Гц, hunger не используется, метрика — ρ Спирмена по всем 110 триалам (частота MN9 за всё окно). Сиды 2 000 000+.
+Protocol: 11 sugar levels × 10 repetitions, 500 ms window, GRN input rate = sugar · 200 Hz, no hunger; metric: Spearman ρ across all 110 trials (MN9 firing over the full window). Seeds 2,000,000+.
 
-| Прогон (бэкенд/версия) | сахарных GRN | ρ по триалам | ρ по средним уровней | средние строго возрастают | ворота |
+| Run (backend/version) | Sugar GRNs | ρ across trials | ρ across level means | Means strictly increasing | Gate |
 |---|---|---|---|---|---|
-| event/v630 | 21 | 0.944 | 0.991 | нет | пройдены |
-| brian2/v630 | 21 | 0.955 | 0.980 | нет | пройдены |
-| event/v783 | 20 | 0.966 | 0.998 | нет | пройдены |
-| brian2/v783 | 20 | 0.960 | 0.998 | нет | пройдены |
+| event/v630 | 21 | 0.944 | 0.991 | no | passed |
+| brian2/v630 | 21 | 0.955 | 0.980 | no | passed |
+| event/v783 | 20 | 0.966 | 0.998 | no | passed |
+| brian2/v783 | 20 | 0.960 | 0.998 | no | passed |
 
-Частота MN9, Гц, по уровням sugar:
+MN9 firing, Hz, by sugar level:
 
-| sugar | event/v630: среднее (SD) | brian2/v630: среднее (SD) | event/v783: среднее (SD) | brian2/v783: среднее (SD) |
+| sugar | event/v630: mean (SD) | brian2/v630: mean (SD) | event/v783: mean (SD) | brian2/v783: mean (SD) |
 |---|---|---|---|---|
 | 0.0 | 0.0 (0.0) | 0.0 (0.0) | 0.0 (0.0) | 0.0 (0.0) |
 | 0.1 | 0.2 (0.6) | 0.0 (0.0) | 0.0 (0.0) | 0.0 (0.0) |
@@ -51,14 +51,14 @@
 | 0.9 | 92.4 (4.8) | 90.0 (6.5) | 83.4 (5.9) | 79.6 (7.5) |
 | 1.0 | 91.4 (8.3) | 89.2 (4.1) | 87.2 (5.2) | 90.4 (5.9) |
 
-### 1.2 Сырая дозовая кривая sugar → MN9 (отдельный прогон для этого отчёта)
+### 1.2 Raw sugar → MN9 dose curve (separate run for this report)
 
-Бэкенд `event`, те же 11 × 10, окно 500 мс, сиды 4 000 000+; сырые данные: `runs/20260920T002733_status-dose/dose.json`.
-Декодера `EAT` не существует (`theta_eat` не задан), поэтому `p_eat` по SPEC §4.1 **не вычислялась**. Вместо неё приведены две сырые величины: доля триалов, где MN9 дал хотя бы один спайк за окно, и симулированное время его первого спайка.
+`event` backend, same 11 × 10 design, 500 ms window, seeds 4,000,000+; raw data: `runs/20260920T002733_status-dose/dose.json`.
+The EAT decoder does not exist (`theta_eat` unset), so SPEC §4.1 `p_eat` **was not computed**. Two raw quantities are reported instead: fraction of trials with at least one MN9 spike in the window, and simulated first-spike time.
 
-**Коннектом v783 (20 сахарных GRN, 138,639 нейронов):**
+**Connectome v783 (20 sugar GRNs, 138,639 neurons):**
 
-| sugar | вход GRN, Гц (задано) | GRN, Гц (факт) | MN9, Гц: среднее (SD) | P(≥1 спайк MN9 за 500 мс) | t_sim первого спайка MN9, мс: p50 [min–max] | спайков в сети | активных нейронов |
+| sugar | GRN input, Hz (requested) | GRN, Hz (observed) | MN9, Hz: mean (SD) | P(≥1 MN9 spike in 500 ms) | First MN9 spike t_sim, ms: p50 [min–max] | Network spikes | Active neurons |
 |---|---|---|---|---|---|---|---|
 | 0.0 | 0.0 | 0.0 | 0.0 (0.0) | 0.0 | — | 0.0 | 0.0 |
 | 0.1 | 20.0 | 19.4 | 0.0 (0.0) | 0.0 | — | 268.4 | 40.1 |
@@ -72,9 +72,9 @@
 | 0.9 | 180.0 | 179.2 | 82.6 (6.39) | 1.0 | 29.2 [26.0–32.6] | 7380.9 | 365.1 |
 | 1.0 | 200.0 | 197.8 | 87.8 (4.24) | 1.0 | 26.2 [23.5–30.3] | 8067.0 | 379.0 |
 
-**Коннектом v630 (21 сахарный GRN, 127,400 нейронов):**
+**Connectome v630 (21 sugar GRNs, 127,400 neurons):**
 
-| sugar | вход GRN, Гц (задано) | GRN, Гц (факт) | MN9, Гц: среднее (SD) | P(≥1 спайк MN9 за 500 мс) | t_sim первого спайка MN9, мс: p50 [min–max] | спайков в сети | активных нейронов |
+| sugar | GRN input, Hz (requested) | GRN, Hz (observed) | MN9, Hz: mean (SD) | P(≥1 MN9 spike in 500 ms) | First MN9 spike t_sim, ms: p50 [min–max] | Network spikes | Active neurons |
 |---|---|---|---|---|---|---|---|
 | 0.0 | 0.0 | 0.0 | 0.0 (0.0) | 0.0 | — | 0.0 | 0.0 |
 | 0.1 | 20.0 | 19.4 | 0.0 (0.0) | 0.0 | — | 292.8 | 38.9 |
@@ -88,117 +88,117 @@
 | 0.9 | 180.0 | 179.4 | 88.2 (8.65) | 1.0 | 27.7 [25.1–30.8] | 7846.8 | 373.7 |
 | 1.0 | 200.0 | 197.6 | 91.8 (7.87) | 1.0 | 25.5 [24.0–29.7] | 8484.0 | 385.2 |
 
-Молчание и насыщение, числами:
-- sugar = 0: 0 спайков в сети, 0 активных нейронов (обе версии).
-- sugar = 0.1 (20 Гц): MN9 0.0 Гц во всех 10 повторах (обе версии); в сети в среднем 268.4 (v783) / 292.8 (v630) спайков за триал; активных нейронов в среднем 40.1 (v783, из них стимулируемых GRN 20) / 38.9 (v630, из них стимулируемых GRN 21).
-- sugar = 0.2 (40 Гц): MN9 дал хотя бы один спайк в 7 из 10 (v783) и 8 из 10 (v630) триалов.
-- sugar ≥ 0.3: MN9 спайкует в 10 из 10 триалов.
-- Прирост частоты MN9 на шаг sugar 0.1: на участке 0.2→0.4 это +20.0 и +29.8 Гц (v783), +24.6 и +24.4 Гц (v630); на участке 0.8→1.0 это +3.8 и +5.2 Гц (v783), +5.4 и +3.6 Гц (v630). Максимум: 87.8 Гц (v783), 91.8 Гц (v630) при sugar = 1.0.
-- Активных нейронов при sugar = 1.0: 379 из 138 639 (v783), 385 из 127 400 (v630). В отдельном подсчёте на v630 при 150 Гц, 1 с: спайкующих нейронов 370, нейронов, до которых дошёл хотя бы один синаптический вход, — 11 178 (8.8%).
-- t_sim первого спайка MN9 (p50): 304 мс при sugar 0.2 → 26 мс при sugar 1.0 (v783); 180 мс → 25.5 мс (v630).
+Silence and saturation in numbers:
+- sugar = 0: zero network spikes and active neurons (both versions).
+- sugar = 0.1 (20 Hz): MN9 0.0 Hz in all 10 repetitions (both versions); mean network spikes per trial 268.4 (v783) / 292.8 (v630); mean active neurons 40.1 (v783, including 20 stimulated GRNs) / 38.9 (v630, including 21 stimulated GRNs).
+- sugar = 0.2 (40 Hz): MN9 spiked in 7 of 10 (v783) and 8 of 10 (v630) trials.
+- sugar ≥ 0.3: MN9 spikes in all 10 trials.
+- MN9 rate increase per sugar step of 0.1: over 0.2→0.4, +20.0 and +29.8 Hz (v783), +24.6 and +24.4 Hz (v630); over 0.8→1.0, +3.8 and +5.2 Hz (v783), +5.4 and +3.6 Hz (v630). Maximum at sugar = 1.0: 87.8 Hz (v783), 91.8 Hz (v630).
+- Active neurons at sugar = 1.0: 379 of 138,639 (v783), 385 of 127,400 (v630). Separate v630 count at 150 Hz for 1 s: 370 spiking neurons; 11,178 neurons received at least one synaptic input (8.8%).
+- First MN9 spike t_sim (p50): 304 ms at sugar 0.2 → 26 ms at sugar 1.0 (v783); 180 ms → 25.5 ms (v630).
 
-### 1.3 Дозовая кривая looming → DNp01
+### 1.3 Looming → DNp01 dose curve
 
-Нет данных. Идентификаторы LPLC2, LC4 и DNp01 не получены из первоисточников; кодирование looming и декодер `ESCAPE` не реализованы. Ни одной симуляции с looming-входом не выполнялось.
+No data. LPLC2, LC4, and DNp01 IDs were not obtained from primary sources; looming encoding and ESCAPE decoding were not implemented. No looming-input simulation had been run.
 
-## 2. Группы нейронов (`data/circuits.yaml`)
+## 2. Neuron groups (`data/circuits.yaml`)
 
-| Группа | Число ID | Источник | Стороны мозга |
+| Group | IDs | Source | Brain sides |
 |---|---|---|---|
-| Сахарные GRN | 21 (v630); 20 (v783) | `example.ipynb` репозитория `philshiu/Drosophila_brain_model` @ `91bdd1e7dc`, переменная `neu_sugar` | только правое полушарие — по тексту ноутбука: «some sugar-sensing neurons in the right hemisphere» |
-| MN9 | 1 (`720575940660219265`) | тот же ноутбук, `id_mn9 = 720575940660219265  #id for MN9` | один нейрон; сторона в источнике не указана и мной не проверялась |
-| Горькие GRN | 0 | не получены | — |
-| LPLC2 | 0 | не получены | — |
-| LC4 | 0 | не получены | — |
-| DNp01 | 0 | не получены | — |
+| Sugar GRNs | 21 (v630); 20 (v783) | `philshiu/Drosophila_brain_model` @ `91bdd1e7dc`, `example.ipynb`, variable `neu_sugar` | Right hemisphere only, according to notebook wording: “some sugar-sensing neurons in the right hemisphere” |
+| MN9 | 1 (`720575940660219265`) | Same notebook, `id_mn9 = 720575940660219265  #id for MN9` | One neuron; side not specified in source or independently checked |
+| Bitter GRNs | 0 | Not obtained | — |
+| LPLC2 | 0 | Not obtained | — |
+| LC4 | 0 | Not obtained | — |
+| DNp01 | 0 | Not obtained | — |
 
-Codex/FlyWire как источник аннотаций пока не использовался: проверена только доступность сайтов (HTTP 200). Все ID взяты из кода авторов. Статья Shiu et al. (Nature 2024) не прочитана.
+Codex/FlyWire had not been used as an annotation source; only site availability was checked (HTTP 200). All IDs came from the authors' code. Shiu et al. (Nature 2024) had not been read.
 
-Версии коннектома (файлы из того же репозитория, сверены по git blob SHA-1 с коммитом `91bdd1e7dc`):
+Connectome versions (files from the same repository, verified against Git blob SHA-1 at commit `91bdd1e7dc`):
 
 | | v630 («which the paper used») | v783 («public version») |
 |---|---|---|
-| нейронов | 127 400 | 138 639 |
-| рёбер | 14 687 178 | 15 091 983 |
-| доля возбуждающих рёбер | 59.9% | 60.0% |
-| вес ребра (знаковое число синапсов), min / max | −2358 / 1801 | −2405 / 1897 |
-| сахарных GRN из списка найдено | 21 из 21 | 20 из 21 |
-| MN9: входящих / исходящих рёбер | 229 / 83 | 227 / 82 |
-| исходящая степень сахарных GRN, min / медиана / max | 51 / 72 / 98 | 51 / 70 / 98 |
+| Neurons | 127 400 | 138 639 |
+| Edges | 14 687 178 | 15 091 983 |
+| Excitatory edge fraction | 59.9% | 60.0% |
+| Edge weight (signed synapse count), min / max | −2358 / 1801 | −2405 / 1897 |
+| Sugar GRNs found from list | 21 of 21 | 20 of 21 |
+| MN9 incoming / outgoing edges | 229 / 83 | 227 / 82 |
+| Sugar GRN out-degree, min / median / max | 51 / 72 / 98 | 51 / 70 / 98 |
 
-**Пропавший сахарный нейрон.** ID `720575940620900446` есть в `2023_03_23_completeness_630_final.csv` и отсутствует в `Completeness_783.csv`. Идентификатор-преемник в v783 **не искался**. В `data/circuits.yaml` он помечен `absent_in: {783: [...]}`; на v783 все прогоны (G1, perf, дозовая кривая) идут с 20 GRN. Любой другой отсутствующий ID вызывает ошибку. `configs/lif.yaml` сейчас указывает `connectome_version: 783`.
+**Missing sugar neuron.** ID `720575940620900446` occurs in `2023_03_23_completeness_630_final.csv` but not `Completeness_783.csv`. A successor ID in v783 **was not sought**. It is marked `absent_in: {783: [...]}` in `data/circuits.yaml`; v783 runs (G1, perf, dose curve) use 20 GRNs. Any other missing ID raises an error. `configs/lif.yaml` currently specifies `connectome_version: 783`.
 
 ## 3. Jev
 
-**Слаг модели.** Запрашивается `typesafe/jev-1.13`; в ответах приходит `typesafe/jev-1.13-20260917` (во всех 26 живых вызовах), провайдер `TypeSafe`. Эндпоинт: `POST https://openrouter.ai/api/alpha/decisions` (статус alpha), ключ `OPENROUTER_API_KEY`, заголовок `X-OpenRouter-Cache: false`. Ответ с моделью вне семейства `typesafe/jev-1.13` прерывает прогон.
+**Model slug.** Requested `typesafe/jev-1.13`; all 26 live calls returned `typesafe/jev-1.13-20260917`, provider TypeSafe. Endpoint: `POST https://openrouter.ai/api/alpha/decisions` (alpha), key `OPENROUTER_API_KEY`, header `X-OpenRouter-Cache: false`. A model outside the `typesafe/jev-1.13` family aborts the run.
 
-**Точные запросы для naive / informed / bucketed.** Не существуют. Каталог `configs/jev_prompts/` пуст (только `.gitkeep`); `JevArbiter` не реализован; границы бакетов не заданы.
+**Exact naive / informed / bucketed requests.** Not yet defined. `configs/jev_prompts/` contains only `.gitkeep`; `JevArbiter` and bucket boundaries are not implemented.
 
-Единственный запрос, который отправлялся Jev (дымовой тест, не является ни одним из трёх режимов), тело дословно:
+The only request sent to Jev (smoke test, none of the three modes), verbatim body:
 
 ```json
 {"model":"typesafe/jev-1.13","questions":{"action":{"criteria":{"EAT":null,"ESCAPE":null,"IDLE":null},"instructions":"Which action should the agent take?","type":"choice"}},"state":{"bitter":0.05,"hunger":0.5,"looming":0.6,"sugar":0.7}}
 ```
 
-**Срез `p_escape` по looming.** Нет данных: Jev вызывался только в одной точке состояния.
+**p_escape slice over looming.** No data: Jev was queried at only one state.
 
-**SD вероятностей по повторам в 3 точках.** Данные есть только для **одной** точки (состояние выше), 20 побайтно одинаковых последовательных запросов, 2026-09-19. Значения взяты из вывода `fob jev smoke` в терминале; сырые ответы на диск не сохранялись.
+**Probability SD across repetitions at 3 points.** Data exist for **one** point only (state above): 20 byte-identical sequential requests on 2026-09-19. Values taken from `fob jev smoke` terminal output; raw responses were not saved.
 
-| Вариант | среднее | SD | min | max |
+| Option | Mean | SD | Min | Max |
 |---|---|---|---|---|
 | EAT | 0.5625 | 0.031 | 0.52 | 0.62 |
 | ESCAPE | 0.4175 | 0.031 | 0.36 | 0.46 |
 | IDLE | 0.0200 | 0.000 | 0.02 | 0.02 |
 
-Различных векторов вероятностей среди 20 ответов: 11. argmax = EAT в 20 из 20. Отдельный одиночный вызов с тем же телом (через `curl`, до этой серии) вернул EAT 0.40 / ESCAPE 0.58 / IDLE 0.02, argmax = ESCAPE. Во втором прогоне (2026-09-20, 5 вызовов) различных векторов 5 из 5, EAT от 0.52 до 0.63, IDLE 0.01–0.02. Значения вероятностей приходят округлёнными до 0.01; порядок ключей в `probabilities` меняется от ответа к ответу.
+11 distinct probability vectors across 20 responses. argmax = EAT in all 20. An earlier single call with the same body via `curl` returned EAT 0.40 / ESCAPE 0.58 / IDLE 0.02, argmax = ESCAPE. A second run (2026-09-20, 5 calls) returned 5 distinct vectors; EAT 0.52–0.63, IDLE 0.01–0.02. Probabilities arrive rounded to 0.01; key order in `probabilities` varies between responses.
 
-**Почему добавлен `bucketed`** (решение D7, принято человеком 2026-09-19). Основание — документация вендора, страница «Jev 1.13 jaggedness» (просмотрена вендором 2026-09-17), дословно: «It struggles with tasks that require numeric precision»; «`jev-1.13` will perform better on semantic representations than numeric … Instead: do the conversion in code and pass in either the computed number or a named bucket». Режим `naive` по SPEC §4.3 — «только поля и числа». Третий режим добавлен, чтобы в отчёте был формат, рекомендованный вендором, при сохранении двух режимов спеки. Режим существует только как решение; кода и шаблона нет.
+**Why `bucketed` was added** (D7, human decision on 2026-09-19). Basis: vendor documentation “Jev 1.13 jaggedness” (reviewed by the vendor 2026-09-17), verbatim: “It struggles with tasks that require numeric precision”; “`jev-1.13` will perform better on semantic representations than numeric … Instead: do the conversion in code and pass in either the computed number or a named bucket.” SPEC §4.3 defines `naive` as fields and numbers only. The third mode adds the vendor-recommended format while retaining both specified modes. At this snapshot it exists only as a decision, without code or template.
 
-Стоимость: 20 вызовов — $0.000281; один вызов — $0.000014 при 334 входных токенах.
+Cost: 20 calls $0.000281; one call $0.000014 at 334 input tokens.
 
-## 4. Скорость и память
+## 4. Speed and memory
 
-**LIF** (`reports/perf.md`, 2026-09-19 22:11; Apple M3 Pro 6P+6E, 36 ГБ, Python 3.12.8; **питание от батареи**; самопроверка таймеров: перелёт `sleep(10 мс)` 2.52 мс, «не троттлится»). Протокол: коннектом v783, 20 сахарных GRN на 150 Гц, окно 500 мс, dt 0.1 мс, один процесс, граф в памяти; 10 полных триалов и 10 триалов с остановкой на первом спайке MN9, после одного прогревочного.
+**LIF** (`reports/perf.md`, 2026-09-19 22:11; Apple M3 Pro 6P+6E, 36 GB, Python 3.12.8; **battery power**; timer self-check: `sleep(10 ms)` overshoot 2.52 ms, not throttled). Protocol: connectome v783, 20 sugar GRNs at 150 Hz, 500 ms window, dt 0.1 ms, one process, graph in memory; 10 full trials and 10 trials stopping at the first MN9 spike, after one warm-up.
 
-| Бэкенд | t_load, с | первый триал, с | сек/триал p50 | max | RTF p50 | спайков/триал | ранняя остановка: t_sim p50, мс | wall p50, с | пиковая RSS, МиБ |
+| Backend | t_load, s | First trial, s | s/trial p50 | Max | RTF p50 | Spikes/trial | Early stop t_sim p50, ms | Wall p50, s | Peak RSS, MiB |
 |---|---|---|---|---|---|---|---|---|---|
-| `brian2` (Cython, эталон) | 0.44 | 19.15 | 1.355 | 1.380 | 0.37 | 6 328 | 30.6 | 0.299 | 2 260 |
+| `brian2` (Cython, reference) | 0.44 | 19.15 | 1.355 | 1.380 | 0.37 | 6 328 | 30.6 | 0.299 | 2 260 |
 | `event` (NumPy + Numba) | 0.10 | 0.15 | 0.174 | 0.187 | 2.88 | 6 299 | 29.6 | 0.002 | 1 587 |
 | `torch-cpu` (float64) | 0.02 | 2.16 | 2.147 | 2.166 | 0.23 | 6 299 | 29.6 | 0.120 | 1 684 |
 | `torch-mps` (float32) | 0.08 | 4.94 | 4.627 | 4.815 | 0.11 | 6 335 | 29.6 | 0.226 | 1 891 |
 
-- Загрузка графа parquet → CSR: 0.29 с. Пиковая RSS процесса сразу после загрузки графа: ~1 500 МиБ (измерено отдельно, 3 триала по 500 мс, `ru_maxrss`).
-- Сверка с Brian2 при одинаковых входных спайках, пары (нейрон, шаг) за два триала: `event` 12 804 из 12 804; `torch-cpu` 12 804 из 12 804; `torch-mps` 12 803 совпавших при объединении 12 805.
-- Рекомендованный в `reports/perf.md` бэкенд: `event`. Человеком не подтверждён.
-- Замечено отдельно: в интерактивных вызовах из-под агента `sleep(10 мс)` занимал ~104 мс (медиана).
+- Graph load Parquet → CSR: 0.29 s. Peak process RSS immediately after loading: ~1,500 MiB (separate measurement, 3 trials of 500 ms, `ru_maxrss`).
+- Brian2 cross-check with identical input spikes, (neuron, step) pairs over two trials: `event` 12,804 of 12,804; `torch-cpu` 12,804 of 12,804; `torch-mps` 12,803 matching out of a union of 12,805.
+- Recommended backend in `reports/perf.md`: `event`. Not yet approved by the human author.
+- Separate observation: in interactive agent calls, `sleep(10 ms)` took ~104 ms (median).
 
-**Jev**, только клиентское `t_wall`, последовательные вызовы в одной keep-alive-сессии, через OpenRouter, HTTP/1.1, измерено из процесса агента:
+**Jev**, client `t_wall` only, sequential calls in one keep-alive session through OpenRouter over HTTP/1.1, measured from the agent process:
 
-| Прогон | n | p50, мс | p95, мс | первый (холодный) вызов, мс |
+| Run | n | p50, ms | p95, ms | First (cold) call, ms |
 |---|---|---|---|---|
 | 2026-09-19 | 20 | 405.4 | 527.7 | 772.1 |
-| то же без первого вызова | 19 | 391.4 | 479.7 | — |
+| Same, excluding first call | 19 | 391.4 | 479.7 | — |
 | 2026-09-20 | 5 | 495.9 | 599.2 | 615.6 |
 
-Замер по протоколу SPEC §6.2 (`fob latency bench`, прогрев 20, состояния по сетке) не выполнялся: команда — заглушка.
+The SPEC §6.2 benchmark (`fob latency bench`, 20 warm-up calls, grid states) had not been run; the command was a stub.
 
-## 5. Среда на `dev`
+## 5. Environment on `dev`
 
-Нет данных. `arena/`, `RandomArbiter`, `FixedPriorityArbiter`, `OracleArbiter` и `fob eval` не реализованы (веха M2 не начата); `configs/env.yaml` не создан. Средняя жизнь oracle / fixed / random, причины смерти и средняя энергия оракула не измерялись.
+No data. `arena/`, `RandomArbiter`, `FixedPriorityArbiter`, `OracleArbiter`, and `fob eval` were not implemented (M2 not started); `configs/env.yaml` did not exist. Oracle / fixed / random mean lifetime, death causes, and oracle mean energy were unmeasured.
 
-## 6. Ручные параметры
+## 6. Manual parameters
 
-| Параметр | Значение | Как выбрано |
+| Parameter | Value | Selection basis |
 |---|---|---|
-| `R_max` | **200 Гц**, помечено provisional (`configs/encoding.yaml`, запись E1) | Выбрано исполнителем как верхняя граница диапазона частот из материалов авторов: `model.py` — `r_poi = 150 Hz`; текст `example.ipynb` — «By default, the neurons are excited at 200 Hz»; второй эксперимент ноутбука — 100 Гц. Источника для самого значения нет. По результатам не подбиралось: задано до первого прогона G1 |
-| `theta_eat` | **не задан** | Декодер `EAT` не реализован |
-| длина скользящего окна для частоты MN9 | **не задана** | — |
-| `alpha` | **`null`** (`configs/encoding.yaml`) | Не задан; hunger ни в одной симуляции не использовался |
-| `T_sim` | 500 мс | из SPEC §4.1 |
+| `R_max` | **200 Hz**, provisional (`configs/encoding.yaml`, E1) | Implementer selected the upper end of the authors' input-rate examples: `model.py` uses `r_poi = 150 Hz`; `example.ipynb` says “By default, the neurons are excited at 200 Hz”; its second experiment uses 100 Hz. No source prescribes the chosen value. Not result-tuned: set before the first G1 run |
+| `theta_eat` | **Unset** | EAT decoder not implemented |
+| MN9 sliding rate-window length | **Unset** | — |
+| `alpha` | **`null`** (`configs/encoding.yaml`) | Unset; no simulation used hunger |
+| `T_sim` | 500 ms | SPEC §4.1 |
 
-Параметры LIF (`configs/lif.yaml`) скопированы из `default_params` файла `model.py` без изменений: v_0 = v_rst = −52 мВ, v_th = −45 мВ, t_mbr = 20 мс, tau = 5 мс, t_rfc = 2.2 мс, t_dly = 1.8 мс, w_syn = 0.275 мВ, f_poi = 250; dt = 0.1 мс (в `model.py` не задан, это значение Brian2 по умолчанию).
+LIF parameters (`configs/lif.yaml`) copied unchanged from `model.py` `default_params`: v_0 = v_rst = −52 mV, v_th = −45 mV, t_mbr = 20 ms, tau = 5 ms, t_rfc = 2.2 ms, t_dly = 1.8 ms, w_syn = 0.275 mV, f_poi = 250; dt = 0.1 ms (not specified in `model.py`; Brian2 default).
 
-### `docs/ENGINEERED.md` целиком (дословно)
+### Complete `docs/ENGINEERED.md` at this snapshot (verbatim)
 
 ````markdown
 # ENGINEERED — register of hand-made assumptions
@@ -252,36 +252,36 @@ Listed so that none is forgotten; values are deliberately left open.
 | T3 | `Decision.action` for Jev will be sampled from `probabilities`; the API's own `choice` (an argmax) is ignored | SPEC §4: action is sampled from `probs`, same rule for every arbiter | 2026-09-19 (M0) |
 ````
 
-## 7. Отклонения от `SPEC.md`
+## 7. Deviations from `SPEC.md`
 
-Решения человека (`docs/decisions.md`; сам `SPEC.md` не редактировался):
+Human decisions (`docs/decisions.md`; `SPEC.md` itself had not been edited):
 
-| # | Раздел спеки | Спека | Сейчас |
+| # | SPEC section | Original specification | State at this snapshot |
 |---|---|---|---|
-| D1, D12 | §4.3 | доступ к Jev, ключ `JEV_API_KEY` | только через OpenRouter, alpha-эндпоинт Decisions; ключ `OPENROUTER_API_KEY`; `t_wall` Jev включает хоп через OpenRouter |
-| D2 | §4.5 | Jev: 225 точек × 2 режима = 450 вызовов (1 вызов на точку) | `N_rep = 20` на точку; кэш хранит все повторы |
-| D7 | §4.3 | 2 режима состояния: `naive`, `informed` | 3 режима: добавлен `bucketed` |
-| D8 | §4.3 | `--max-calls` по умолчанию 30 000 | 100 000 (в коде); сквозной счётчик между запусками не реализован |
-| D10 | §4, §6.1 | три времени: `t_wall`, `t_sim`, `t_server`; поле `Decision.t_server_ms` | два: `t_wall` у всех, `t_sim` у коннектома; поле `t_server_ms` удалено |
-| D11 | §4.3, §6.2 | логировать время соединения / первого байта / полное; тест 8 параллельных запросов; метаданные сети (тип сети, город, время суток) | удалено; D3 (`t_gateway` из метаданных OpenRouter) отменено |
-| D13 | §4.3 | «логировать версию модели» | модель закреплена: семейство `typesafe/jev-1.13`, иной ответ прерывает прогон |
+| D1, D12 | §4.3 | Jev access, `JEV_API_KEY` | OpenRouter only, alpha Decisions endpoint; key `OPENROUTER_API_KEY`; Jev `t_wall` includes the OpenRouter hop |
+| D2 | §4.5 | Jev: 225 points × 2 modes = 450 calls (1 per point) | `N_rep = 20` per point; cache retains every repetition |
+| D7 | §4.3 | 2 state modes: `naive`, `informed` | 3 modes: added `bucketed` |
+| D8 | §4.3 | Default `--max-calls` 30,000 | 100,000 in code; cross-run counter not implemented |
+| D10 | §4, §6.1 | Three times: `t_wall`, `t_sim`, `t_server`; `Decision.t_server_ms` | Two: `t_wall` for all, `t_sim` for connectome; removed `t_server_ms` |
+| D11 | §4.3, §6.2 | Connection / first-byte / total logging; 8 concurrent requests; network metadata (type, city, time of day) | Removed; D3 (`t_gateway` from OpenRouter metadata) superseded |
+| D13 | §4.3 | Log model version | Pinned model family `typesafe/jev-1.13`; any other response aborts the run |
 | D14 | §6.2, §9 | p50 / p90 / p99 | p50 / p95 |
-| D4 | §4.1 | версия коннектома не указана | v783 (provisional); статья авторов сделана на v630 |
-| D5 | §6.2 | — | замеры, на которых принимаются решения, перезапускает человек из своего терминала; пока не перезапускались |
-| D6 | §10 | Python 3.11+ | 3.12 (фактически Homebrew Python 3.12.8) |
+| D4 | §4.1 | Connectome version unspecified | v783 (provisional); original paper used v630 |
+| D5 | §6.2 | — | Human author reruns decision-grade timing from their terminal; not yet rerun |
+| D6 | §10 | Python 3.11+ | 3.12 (Homebrew Python 3.12.8 in use) |
 
-Отклонения и добавления на уровне реализации (решениями человека не оформлены):
+Implementation-level deviations and additions (not recorded as human decisions):
 
-- Команды, которых нет в таблице SPEC §9: `fob info`, `fob jev smoke`. Нереализованные команды завершаются с кодом 3.
-- Клиент Jev не использует официальный SDK и не делает ретраев.
-- `MockJevClient` реализует задержку активным ожиданием, а не `time.sleep`.
-- Контрольные суммы данных — git blob SHA-1 из дерева закреплённого коммита репозитория авторов, а не опубликованные кем-либо суммы.
-- Бэкенд Brian2 отличается от `model.py`: сеть строится один раз, состояние восстанавливается между триалами (`store`/`restore`); объекты `PoissonInput` создаются один раз на пару (нейрон, частота) и переключаются флагом `active`; добавлена ранняя остановка с проверкой раз в 1 мс симулированного времени. Уравнения, порог, сброс и параметры — дословно из `model.py`.
-- Метрика G1 определена исполнителем: ρ по всем триалам, 11 уровней × 10 повторов (запись E5).
-- `R_max = 200 Гц` задан исполнителем (E1).
-- На v783 стимулируется 20 сахарных GRN вместо 21.
-- SPEC §4.1 допускает сверку неэталонного бэкенда с Brian2 «по G1–G3»; выполнена сверка спайк-в-спайк при одинаковом входе, G2–G3 не существуют.
-- Сырые ответы Jev из дымового теста на диск не сохранялись (SPEC §4.3 требует логировать сырые ответы; логирование не реализовано).
-- Дополнительные документы вне структуры SPEC §14: `docs/decisions.md`, `docs/open_questions.md`, `docs/lif_model_notes.md`; конфиги `configs/data.yaml`, `configs/encoding.yaml`, `configs/gates.yaml`.
-- Замер `reports/perf.md` выполнен при питании от батареи.
-- Не прочитано из обязательного: статья Shiu et al. (Nature 2024); методологическая статья neuroai.science (SPEC §13 требует до M3).
+- Commands absent from SPEC §9: `fob info`, `fob jev smoke`. Unimplemented commands exit with code 3.
+- Jev client does not use the official SDK or retry requests.
+- `MockJevClient` implements delay with busy-waiting rather than `time.sleep`.
+- Data checksums are Git blob SHA-1 values from the authors' pinned repository tree, rather than separately published checksums.
+- Brian2 backend differs from `model.py`: build the network once and restore state between trials (`store`/`restore`); create `PoissonInput` objects once per (neuron, rate) pair and toggle their `active` flag; add early stopping checked every 1 ms of simulated time. Equations, threshold, reset, and parameters are copied verbatim from `model.py`.
+- Implementer defined the G1 metric: ρ across all trials, 11 levels × 10 repetitions (E5).
+- Implementer selected `R_max = 200 Hz` (E1).
+- v783 stimulates 20 sugar GRNs instead of 21.
+- SPEC §4.1 allows a non-reference backend to be checked against Brian2 on G1–G3; a spike-for-spike check with identical input was performed instead; G2–G3 did not exist.
+- Raw Jev smoke-test responses were not saved (SPEC §4.3 requires raw logging; not yet implemented).
+- Documents beyond SPEC §14 layout: `docs/decisions.md`, `docs/open_questions.md`, `docs/lif_model_notes.md`; configurations `configs/data.yaml`, `configs/encoding.yaml`, `configs/gates.yaml`.
+- `reports/perf.md` was measured on battery power.
+- Required reading not yet completed: Shiu et al. (Nature 2024), and the neuroai.science methodology article (SPEC §13 requires it before M3).

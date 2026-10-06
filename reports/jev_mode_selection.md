@@ -1,33 +1,33 @@
-# Выбор основного режима Jev на `dev` (решение D49)
+# Selecting the primary Jev mode on `dev` (decision D49)
 
-Дата: 2026-09-20. Правило задано автором до прогона (`PREREG.md` §2): четыре режима играют онлайн одни и те же 50 dev-эпизодов (сиды 0–49) с нативным действием (поле `choice`); основной — с наибольшей средней жизнью, при равенстве — с меньшим числом вызовов. Шаблоны v1 закоммичены до первого вызова (`6c6f15c`) и на `dev` не настраивались. Скрипт `scripts/select_jev_mode.py`; данные `runs/20260920T154550_select-jev-mode/selection.json`; сырые обмены — `runs/jev_raw/20260920.jsonl`. Среда — `configs/env.yaml` (D31). Модель во всех ответах: `typesafe/jev-1.13-20260917`.
+Date: 2026-09-20. Rule specified by the author before the run (`PREREG.md` §2): four modes play the same 50 dev episodes (seeds 0–49) online with native actions (`choice` field); select highest mean lifetime, breaking ties by fewer calls. Templates v1 were committed before the first call (`6c6f15c`) and not tuned on `dev`. Script: `scripts/select_jev_mode.py`; data: `runs/20260920T154550_select-jev-mode/selection.json`; raw exchanges: `runs/jev_raw/20260920.jsonl`. Environment: `configs/env.yaml` (D31). Every response used `typesafe/jev-1.13-20260917`.
 
-| Режим | Жизнь, триалов: среднее [95% ДИ] | медиана | смерти: хищник / голод / токсин (из 50) | доли действий EAT / ESCAPE / IDLE | вызовов | t_wall p50 / p95, мс |
+| Mode | Lifetime, trials: mean [95% CI] | Median | Deaths: predator / starvation / toxin (out of 50) | EAT / ESCAPE / IDLE fractions | Calls | t_wall p50 / p95, ms |
 |---|---|---|---|---|---|---|
 | `naive` | 25.98 [20.6, 31.8] | 24 | 49 / 1 / 0 | 82% / 18% / 0% | 1,349 | 377 / 512 (n = 1,349) |
-| `informed` **(основной)** | 64.26 [56.7, 72.3] | 63 | 9 / 41 / 0 | 17% / 55% / 27% | 3,263 | 377 / 511 (n = 3,263) |
+| `informed` **(primary)** | 64.26 [56.7, 72.3] | 63 | 9 / 41 / 0 | 17% / 55% / 27% | 3,263 | 377 / 511 (n = 3,263) |
 | `bucketed` | 16.82 [13.2, 20.7] | 14 | 50 / 0 / 0 | 86% / 12% / 2% | 891 | 379 / 520 (n = 891) |
 | `informed_bucketed` | 64.20 [53.4, 75.6] | 60 | 29 / 20 / 1 | 18% / 30% / 52% | 3,262 | 389 / 516 (n = 3,258) |
-| `random` (прямая игра) | 16.02 [12.2, 20.1] | 12 | 42 / 7 / 1 | 34% / 34% / 33% | — | — |
-| `fixed_priority` (прямая игра) | 56.44 [44.0, 70.1] | 48 | 37 / 13 / 0 | 18% / 22% / 61% | — | — |
-| `oracle` (прямая игра) | 77.60 [65.6, 90.7] | 68 | 32 / 18 / 0 | 17% / 30% / 52% | — | — |
+| `random` (direct) | 16.02 [12.2, 20.1] | 12 | 42 / 7 / 1 | 34% / 34% / 33% | — | — |
+| `fixed_priority` (direct) | 56.44 [44.0, 70.1] | 48 | 37 / 13 / 0 | 18% / 22% / 61% | — | — |
+| `oracle` (direct) | 77.60 [65.6, 90.7] | 68 | 32 / 18 / 0 | 17% / 30% / 52% | — | — |
 
-**Основной режим по правилу: `informed`.**
+**Primary mode selected by the rule: `informed`.**
 
-Парные разницы средней жизни на тех же 50 сидах (бутстреп 10 000):
+Paired mean lifetime differences on the same 50 seeds (10,000 bootstrap resamples):
 
-| Сравнение | Разница | 95% ДИ | ДИ не включает ноль |
+| Comparison | Difference | 95% CI | CI excludes zero |
 |---|---|---|---|
-| `informed` − `naive` | +38.3 | [+29.0, +47.8] | да |
-| `informed` − `bucketed` | +47.4 | [+39.6, +55.9] | да |
-| `informed` − `informed_bucketed` | +0.1 | [-6.6, +6.9] | нет |
-| `informed` − `random` | +48.2 | [+40.4, +56.6] | да |
-| `informed` − `fixed_priority` | +7.8 | [-3.5, +19.1] | нет |
-| `informed` − `oracle` | -13.3 | [-23.0, -3.8] | да |
+| `informed` − `naive` | +38.3 | [+29.0, +47.8] | yes |
+| `informed` − `bucketed` | +47.4 | [+39.6, +55.9] | yes |
+| `informed` − `informed_bucketed` | +0.1 | [-6.6, +6.9] | no |
+| `informed` − `random` | +48.2 | [+40.4, +56.6] | yes |
+| `informed` − `fixed_priority` | +7.8 | [-3.5, +19.1] | no |
+| `informed` − `oracle` | -13.3 | [-23.0, -3.8] | yes |
 
-Что видно в числах:
+Findings:
 
-- `informed` и `informed_bucketed` различаются на 0.06 триала; ДИ разницы включает ноль. Правило выбирает `informed` по среднему, но статистически эти два режима на 50 эпизодах неразличимы. Профили действий у них разные: `informed` убегает в 55% триалов и гибнет в основном от голода (41 из 50), `informed_bucketed` убегает в 30% и гибнет чаще от хищника (29 из 50).
-- Оба режима с пакетом правил живут в 2.5–4 раза дольше режимов без него; режимы без правил — на уровне `random` (`bucketed`) или немного выше (`naive`).
-- Латентность (клиентское `t_wall`, последовательные вызовы, одна keep-alive-сессия, из процесса агента, параллельно шли локальные расчёты — **не замер по протоколу §8**): p50 377–389 мс во всех режимах, хотя запрос в режимах с правилами длиннее в десятки раз. Вызовов с повтором после сетевой ошибки: naive 0, informed 0, bucketed 0, informed_bucketed 4; они исключены из статистики.
-- Расход: 8,765 вызовов за прогон; всего по проекту 9,091 из 100 000.
+- `informed` and `informed_bucketed` differ by 0.06 trials; the difference CI includes zero. The mean-based rule selects `informed`, but these modes are statistically indistinguishable on 50 episodes. Their action profiles differ: `informed` escapes in 55% of trials and mostly dies of starvation (41 of 50); `informed_bucketed` escapes in 30% and more often dies to predators (29 of 50).
+- Both modes with the rules package survive 2.5–4 times longer than modes without it; rule-free modes perform at the `random` level (`bucketed`) or slightly above it (`naive`).
+- Latency (client `t_wall`, sequential calls, one keep-alive session, agent process with concurrent local computation — **not a §8 protocol benchmark**): p50 377–389 ms across modes despite requests being tens of times longer with rules. Retried network calls: naive 0, informed 0, bucketed 0, informed_bucketed 4; excluded from latency statistics.
+- Usage: 8,765 calls in this run; project total 9,091 of 100,000.

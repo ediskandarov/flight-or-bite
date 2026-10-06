@@ -1,16 +1,16 @@
-# Сверка `event` против Brian2 на конфликтных триалах (решение D43)
+# `event` versus Brian2 cross-check on conflict trials (decision D43)
 
-Дата: 2026-09-20. Скрипт `scripts/crosscheck_conflict.py`; данные `runs/20260920T154359_crosscheck-conflict/crosscheck.json`.
+Date: 2026-09-20. Script `scripts/crosscheck_conflict.py`; data `runs/20260920T154359_crosscheck-conflict/crosscheck.json`.
 
-**Условие:** sugar = 0.6 + looming = 0.8, bitter = 0, hunger = 0; замороженное частотное кодирование (20 сахарных GRN на 61.67 Гц, 314 LPLC2 + LC4 на 1.875 Гц); коннектом v783; полные триалы 500 мс, dt 0.1 мс; сиды 0–9.
+**Condition:** sugar = 0.6 + looming = 0.8, bitter = 0, hunger = 0; frozen rate encoding (20 sugar GRNs at 61.67 Hz, 314 LPLC2 + LC4 at 1.875 Hz); connectome v783; full 500 ms trials, dt 0.1 ms; seeds 0–9.
 
-**Одинаковый вход.** Эталон — Brian2 (кодогенерация Cython), уравнения, порог, сброс и параметры дословно из `model.py`; вход он генерирует сам: по одному `PoissonInput` на каждый из 334 стимулируемых нейронов, как в `model.py`. Спайки стимулируемых нейронов из триала Brian2 затем воспроизводятся в `event` (каждый такой спайк — толчок на предыдущем шаге), так что остальная сеть получает в обоих симуляторах побитово одинаковый вход. Сравниваются **все спайки всей сети** как пары (нейрон, шаг 0.1 мс), и к обоим результатам применяется декодер.
+**Identical input.** Reference: Brian2 (Cython code generation), with equations, threshold, reset, and parameters copied verbatim from `model.py`; it generates input itself: one `PoissonInput` per stimulated neuron (334 total), as in `model.py`. Stimulated-neuron spikes from each Brian2 trial are replayed in `event` (each spike corresponds to an input on the previous step), giving the rest of the network bitwise-identical input in both simulators. Compare **every spike in the entire network** as (neuron, 0.1 ms step) pairs and apply the decoder to both outputs.
 
-## Результат
+## Result
 
-**26,502 из 26,502 спайков совпали; расходящихся пар — 0.** Решение декодера и время решения совпали **точно** (одно и то же число) в 10 триалах из 10 — прогон повторён после перевода декодера на целые шаги.
+**26,502 of 26,502 spikes matched; zero differing pairs.** Decoder decisions and times matched **exactly** (the same number) in all 10 trials; the run was repeated after switching the decoder to integer steps.
 
-| сид | входных спайков | спайков Brian2 | спайков event | совпало | только Brian2 | только event | активных нейронов | спайков MN9 | спайков DNp01 | решение Brian2 @ t_sim, мс | решение event @ t_sim, мс | wall Brian2, с | wall event, с |
+| Seed | Input spikes | Brian2 spikes | event spikes | Matched | Brian2 only | event only | Active neurons | MN9 spikes | DNp01 spikes | Brian2 decision @ t_sim, ms | event decision @ t_sim, ms | Brian2 wall, s | event wall, s |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | 0 | 964 | 2,829 | 2,829 | 2,829 | 0 | 0 | 526 | 17 | 1 | ESCAPE @ 39.2 | ESCAPE @ 39.2 | 5.5 | 0.36 |
 | 1 | 885 | 2,708 | 2,708 | 2,708 | 0 | 0 | 502 | 18 | 1 | ESCAPE @ 102.4 | ESCAPE @ 102.4 | 3.8 | 0.33 |
@@ -23,11 +23,11 @@
 | 8 | 937 | 3,199 | 3,199 | 3,199 | 0 | 0 | 498 | 26 | 0 | EAT @ 95.5 | EAT @ 95.5 | 3.8 | 0.40 |
 | 9 | 895 | 2,414 | 2,414 | 2,414 | 0 | 0 | 495 | 16 | 2 | EAT @ 136.8 | EAT @ 136.8 | 3.9 | 0.20 |
 
-В первом прогоне (`runs/20260920T152427_crosscheck-conflict`) времена решений расходились в записи: один и тот же шаг 0.1 мс Brian2 отдавал как `39.199999999999996`, `event` — как `39.2`. Это показало, что декодер сравнивал интервалы в миллисекундах как числа с плавающей точкой, и пачка длиной ровно в окно (500 шагов) могла засчитываться или нет в зависимости от округления. Декодер переведён на целые шаги (`lif/decoder.py`, тесты `tests/test_decoder.py`). Исходы «DNp01 дал спайк» (G5, G7, H1–H3) от этого не зависят; на `p_eat` и `t_sim` решения EAT это могло влиять только в триалах с пачкой ровно в 50.0 мс. Ворота M3 посчитаны до исправления и не пересчитывались.
+In the first run (`runs/20260920T152427_crosscheck-conflict`), serialized decision times differed: Brian2 represented the same 0.1 ms step as `39.199999999999996`, while `event` returned `39.2`. The decoder compared intervals in floating-point milliseconds, allowing a burst exactly one window long (500 steps) to count or not depending on rounding. The decoder now uses integer steps (`lif/decoder.py`, tests in `tests/test_decoder.py`). “DNp01 spiked” outcomes (G5, G7, H1–H3) are unaffected; `p_eat` and EAT `t_sim` could change only for bursts exactly 50.0 ms long. M3 gates predate the fix and were not rerun.
 
-## Что это проверяет и чего не проверяет
+## What this does and does not verify
 
-- Проверяет: динамику сети в ядре `event` при **одновременном** сахарном и looming-входе — порядок операций внутри шага, задержку 1.8 мс, рефрактерность, отбрасывание входа к рефрактерным нейронам, сброс, активное множество, порядок суммирования в `g` — и декодер.
-- Ранее сверялось так же: сахарный вход на v630 (13 698 / 13 698 и 13 233 / 13 233 спайков), сахарный вход на v783 в `fob perf` (12 804 / 12 804), случайный граф со смешанными знаками (тест `tests/test_lif.py`, выполняется при каждом прогоне тестов).
-- Не проверяет: генератор входа `event` (свои потоки ГСЧ по каналам) против генератора Brian2 — они статистически эквивалентны (Бернулли(частота · dt) на шаг), но не побитово; абляцию (`ablated`) — в Brian2 у неё нет аналога в `model.py`; популяционный код looming.
-- Время Brian2 на триал включает накладные расходы 334 объектов `PoissonInput`; это не замер производительности.
+- Verifies network dynamics in the `event` kernel under **simultaneous** sugar and looming input: within-step operation order, 1.8 ms delay, refractoriness, input rejection by refractory neurons, reset, active set, summation order in `g`, and decoder.
+- Earlier checks used the same method: sugar input on v630 (13,698 / 13,698 and 13,233 / 13,233 spikes), sugar input on v783 in `fob perf` (12,804 / 12,804), and a random mixed-sign graph (`tests/test_lif.py`, run in every test suite).
+- Does not verify the `event` input generator (separate RNG streams per channel) against Brian2's generator: statistically equivalent (Bernoulli(rate · dt) per step), not bitwise identical. Nor does it verify ablation (`ablated`, without a counterpart in Brian2 `model.py`) or population looming encoding.
+- Brian2 time per trial includes overhead from 334 `PoissonInput` objects; this is not a performance benchmark.

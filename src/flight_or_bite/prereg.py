@@ -28,7 +28,7 @@ def sha256(path: Path) -> str:
 
 def hash_table() -> str:
     rows = "\n".join(f"| `{f}` | `{sha256(f)}` |" for f in hashed_files())
-    return "| Файл | SHA-256 |\n|---|---|\n" + rows
+    return "| File | SHA-256 |\n|---|---|\n" + rows
 
 
 def check(path: Path | None = None) -> None:

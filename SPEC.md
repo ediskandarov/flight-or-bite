@@ -1,80 +1,82 @@
-# SPEC: Flight or Bite — коннектом мухи против Jev
+# SPEC: Flight or Bite — fly connectome versus Jev
 
-Спецификация для Claude Code · v0.3 · 19 сентября 2026
-Целевая машина: MacBook, Apple M3 Pro (arm64, без CUDA). Интерфейс — только терминал.
-Репозиторий `flight-or-bite`, пакет `flight_or_bite`, команда `fob`.
+> **Historical specification, translated into English on 2026-10-06 (D65).** This preserves the original v0.3 design, including later-superseded defaults and milestones. For the executed protocol use [PREREG.md](PREREG.md) and [approved decisions](docs/decisions.md); for current results use [README.md](README.md) and the [final report](reports/final_report.md). All planned runs are complete.
 
----
-
-## 0. Правила для Claude Code
-
-1. Прочитай спеку целиком. Работай по вехам (раздел 11), не перескакивая.
-2. **Ничего не выдумывай**: идентификаторы нейронов, параметры моделей, формат API Jev — только из первоисточников (раздел 13). Нет в источнике — остановись и спроси (раздел 12).
-3. Веса коннектома заморожены. Никакого обучения, backprop, RL, обучаемых считывателей.
-4. Негативный результат валиден. Не подгоняй параметры. Каждое ручное допущение — в `docs/ENGINEERED.md`.
-5. Вне рамок: 3D, физические тела, MuJoCo, веб-интерфейс, анимация, человек-игрок, CUDA-бэкенды.
-6. Код, идентификаторы, коммиты — на английском.
+Specification for Claude Code · v0.3 · September 19, 2026
+Target machine: MacBook, Apple M3 Pro (arm64, no CUDA). Terminal interface only.
+Repository `flight-or-bite`, package `flight_or_bite`, command `fob`.
 
 ---
 
-## 1. Цель
+## 0. Rules for Claude Code
 
-Сравнить два «System One» на задаче арбитража «еда против угрозы» по двум осям — **качество решений** и **время решения**:
-- **коннектом** — LIF-симуляция мозга дрозофилы (модель Shiu et al., FlyWire);
-- **Jev** (TypeSafe AI) — модель, возвращающая типизированный выбор с калиброванными вероятностями; вызывается **онлайн**.
-
-Вопросы:
-- **RQ1.** Возникает ли в LIF-модели арбитраж между контурами питания и побега, и зависит ли он от настоящей проводки?
-- **RQ2.** Кто ближе к оптимальной политике по выживаемости?
-- **RQ3.** Где расходятся психометрические кривые коннектома и Jev?
-- **RQ4.** Насколько калиброваны вероятности Jev относительно оракула?
-- **RQ5.** Сколько времени занимает решение у каждого арбитра и зависит ли оно от трудности конфликта?
+1. Read the entire specification. Follow the milestones (section 11) without skipping ahead.
+2. **Do not invent anything**: neuron IDs, model parameters, and Jev API formats must come from primary sources (section 13). If a source does not provide the information, stop and ask (section 12).
+3. Connectome weights are frozen. No training, backpropagation, RL, or trainable readouts.
+4. A negative result is valid. Do not tune parameters to fit results. Record every manual assumption in `docs/ENGINEERED.md`.
+5. Out of scope: 3D, physical bodies, MuJoCo, web interfaces, animation, human players, CUDA backends.
+6. Code, identifiers, and commits must be in English.
 
 ---
 
-## 2. Дизайн
+## 1. Goal
 
-Задача — последовательность триалов без пространственной навигации.
+Compare two “System One” candidates on food-versus-threat arbitration along two axes: **decision quality** and **decision time**:
+- **connectome** — LIF simulation of the Drosophila brain (Shiu et al. model, FlyWire);
+- **Jev** (TypeSafe AI) — a model returning typed choices with calibrated probabilities, called **online**.
 
-1. Среда выдаёт `(sugar, bitter, looming)` ∈ [0,1]³ и `hunger` ∈ [0,1].
-2. Арбитр выбирает действие из `{EAT, ESCAPE, IDLE}`; фиксируется время решения.
-3. Среда разыгрывает исход и обновляет энергию.
-
-Два режима работы арбитров:
-- **Табличный** — политика `π(action | sugar, bitter, looming, hunger)` и распределения латентности оценены на сетке; эпизоды сэмплируются из таблиц. Для массовой оценки (1000 эпизодов).
-- **Онлайн** — каждое решение принимается вживую: реальный вызов Jev по сети, реальный прогон LIF. Для замера времени, живых эпизодов и проверки, что таблица не врёт.
-
----
-
-## 3. Среда (`arena/`)
-
-Значения по умолчанию в `configs/env.yaml`; менять можно только до предрегистрации.
-
-- `energy` ∈ [0, 100], старт 50; `hunger = 1 - energy/100`; лимит эпизода 500 триалов.
-- Еда есть с вероятностью 0.5 (`sugar ~ U(0.2, 1)`), иначе `sugar = 0`.
-- Еда токсична с вероятностью 0.25 (`bitter ~ U(0.3, 1)`), иначе `bitter ~ U(0, 0.1)`.
-- Угроза реальна с вероятностью 0.2. `looming` — зашумлённая подсказка: `clip(N(0.7, 0.2))` при угрозе, `clip(N(0.2, 0.2))` без неё.
-- Метаболизм: −1 за триал.
-- `EAT`: `+12·sugar`; если токсично — `−15·bitter`; при реальной угрозе смерть с вероятностью 0.6.
-- `ESCAPE`: −3, угроза не убивает.
-- `IDLE`: при реальной угрозе смерть с вероятностью 0.3.
-- Смерть также при `energy ≤ 0`.
-- **Дедлайн (опция `deadline_ms`, по умолчанию выключен):** если время решения больше дедлайна, действие заменяется на `IDLE` («не успел»).
-
-Требования: детерминизм по сиду; `reset(seed) -> obs`, `step(action) -> obs, done, info`. Сиды: `dev` 0–999, `test` 100000–100999. Доступ к `test` — только с `--unlock-test`, каждый доступ пишется в `runs/test_access.log`.
+Research questions:
+- **RQ1.** Does arbitration emerge between feeding and escape circuits in the LIF model, and does it depend on the real wiring?
+- **RQ2.** Which arbiter is closer to the optimal policy in survival?
+- **RQ3.** Where do the connectome and Jev psychometric curves diverge?
+- **RQ4.** How well calibrated are Jev probabilities relative to the oracle?
+- **RQ5.** How long does each arbiter take to decide, and does that depend on conflict difficulty?
 
 ---
 
-## 4. Арбитры (`arbiters/`)
+## 2. Design
+
+The task is a sequence of trials without spatial navigation.
+
+1. The environment provides `(sugar, bitter, looming)` ∈ [0,1]³ and `hunger` ∈ [0,1].
+2. The arbiter chooses an action from `{EAT, ESCAPE, IDLE}`; decision time is recorded.
+3. The environment samples the outcome and updates energy.
+
+Two arbiter execution modes:
+- **Table mode** — policy `π(action | sugar, bitter, looming, hunger)` and latency distributions are estimated on a grid; episodes are sampled from tables. Used for large-scale evaluation (1000 episodes).
+- **Online** — each decision is made live: an actual Jev network call or an actual LIF simulation. Used for timing, live episodes, and checking table accuracy.
+
+---
+
+## 3. Environment (`arena/`)
+
+Defaults are in `configs/env.yaml`; changes are allowed only before preregistration.
+
+- `energy` ∈ [0, 100], initially 50; `hunger = 1 - energy/100`; episode limit 500 trials.
+- Food is present with probability 0.5 (`sugar ~ U(0.2, 1)`), otherwise `sugar = 0`.
+- Food is toxic with probability 0.25 (`bitter ~ U(0.3, 1)`), otherwise `bitter ~ U(0, 0.1)`.
+- A threat is real with probability 0.2. `looming` is a noisy cue: `clip(N(0.7, 0.2))` with a threat, `clip(N(0.2, 0.2))` without one.
+- Metabolism: −1 per trial.
+- `EAT`: `+12·sugar`; if toxic, `−15·bitter`; with a real threat, death probability 0.6.
+- `ESCAPE`: −3; the threat cannot kill the agent.
+- `IDLE`: with a real threat, death probability 0.3.
+- Death also occurs at `energy ≤ 0`.
+- **Deadline (`deadline_ms` option, disabled by default):** if decision time exceeds the deadline, replace the action with `IDLE` (“missed deadline”).
+
+Requirements: deterministic given a seed; `reset(seed) -> obs`, `step(action) -> obs, done, info`. Seeds: `dev` 0–999, `test` 100000–100999. Access to `test` requires `--unlock-test`; each access is logged in `runs/test_access.log`.
+
+---
+
+## 4. Arbiters (`arbiters/`)
 
 ```python
 @dataclass
 class Decision:
     probs: dict[Action, float]
-    action: Action            # сэмплируется из probs
-    t_wall_ns: int            # wall-clock от запроса до действия
-    t_sim_ms: float | None    # только коннектом
-    t_server_ms: float | None # только Jev, если API отдаёт
+    action: Action            # sampled from probs
+    t_wall_ns: int            # wall-clock time from request to action
+    t_sim_ms: float | None    # connectome only
+    t_server_ms: float | None # Jev only, if returned by the API
     meta: dict                # cache_hit, backend, model_version, ...
 
 class Arbiter(Protocol):
@@ -84,147 +86,147 @@ class Arbiter(Protocol):
 
 ### 4.1 ConnectomeArbiter
 
-**Модель.** Shiu et al., Nature 2024: LIF, единые параметры нейронов, веса из знаковой матрицы связей × одна глобальная константа. Исходник — `philshiu/Drosophila_brain_model` (Brian2). Симулируется весь граф; вырезать подсеть нельзя без согласования.
+**Model.** Shiu et al., Nature 2024: LIF, uniform neuron parameters, weights from a signed connectivity matrix multiplied by one global constant. Source: `philshiu/Drosophila_brain_model` (Brian2). Simulate the entire graph; do not extract a subnetwork without approval.
 
-**Бэкенд под M3 Pro** — выбрать на M1 по замеру:
-1. **Brian2 на CPU** (cython или C++ standalone) — эталон, с него начинать.
-2. **Свой событийный LIF на NumPy/Numba**: граф в CSR, на шаге обрабатываются исходящие рёбра только выстреливших нейронов; параллелизм процессами по триалам.
-3. **PyTorch MPS.** Разреженные тензоры на MPS поддерживаются ограниченно — спайки распространять через `index_add_`/scatter по списку рёбер, проверить на игрушечном графе, при проблемах вернуться на CPU.
+**Backend for M3 Pro** — select at M1 based on measurements:
+1. **Brian2 on CPU** (Cython or C++ standalone) — reference implementation; start here.
+2. **Custom event-driven LIF in NumPy/Numba**: CSR graph; each step processes outgoing edges only from neurons that spiked; parallelize trials with processes.
+3. **PyTorch MPS.** Sparse tensor support on MPS is limited: propagate spikes using `index_add_`/scatter over an edge list, verify on a toy graph, and fall back to CPU if needed.
 
-CUDA-бэкенды не рассматривать. Неэталонный бэкенд обязан пройти сверку с Brian2 по G1–G3. Для онлайн-режима бэкенд должен поддерживать **пошаговый прогон с ранней остановкой** (граф загружен один раз, состояние сбрасывается между триалами).
+Do not consider CUDA backends. Any non-reference backend must pass a Brian2 cross-check on G1–G3. Online mode requires **stepwise execution with early stopping** (load the graph once, reset state between trials).
 
-**Сенсорное кодирование (ручное, документировать):**
-- `sugar` → пуассоновский вход в сахарные GRN, частота `sugar · R_max · (1 + alpha · hunger)`. Усиление голодом — допущение.
-- `bitter` → вход в горькие GRN, `bitter · R_max`.
-- `looming` → вход напрямую в LPLC2 и LC4 (в обход сетчатки), `looming · R_max`.
+**Sensory encoding (manual; document it):**
+- `sugar` → Poisson input to sugar GRNs at rate `sugar · R_max · (1 + alpha · hunger)`. Hunger amplification is an assumption.
+- `bitter` → input to bitter GRNs at `bitter · R_max`.
+- `looming` → input directly to LPLC2 and LC4 (bypassing the retina), at `looming · R_max`.
 
-**Моторное декодирование (ручное):** окно триала `T_sim = 500 ms`, стимул включается в `t = 0`.
-- `EAT` — скользящая частота MN9 пересекла `theta_eat`.
-- `ESCAPE` — спайк DNp01 (гигантское волокно).
-- Побеждает первый пересёкший порог; симуляция на этом **останавливается**. Никто за `T_sim` — `IDLE`.
-- `t_sim_ms` = симулированное время пересечения порога (для `IDLE` = `T_sim`).
+**Motor decoding (manual):** trial window `T_sim = 500 ms`, stimulus onset at `t = 0`.
+- `EAT` — the sliding MN9 rate crosses `theta_eat`.
+- `ESCAPE` — a DNp01 spike (giant fiber).
+- The first threshold crossing wins; the simulation **stops** there. No crossing within `T_sim` means `IDLE`.
+- `t_sim_ms` = simulated time of threshold crossing (for `IDLE`, `T_sim`).
 
-**Идентификаторы нейронов** — из аннотаций FlyWire/Codex и кода исходного репозитория, в `data/circuits.yaml` с полем `provenance`.
+**Neuron IDs** must come from FlyWire/Codex annotations and the original repository, recorded in `data/circuits.yaml` with a `provenance` field.
 
 ### 4.2 ShuffledConnectomeArbiter
-Тот же пайплайн на графе, перемешанном с сохранением степеней и знаков. 20 независимых сидов.
+The same pipeline on a graph shuffled while preserving degrees and signs. 20 independent seeds.
 
 ### 4.3 JevArbiter
-- На M0 прочитать официальную документацию → `docs/jev_api_notes.md`: эндпоинт, аутентификация, формат `state`, вопросов (choice / score / noul) и ответа, лимиты, версия, **отдаёт ли API серверное время обработки**. Сигнатуры не угадывать.
-- `JevClient` (реальный) и `MockJevClient` (заглушка с настраиваемой задержкой для тестов).
-- Вопрос: choice из `["EAT", "ESCAPE", "IDLE"]`, берём вероятности всех вариантов.
-- Два режима состояния, оба в отчёт: `naive` (только поля и числа) и `informed` (плюс описание правил среды без подсказок оптимума). Шаблоны в `configs/jev_prompts/`, настраиваются только на `dev`.
-- **Онлайн по умолчанию.** Дисковый кэш используется только при построении таблицы политик и при пересборке отчёта. В любом режиме замера времени кэш принудительно выключен; запись с `cache_hit = true` в статистику латентности не попадает никогда.
-- Постоянная HTTP-сессия (keep-alive). Через хуки клиента логировать, где доступно: время установки соединения, время до первого байта, полное время.
-- Ключ из `JEV_API_KEY`; предохранитель `--max-calls` (по умолчанию 30 000).
-- Логировать дату, версию модели, сырые ответы, размер запроса.
+- At M0, read the official documentation and write `docs/jev_api_notes.md`: endpoint, authentication, `state`, question (choice / score / noul), and response formats, limits, version, and **whether the API returns server processing time**. Do not guess signatures.
+- `JevClient` (real) and `MockJevClient` (test stub with configurable delay).
+- Question: choice from `["EAT", "ESCAPE", "IDLE"]`; retain all option probabilities.
+- Two state modes, both reported: `naive` (fields and numbers only) and `informed` (also describes environment rules, without optimal-policy hints). Templates in `configs/jev_prompts/`, tuned only on `dev`.
+- **Online by default.** Use disk caching only when building policy tables or rebuilding reports. Force caching off in every timing mode; records with `cache_hit = true` never enter latency statistics.
+- Persistent HTTP session (keep-alive). Use client hooks to log, where available: connection time, time to first byte, and total time.
+- Key from `JEV_API_KEY`; `--max-calls` guard (default 30,000).
+- Log the date, model version, raw responses, and request size.
 
-### 4.4 Базлайны и оракул
+### 4.4 Baselines and oracle
 - `RandomArbiter`.
-- `FixedPriorityArbiter`: `looming > 0.5 → ESCAPE`; иначе `sugar > 0 и bitter < 0.3 → EAT`; иначе `IDLE`.
-- `OracleArbiter`: апостериор угрозы по Байесу из `looming`, value iteration по дискретизованной энергии.
-- Время решения измеряется у всех одинаково — базлайны дают нижнюю точку шкалы.
+- `FixedPriorityArbiter`: `looming > 0.5 → ESCAPE`; otherwise `sugar > 0 and bitter < 0.3 → EAT`; otherwise `IDLE`.
+- `OracleArbiter`: Bayesian threat posterior from `looming`, value iteration over discretized energy.
+- Measure decision time identically for all arbiters; baselines define the lower end of the scale.
 
-### 4.5 Таблицы политик (`policy_table/`)
-- Сетка по умолчанию: `sugar` 5 × `bitter` 3 × `looming` 5 × `hunger` 3 = 225 точек, `N_rep = 20` → 4 500 симуляций.
-- Перемешанные графы: два 1D-среза, 10 точек × 10 повторов × 20 сидов = 2 000 симуляций.
-- Jev: 225 точек × 2 режима = 450 вызовов.
-- Для каждой точки хранить не только вероятности, но и **сэмплы латентности** (`t_sim_ms`, `t_wall_ns` по каждому повтору и исходу).
-- Интерполяция вероятностей — линейная с перенормировкой; латентность сэмплируется из ближайшего узла.
-- Расчёт возобновляемый (шарды parquet); ночные прогоны через `caffeinate -i`.
-- После замера на M1 предложить человеку итоговый размер сетки.
+### 4.5 Policy tables (`policy_table/`)
+- Default grid: `sugar` 5 × `bitter` 3 × `looming` 5 × `hunger` 3 = 225 points, `N_rep = 20` → 4,500 simulations.
+- Shuffled graphs: two 1D slices, 10 points × 10 repetitions × 20 seeds = 2,000 simulations.
+- Jev: 225 points × 2 modes = 450 calls.
+- At each point, store both probabilities and **latency samples** (`t_sim_ms`, `t_wall_ns` for every repetition and outcome).
+- Linear probability interpolation with renormalization; sample latency from the nearest node.
+- Resumable computation (Parquet shards); overnight runs under `caffeinate -i`.
+- After the M1 benchmark, propose the final grid size to the human author.
 
 ---
 
-## 5. Ворота валидности (`validation/`)
+## 5. Validity gates (`validation/`)
 
-Проходятся до сравнения с Jev. Каждый тест пишет `reports/gates/<gate>.json`: `passed`, `metric`, `threshold`, `details`.
+Run before comparing against Jev. Each test writes `reports/gates/<gate>.json`: `passed`, `metric`, `threshold`, `details`.
 
-| # | Ворота | Критерий |
+| # | Gate | Criterion |
 |---|---|---|
-| G1 | Сахар → MN9 | Частота MN9 монотонно растёт с `sugar` (Спирмен ρ > 0.8) |
-| G2 | Горькое подавляет сахар | Рост `bitter` снижает `p_eat` минимум на 20% |
-| G3 | Looming → DNp01 | `p_escape` монотонно растёт с `looming` (ρ > 0.8) |
-| G4 | Настоящая против перемешанной | Метрики G1–G3 вне 95% нулевого распределения по 20 перемешиваниям |
-| G5 | Абляция | Заглушён DNp01 → `p_escape ≈ 0`; заглушён MN9 → `p_eat ≈ 0` |
-| G6 | Устойчивость | При `R_max`, глобальной константе и `alpha` в ±50% знак и монотонность G1–G3 сохраняются |
-| G7 | Конфликт | При одновременных `sugar` и `looming` поведение статистически отличается от модели независимой гонки |
+| G1 | Sugar → MN9 | MN9 rate increases monotonically with `sugar` (Spearman ρ > 0.8) |
+| G2 | Bitter suppresses sugar | Increasing `bitter` reduces `p_eat` by at least 20% |
+| G3 | Looming → DNp01 | `p_escape` increases monotonically with `looming` (ρ > 0.8) |
+| G4 | Real versus shuffled | G1–G3 metrics lie outside the 95% null distribution across 20 shuffles |
+| G5 | Ablation | Silenced DNp01 → `p_escape ≈ 0`; silenced MN9 → `p_eat ≈ 0` |
+| G6 | Robustness | G1–G3 direction and monotonicity persist under ±50% changes to `R_max`, the global constant, and `alpha` |
+| G7 | Conflict | With simultaneous `sugar` and `looming`, behavior differs statistically from an independent race model |
 
-**G7 отвечает на RQ1.** Нулевая модель: контуры независимы, действие определяет гонка латентностей `t_sim`, измеренных по отдельности. Нет отличий — в проводке нет арбитража, есть два рефлекса. Сравнение с Jev продолжается с пометкой «коннектом = гонка рефлексов».
+**G7 addresses RQ1.** Null model: circuits are independent; action is determined by a race between separately measured `t_sim` latencies. No difference means no arbitration in the wiring, only two reflexes. Continue the Jev comparison with the label “connectome = race of reflexes.”
 
-Провал G1–G3 или G5 → стоп и вопрос человеку. Провал G4 → публикуем негатив. Провал G6 → в отчёте: «выводы зависят от ручных параметров».
+Failure of G1–G3 or G5 → stop and ask the human author. Failure of G4 → publish the negative result. Failure of G6 → state in the report: “conclusions depend on manually chosen parameters.”
 
 ---
 
-## 6. Время решения (`timing/`)
+## 6. Decision time (`timing/`)
 
-### 6.1 Три разных времени — не смешивать
-| Величина | У кого | Что это |
+### 6.1 Three distinct times — keep them separate
+| Quantity | Arbiter | Meaning |
 |---|---|---|
-| `t_wall` | у всех | Реальное время от запроса до готового действия на этой машине и в этой сети |
-| `t_sim` | коннектом | Симулированное время от включения стимула до пересечения порога — «биологическая» латентность модели |
-| `t_server` | Jev | Серверное время обработки, **только если API его отдаёт**; иначе поле пустое |
+| `t_wall` | all | Actual time from request to completed action on this machine and network |
+| `t_sim` | connectome | Simulated time from stimulus onset to threshold crossing — the model's “biological” latency |
+| `t_server` | Jev | Server processing time, **only if returned by the API**; otherwise empty |
 
-`t_wall` у Jev включает сеть и зависит от места и провайдера; `t_wall` у коннектома зависит от этого мака. Это эксплуатационные цифры, не свойства моделей — в отчёте так и писать. Заявления TypeSafe о скорости относятся к сравнению с LLM; их этот проект не проверяет.
+Jev `t_wall` includes the network and depends on location and provider; connectome `t_wall` depends on this Mac. These are operational measurements, not intrinsic model properties; say so in the report. TypeSafe's speed claims concern comparisons with LLMs; this project does not test those claims.
 
-### 6.2 Методика
-- Таймер `time.perf_counter_ns()`.
-- **Jev:** последовательные вызовы, одна keep-alive-сессия, кэш выключен. Первые 20 вызовов — прогрев: в основную статистику не входят, но «холодная» латентность первого вызова приводится отдельно. Состояния берутся равномерно по сетке, чтобы покрыть лёгкие и трудные конфликты. Отдельный тест пропускной способности: 8 параллельных запросов, если позволяют лимиты.
-- **Коннектом:** один процесс, без параллельных воркеров, граф уже в памяти (`t_load` приводится отдельно). `t_wall` включает генерацию входа и симуляцию до ранней остановки. Считать коэффициент реального времени `RTF = прошедшее t_sim / t_wall`.
-- Перед замером записать в метаданные: тип сети (Wi-Fi/кабель), город, время суток, питание от сети или батареи.
-- Сообщать p50 / p90 / p99 и ECDF; среднее — только как дополнение.
+### 6.2 Method
+- Timer: `time.perf_counter_ns()`.
+- **Jev:** sequential calls, one keep-alive session, caching disabled. The first 20 calls are warm-up: exclude them from primary statistics, but report the first call's cold latency separately. Sample states uniformly over the grid to cover easy and difficult conflicts. Separate throughput test: 8 concurrent requests, if rate limits permit.
+- **Connectome:** one process, no parallel workers, graph already in memory (`t_load` reported separately). `t_wall` includes input generation and simulation up to early stopping. Compute real-time factor `RTF = elapsed t_sim / t_wall`.
+- Before timing, record metadata: network type (Wi-Fi/wired), city, time of day, AC or battery power.
+- Report p50 / p90 / p99 and ECDF; mean only as a supplement.
 
-### 6.3 Анализы
-- **A. Таблица латентности** по всем арбитрам: `t_wall` p50/p90/p99; для коннектома ещё `t_sim` и RTF; для Jev — холодный старт, разбивка соединение / первый байт / полное, `t_server` при наличии.
-- **B. Скорость против качества** — главный рисунок проекта: по X `t_wall` p50 (лог-шкала), по Y `% от оракула`, точка на арбитра с ДИ по обеим осям. Коннектом показан дважды: по `t_wall` и по `t_sim`.
-- **C. Хронометрические кривые (RQ5).** Латентность как функция трудности конфликта `d = 1 − |p_escape − p_eat|` в точке сетки. Гипотеза: у коннектома `t_sim` растёт вблизи границы решения (как у гонки к порогу), у Jev `t_wall` от трудности не зависит (один проход). Тест: Спирмен между `d` и латентностью, ДИ бутстрепом.
-- **D. Свип по дедлайну.** `deadline_ms` ∈ {1, 3, 10, 30, 100, 300, 1000, 3000}; выживаемость как функция дедлайна. Два трека: `wall` (все по `t_wall`) и `native` (коннектом по `t_sim`, остальные по `t_wall`). Показывает, при каком бюджете времени каждый арбитр вообще становится жизнеспособным.
-
----
-
-## 7. Оценка качества (`eval/`)
-
-**Главная метрика качества:** среднее время жизни в триалах (цензурировано на 500) на 1000 тестовых эпизодах, табличный режим, без дедлайна.
-- Парное сравнение на одинаковых сидах; бутстреп 10 000 ресэмплов, 95% ДИ разницы; победа — только если ДИ не включает ноль.
-- `% от оракула = (L − L_random) / (L_oracle − L_random)`.
-
-**Живые эпизоды (проверка таблицы):** 50 тестовых эпизодов в онлайн-режиме для Jev и коннектома. Сверка с табличным результатом на тех же сидах: разница выживаемости и дивергенция Дженсена—Шеннона между живыми ответами и интерполированной таблицей в посещённых состояниях. Заметное расхождение — сетка слишком грубая; сообщить человеку.
-
-**«Самый мушиный» (RQ3):** логистический фит срезов `p_escape(looming)` и `p_eat(bitter)`; сравнение порога и крутизны между коннектомом, Jev и оракулом; средняя JS-дивергенция по сетке.
-
-**Калибровка (RQ4):** Brier score и reliability-таблица для `p_escape` относительно «ESCAPE оптимально по оракулу».
-
-**Вторичное:** итоговая энергия, причины смерти (голод / хищник / токсин / не успел), цена решения, результаты при argmax.
+### 6.3 Analyses
+- **A. Latency table** for all arbiters: `t_wall` p50/p90/p99; additionally `t_sim` and RTF for connectome; for Jev, cold start, connection / first byte / total breakdown, and `t_server` if available.
+- **B. Speed versus quality** — the project's main figure: X is `t_wall` p50 (log scale), Y is `% of oracle`, one point per arbiter with CIs on both axes. Show connectome twice: using `t_wall` and `t_sim`.
+- **C. Chronometric curves (RQ5).** Latency as a function of conflict difficulty `d = 1 − |p_escape − p_eat|` at each grid point. Hypothesis: connectome `t_sim` increases near the decision boundary (as in a race to threshold), whereas Jev `t_wall` is independent of difficulty (one pass). Test: Spearman correlation between `d` and latency, bootstrap CI.
+- **D. Deadline sweep.** `deadline_ms` ∈ {1, 3, 10, 30, 100, 300, 1000, 3000}; survival as a function of deadline. Two tracks: `wall` (all use `t_wall`) and `native` (connectome uses `t_sim`, others use `t_wall`). Shows the time budget at which each arbiter becomes viable.
 
 ---
 
-## 8. Предрегистрация
+## 7. Quality evaluation (`eval/`)
 
-`PREREG.md` коммитится до первого обращения к `test`: гипотезы (включая хронометрическую), хэши конфигов и шаблонов Jev, сетка, метрики, пороги ворот, статистика, протокол замера времени, набор дедлайнов, список вторичных анализов.
+**Primary quality metric:** mean lifetime in trials (censored at 500) over 1000 test episodes, table mode, no deadline.
+- Paired comparison on identical seeds; bootstrap with 10,000 resamples, 95% CI for the difference; declare a winner only if the CI excludes zero.
+- `% of oracle = (L − L_random) / (L_oracle − L_random)`.
 
-`--unlock-test` падает, если `PREREG.md` отсутствует или хэши не совпадают. Всё, что не описано заранее, помечается **exploratory**.
+**Live episodes (table validation):** 50 test episodes online for Jev and connectome. Compare with table results on the same seeds: survival difference and Jensen–Shannon divergence between live responses and interpolated tables at visited states. A substantial discrepancy means the grid is too coarse; notify the human author.
+
+**“Most fly-like” (RQ3):** logistic fits to `p_escape(looming)` and `p_eat(bitter)` slices; compare threshold and slope across connectome, Jev, and oracle; mean JS divergence over the grid.
+
+**Calibration (RQ4):** Brier score and reliability table for `p_escape` against “ESCAPE is optimal according to the oracle.”
+
+**Secondary:** final energy, causes of death (starvation / predator / toxin / missed deadline), decision cost, argmax results.
 
 ---
 
-## 9. Терминальный интерфейс (`cli/`)
+## 8. Preregistration
 
-Команда `fob` (typer + rich). Вывод — таблицы, прогресс-бары и юникод-гистограммы; графики — только статичные PNG в `reports/figures/`.
+Commit `PREREG.md` before the first access to `test`: hypotheses (including the chronometric hypothesis), configuration and Jev template hashes, grid, metrics, gate thresholds, statistics, timing protocol, deadline set, and secondary analyses.
 
-| Команда | Что делает |
+`--unlock-test` fails if `PREREG.md` is absent or hashes do not match. Label everything not specified in advance as **exploratory**.
+
+---
+
+## 9. Terminal interface (`cli/`)
+
+Command `fob` (Typer + Rich). Output: tables, progress bars, and Unicode histograms; plots only as static PNGs in `reports/figures/`.
+
+| Command | Purpose |
 |---|---|
-| `fob fetch-data` | Скачивает коннектом, сверяет контрольные суммы |
-| `fob perf` | Замер бэкендов LIF → `reports/perf.md` |
-| `fob gate G1` / `fob gates` | Ворота, сводная таблица pass/fail |
-| `fob table build --arbiter connectome\|shuffled\|jev` | Таблица политик, возобновляемо |
-| `fob table show --arbiter X --slice looming` | Срез политики и латентности |
-| `fob latency bench --arbiter jev\|connectome\|all --n 1000` | Замер по протоколу 6.2 |
-| `fob latency show` | Таблица p50/p90/p99 и гистограммы в терминале, лог-шкала |
-| `fob live --seed N` | Живой эпизод: оба арбитра онлайн на одних стимулах (см. ниже) |
-| `fob eval --split dev\|test [--unlock-test] [--deadline-sweep]` | Оценка, таблица с ДИ |
-| `fob replay --seed N --arbiter X` | Текстовый лог табличного эпизода |
-| `fob report` | Собирает `reports/final_report.md` и PNG из артефактов |
+| `fob fetch-data` | Download the connectome and verify checksums |
+| `fob perf` | Benchmark LIF backends → `reports/perf.md` |
+| `fob gate G1` / `fob gates` | Gates and pass/fail summary |
+| `fob table build --arbiter connectome\|shuffled\|jev` | Build a resumable policy table |
+| `fob table show --arbiter X --slice looming` | Show a policy and latency slice |
+| `fob latency bench --arbiter jev\|connectome\|all --n 1000` | Benchmark under protocol 6.2 |
+| `fob latency show` | Terminal p50/p90/p99 table and log-scale histograms |
+| `fob live --seed N` | Live episode: both arbiters online on identical stimuli (see below) |
+| `fob eval --split dev\|test [--unlock-test] [--deadline-sweep]` | Evaluate and show a table with CIs |
+| `fob replay --seed N --arbiter X` | Text log of a table-mode episode |
+| `fob report` | Build `reports/final_report.md` and PNGs from artifacts |
 
-**`fob live`** — поток строк, по одной на триал: номер, стимулы, затем для каждого арбитра действие, вероятности и время решения с полоской в лог-шкале (юникод-блоки, общая шкала для всех). Расхождение действий помечается. В подвале — бегущие p50/p95 по каждому арбитру и счётчик «кто ответил первым». Пример строки:
+**`fob live`** — one line per trial: number, stimuli, then each arbiter's action, probabilities, and decision time with a log-scale bar (Unicode blocks, shared scale). Flag disagreements. Footer: running p50/p95 for each arbiter and a “who answered first” counter. Example:
 
 ```
  t=042  sugar 0.71  bitter 0.04  loom 0.63
@@ -232,81 +234,81 @@ CUDA-бэкенды не рассматривать. Неэталонный бэ
    jev         EAT     0.55                            wall   61 ms ▇▇▇▇▇▇      ≠
 ```
 
-**Графики в отчёте** (matplotlib): скорость против качества; ECDF латентностей; хронометрические кривые; свип по дедлайну (два трека); тепловые карты `p_escape(sugar, looming)`; психометрические кривые; кривые выживаемости; reliability-диаграммы.
+**Report figures** (Matplotlib): speed versus quality; latency ECDF; chronometric curves; deadline sweep (two tracks); `p_escape(sugar, looming)` heatmaps; psychometric curves; survival curves; reliability diagrams.
 
 ---
 
-## 10. Окружение и воспроизводимость
+## 10. Environment and reproducibility
 
-- macOS arm64, Python 3.11+, `uv`, lock-файл; только колёса под Apple Silicon.
-- При старте логировать чип, число ядер, память. Воркеров по умолчанию = число производительных ядер (кроме замеров времени — там один процесс). Не влезает в память — уменьшать воркеры, не граф.
-- Конфиги — YAML + pydantic. Каждый запуск пишет в `runs/<timestamp>_<name>/`: конфиг, git-хэш, сиды, версии, логи, результаты.
-- Таблицы политик, сэмплы латентности и сырые ответы Jev достаточны, чтобы `fob report` пересобрал всё без симуляций и без API.
-- Тесты (`pytest`): среда, дедлайн, оракул на игрушечном MDP, интерполяция, статистика, кэш и его отключение в замерах, таймеры на `MockJevClient` с известной задержкой, LIF с ранней остановкой на синтетическом графе.
-- Данные FlyWire — CC BY-NC 4.0: не коммитить, в `README` — атрибуция. Проект некоммерческий.
-
----
-
-## 11. Вехи
-
-**M0 — Каркас.** Репозиторий, `uv`, CLI-скелет, `MockJevClient`, `docs/jev_api_notes.md`, `docs/sources.md`. Если доступ к Jev есть — дымовой тест на 20 вызовов с печатью латентности.
-Приёмка: `pytest` зелёный; список вопросов человеку.
-
-**M1 — LIF на маке.** Загрузка коннектома, модель Shiu на Brian2, воспроизведение G1. `fob perf` по кандидатам из 4.1, включая RTF и раннюю остановку.
-Приёмка: G1 пройден; `reports/perf.md` с рекомендацией бэкенда и размера сетки. **Стоп — ждать подтверждения.**
-
-**M2 — Среда и оракул.** `arena/` с дедлайном, базлайны, `OracleArbiter`.
-Приёмка: оракул значимо лучше базлайнов на `dev`; если разрыв с `FixedPriority` меньше 10% — предложить правку параметров среды.
-
-**M3 — Ворота.** Кодирование, декодирование с `t_sim`, перемешивание, абляции, чувствительность, модель гонки.
-Приёмка: все `reports/gates/*.json`, сводка `reports/gates.md`. **Стоп — решение человека.**
-
-**M4 — Таблицы и время.** Таблицы политик с сэмплами латентности; `fob latency bench` для всех арбитров; `fob live` работает.
-Приёмка: parquet-артефакты; `reports/latency.md`; расход на Jev в пределах `--max-calls`.
-
-**M5 — Финал.** `PREREG.md` → оценка на `test` со свипом по дедлайну и 50 живыми эпизодами → `fob report`.
-Приёмка: отчёт с таблицами качества и времени, графиками, ограничениями и списком exploratory; пересборка из артефактов работает.
+- macOS arm64, Python 3.11+, `uv`, lockfile; Apple Silicon wheels only.
+- Log chip, core count, and memory at startup. Default worker count = performance-core count (except timing runs, which use one process). If memory is insufficient, reduce workers, not the graph.
+- YAML + Pydantic configurations. Each run writes configuration, Git hash, seeds, versions, logs, and results to `runs/<timestamp>_<name>/`.
+- Policy tables, latency samples, and raw Jev responses must suffice for `fob report` to rebuild everything without simulations or API calls.
+- Tests (`pytest`): environment, deadline, oracle on a toy MDP, interpolation, statistics, cache and disabling it during timing, timers with a known-delay `MockJevClient`, LIF early stopping on a synthetic graph.
+- FlyWire data: CC BY-NC 4.0; do not commit; provide attribution in `README`. Non-commercial project.
 
 ---
 
-## 12. Когда остановиться и спросить
+## 11. Milestones
 
-- Не найден идентификатор нейрона или тип клеток.
-- Документация Jev недоступна, противоречива, или нет доступа к API.
-- Лимиты Jev не позволяют провести замер по протоколу 6.2.
-- Граф не помещается в память, либо расчёт сетки по оценке дольше 24 часов.
-- Бэкенд не поддерживает раннюю остановку без потери сверки с Brian2.
-- Провалены G1–G5.
-- Хочется менять параметры, пороги или метрики после просмотра результатов.
-- Расходы сверх `--max-calls`.
-- Соблазн добавить обучаемый компонент.
+**M0 — Scaffold.** Repository, `uv`, CLI skeleton, `MockJevClient`, `docs/jev_api_notes.md`, `docs/sources.md`. If Jev is accessible, run a 20-call smoke test displaying latency.
+Acceptance: passing `pytest`; list of questions for the human author.
 
-Формат: что блокирует, варианты, рекомендация и почему.
+**M1 — LIF on Mac.** Load the connectome, implement the Shiu model in Brian2, reproduce G1. Run `fob perf` on the candidates in 4.1, including RTF and early stopping.
+Acceptance: G1 passed; `reports/perf.md` with backend and grid-size recommendations. **Stop and wait for confirmation.**
+
+**M2 — Environment and oracle.** `arena/` with deadlines, baselines, `OracleArbiter`.
+Acceptance: oracle significantly outperforms baselines on `dev`; if its lead over `FixedPriority` is below 10%, propose an environment-parameter change.
+
+**M3 — Gates.** Encoding, decoding with `t_sim`, shuffling, ablations, sensitivity, race model.
+Acceptance: all `reports/gates/*.json` and summary `reports/gates.md`. **Stop for a human decision.**
+
+**M4 — Tables and timing.** Policy tables with latency samples; `fob latency bench` for all arbiters; working `fob live`.
+Acceptance: Parquet artifacts, `reports/latency.md`, Jev usage within `--max-calls`.
+
+**M5 — Final.** `PREREG.md` → evaluation on `test` with a deadline sweep and 50 live episodes → `fob report`.
+Acceptance: report with quality and timing tables, figures, limitations, and exploratory work; successful rebuild from artifacts.
 
 ---
 
-## 13. Источники
+## 12. When to stop and ask
+
+- A neuron ID or cell type cannot be found.
+- Jev documentation is unavailable or contradictory, or API access is unavailable.
+- Jev limits prevent the timing protocol in 6.2.
+- The graph does not fit in memory, or estimated grid computation exceeds 24 hours.
+- A backend cannot support early stopping while matching Brian2.
+- G1–G5 fail.
+- There is a desire to change parameters, thresholds, or metrics after viewing results.
+- Usage would exceed `--max-calls`.
+- There is a temptation to add a trainable component.
+
+Format: blocker, options, recommendation, and rationale.
+
+---
+
+## 13. Sources
 
 - Shiu et al., Nature 2024 — https://doi.org/10.1038/s41586-024-07763-9
 - https://github.com/philshiu/Drosophila_brain_model
-- https://github.com/eonsystemspbc/fly-brain (порты на другие бэкенды, для сверки)
+- https://github.com/eonsystemspbc/fly-brain (ports to other backends, for cross-checking)
 - FlyWire — https://flywire.ai · Codex — https://codex.flywire.ai
 - Jev: https://typesafe.ai/blog/introducing-system-one-models-and-jev · https://developers.cloudflare.com/ai/models/typesafe/jev/ · https://www.langchain.com/blog/building-a-harness-with-jev
-- Методология (прочитать до M3): https://www.neuroai.science/p/are-flies-playing-beat-saber
-- Пример контроля с перемешиванием: https://github.com/webergithub/fruitfly-lab
-- Каталог проектов, включая запуск на Apple MPS: https://github.com/cobanov/awesome-fly
+- Methodology (read before M3): https://www.neuroai.science/p/are-flies-playing-beat-saber
+- Example shuffle control: https://github.com/webergithub/fruitfly-lab
+- Project catalog, including Apple MPS execution: https://github.com/cobanov/awesome-fly
 
 ---
 
-## 14. Структура репозитория
+## 14. Repository layout
 
 ```
 flight-or-bite/
 ├── SPEC.md
-├── PREREG.md            # появляется на M5
+├── PREREG.md            # added at M5
 ├── pyproject.toml
 ├── configs/             # env.yaml, lif.yaml, grid.yaml, timing.yaml, jev_prompts/
-├── data/                # .gitignore, кроме circuits.yaml
+├── data/                # git-ignored except circuits.yaml
 ├── docs/                # ENGINEERED.md, jev_api_notes.md, sources.md
 ├── src/flight_or_bite/
 │   ├── arena/  arbiters/  lif/  policy_table/
@@ -316,4 +318,4 @@ flight-or-bite/
 └── reports/             # gates/, figures/, perf.md, latency.md, final_report.md
 ```
 
-В отчёте писать «LIF-симуляция коннектома», «контур», «арбитр», «политика». Не писать «муха решила», «загруженная муха», «сознание»: коннектом — статичная карта, вся динамика задана нами.
+In reports, use “LIF simulation of the connectome,” “circuit,” “arbiter,” and “policy.” Do not write “the fly decided,” “uploaded fly,” or “consciousness”: the connectome is a static map; all dynamics are defined by us.

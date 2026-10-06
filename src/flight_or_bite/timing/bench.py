@@ -165,13 +165,13 @@ def _spark(counts: list[int]) -> str:
 
 
 def render(s: dict[str, Any]) -> str:
-    lines = ["| Арбитр | n | t_wall p50, мс | p95, мс | холодный вызов, мс | t_sim p50 / p95, мс | RTF | сбоев | "
-             "гистограмма t_wall, 1 мкс … 10 с (лог) |", "|---|---|---|---|---|---|---|---|---|"]  # fmt: skip
+    lines = ["| Arbiter | n | t_wall p50, ms | p95, ms | Cold call, ms | t_sim p50 / p95, ms | RTF | Failures | "
+             "t_wall histogram, 1 µs … 10 s (log) |", "|---|---|---|---|---|---|---|---|---|"]  # fmt: skip
     for name, a in s["arbiters"].items():
         cold = ", ".join(f"{x:.0f}" for x in a.get("cold_ms", [])) or "—"
         sim = f"{a['t_sim_p50_ms']:.1f} / {a['t_sim_p95_ms']:.1f}" if "t_sim_p50_ms" in a else "—"
         rtf = f"{a['rtf']:.2f}" if "rtf" in a else "—"
-        bad = f"{a['failed']} / {a['attempts']}" + ("" if a["valid"] else " **(замер недействителен)**")
+        bad = f"{a['failed']} / {a['attempts']}" + ("" if a["valid"] else " **(invalid benchmark)**")
         lines.append(f"| `{name}` | {a['n']} | {a['p50_ms']:.3g} | {a['p95_ms']:.3g} | {cold} | {sim} | {rtf} | "
                      f"{bad} | `{_spark(a['hist_log10_ms'])}` |")  # fmt: skip
     return "\n".join(lines)

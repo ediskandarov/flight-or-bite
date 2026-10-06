@@ -6,10 +6,14 @@ listed under [Not documented](#not-documented). Quoted text is verbatim.
 
 Status: **verified against the live API** through OpenRouter (§1a, §11).
 
-> **Scope after decisions D10–D13 (2026-09-20):** OpenRouter Decisions (§1a) is the project's only
-> access path; the model is pinned to `typesafe/jev-1.13`; only client-side `t_wall` is measured.
-> §1 (TypeSafe direct, Cloudflare), §5 (server time) and the connect / first-byte findings are
-> kept below as a record of what was read, **not** as things the project uses.
+> **Current project scope, 2026-10-06:** the completed primary experiment uses OpenRouter
+> Decisions and the `typesafe/jev-1.13` family. D63–D64 add a separate direct TypeSafe
+> benchmark using `TypeSafeClient`, `TYPESAFE_API_KEY`, and pinned `jev-1.13.0` at
+> `POST https://api.typesafe.ai/v1/systemone`. All 4,080 full-benchmark calls succeeded;
+> the preliminary probe made 121 successful calls. See [comparison](../reports/latency_typesafe/comparison.md)
+> and [spend accounting](../reports/direct_typesafe/README.md). Only client-side `t_wall`
+> is measured. Original OpenRouter results are preserved; provider snapshot equivalence
+> is unverified. Cloudflare and server-time investigations below are historical source notes.
 
 ## 1a. Third path, the one we use: OpenRouter Decisions (alpha)
 
@@ -30,7 +34,7 @@ through the Decisions endpoint, so the agent model and the check run on the same
 Not documented for this path: rate limits specific to Decisions; whether TypeSafe's 1,200 req/min
 applies per OpenRouter customer or to OpenRouter as a whole.
 
-## 1. Two further documented access paths (untested)
+## 1. Other documented paths (historical source notes; direct TypeSafe tested on 2026-10-06)
 
 | | TypeSafe direct | Cloudflare AI |
 |---|---|---|
@@ -47,11 +51,11 @@ Sources: [api], [models], [cf].
 The response body has the same shape on both paths (`model`, `answers`, `usage`); the Cloudflare
 examples report `"model": "jev-1.13.0"`.
 
-**Project choice (M0, reversible):** `JevClient` has two backends, `typesafe` (direct) and
-`openrouter` (Decisions). `--backend auto` prefers the direct path when its key exists, because it
-removes one intermediary from `t_wall`; today only the OpenRouter key exists. Cloudflare is not
-implemented. Consequence for SPEC §6.1: Jev's `t_wall` includes the OpenRouter hop, and the report
-must say so.
+**Historical M0 proposal, superseded by D10–D13:** an automatic choice between direct
+TypeSafe and OpenRouter was initially proposed. The executed primary experiment uses
+`JevClient` for OpenRouter only. The later direct benchmark uses a separate
+`TypeSafeClient` (D63–D64), without changing the primary client or its results.
+Cloudflare is not implemented.
 
 ## 2. Authentication
 
@@ -59,7 +63,8 @@ must say so.
 - Keys come from the dashboard: https://console.typesafe.ai/keys. [quickstart]
 - Access is gated: "Early access" with a waitlist. [blog]
 - The vendor's SDKs and examples read the key from **`TYPESAFE_API_KEY`**. [constants] SPEC §4.3
-  names `JEV_API_KEY`. `JevClient` reads `JEV_API_KEY` first and falls back to `TYPESAFE_API_KEY`.
+  names `JEV_API_KEY`; that original name was superseded. Current `JevClient` uses
+  `OPENROUTER_API_KEY`; the separate direct `TypeSafeClient` uses `TYPESAFE_API_KEY`.
 
 ## 3. Request
 

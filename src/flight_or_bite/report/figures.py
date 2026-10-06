@@ -56,9 +56,9 @@ def speed_vs_quality(main: dict) -> str:
             ax.annotate(f"{n} ({kind})" if len(xs) > 1 else n, (x, 100 * pct), xytext=(7, 6 if kind == "t_wall" else -14),
                         textcoords="offset points", color=INK2, fontsize=9)  # fmt: skip
     ax.set_xscale("log")
-    ax.set_xlabel("t_wall p50 на решение, мс (лог-шкала); у коннектома дополнительно t_sim p50 — полый маркер")
-    ax.set_ylabel("% от оракула")
-    ax.set_title("Скорость против качества: главный онлайн-прогон, test")
+    ax.set_xlabel("Decision t_wall p50, ms (log scale); connectome t_sim p50: open marker")
+    ax.set_ylabel("% of oracle")
+    ax.set_title("Speed versus quality: main online run, test")
     return _save(fig, "speed_vs_quality.png")
 
 
@@ -71,9 +71,9 @@ def latency_ecdf(main: dict) -> str:
             s = np.sort(main["sims_ms"][n])
             ax.plot(s, np.arange(1, len(s) + 1) / len(s), color=COLOR[n], ls="--", label=f"{n}, t_sim")
     ax.set_xscale("log")
-    ax.set_xlabel("время решения, мс (лог-шкала)")
-    ax.set_ylabel("доля решений")
-    ax.set_title("ECDF времени решения: главный онлайн-прогон")
+    ax.set_xlabel("Decision time, ms (log scale)")
+    ax.set_ylabel("Fraction of decisions")
+    ax.set_title("Decision-time ECDF: main online run")
     ax.legend(loc="center left", bbox_to_anchor=(1.0, 0.5))
     return _save(fig, "latency_ecdf.png")
 
@@ -84,9 +84,9 @@ def deadline_sweep(main: dict) -> str:
         for n, shares in main["deadline_share"][track].items():
             ax.plot([float(d) for d in shares], list(shares.values()), label=n, **_style(n))
         ax.set_xscale("log")
-        ax.set_xlabel("дедлайн, мс (лог-шкала)")
-        ax.set_title({"wall": "Трек wall: все по t_wall", "native": "Трек native: коннектом по t_sim"}[track])
-    axes[0].set_ylabel("доля решений, успевших к дедлайну")
+        ax.set_xlabel("Deadline, ms (log scale)")
+        ax.set_title({"wall": "Wall track: all use t_wall", "native": "Native track: connectome uses t_sim"}[track])
+    axes[0].set_ylabel("Fraction of decisions meeting deadline")
     axes[1].legend(loc="center left", bbox_to_anchor=(1.0, 0.5))
     return _save(fig, "deadline_sweep.png")
 
@@ -97,16 +97,16 @@ def survival(main: dict) -> str:
         life = np.asarray(life)
         t = np.arange(0, int(life.max()) + 2)
         ax.step(t, [(life >= k).mean() for k in t], where="post", color=COLOR[n], label=n)
-    ax.set_xlabel("триал")
-    ax.set_ylabel("доля эпизодов, доживших до триала")
-    ax.set_title("Кривые выживания: главный онлайн-прогон")
+    ax.set_xlabel("Trial")
+    ax.set_ylabel("Fraction of episodes surviving to trial")
+    ax.set_title("Survival curves: main online run")
     ax.legend(loc="center left", bbox_to_anchor=(1.0, 0.5))
     return _save(fig, "survival.png")
 
 
 def chronometric(tables: dict) -> str | None:
-    panels = [(k, t) for k, t in (("h6_secondary_connectome", "connectome: медиана t_sim в узле, мс"),
-                                  ("h6_jev", "jev_informed: медиана t_wall в узле, мс")) if k in tables]  # fmt: skip
+    panels = [(k, t) for k, t in (("h6_secondary_connectome", "connectome: median node t_sim, ms"),
+                                  ("h6_jev", "jev_informed: median node t_wall, ms")) if k in tables]  # fmt: skip
     if not panels:
         return None
     fig, axes = plt.subplots(1, len(panels), figsize=(5.3 * len(panels), 4.2), squeeze=False)
@@ -115,7 +115,7 @@ def chronometric(tables: dict) -> str | None:
         name = "connectome" if "connectome" in key else "jev_informed"
         if len(pts):
             ax.scatter(pts[:, 0], pts[:, 1], s=14, color=COLOR[name], alpha=0.55, edgecolors="none")
-        ax.set_xlabel("трудность конфликта d = 1 − |p_escape − p_eat|")
+        ax.set_xlabel("Conflict difficulty d = 1 − |p_escape − p_eat|")
         ax.set_title(title)
     return _save(fig, "chronometric.png")
 
@@ -129,7 +129,7 @@ def psychometric(tables: dict) -> str:
             ax.plot(x, r["p"], label=n, **_style(n))
         ax.set_xlabel(xl)
         ax.set_title({"escape_vs_looming": "p_escape(looming)", "eat_vs_bitter": "p_eat(bitter)"}[key])
-    axes[0].set_ylabel("вероятность")
+    axes[0].set_ylabel("Probability")
     axes[1].legend(loc="center left", bbox_to_anchor=(1.0, 0.5))
     return _save(fig, "psychometric.png")
 
@@ -157,13 +157,13 @@ def reliability(tables: dict) -> str | None:
     if not tables["calibration"]:
         return None
     fig, ax = plt.subplots(figsize=(5.6, 4.8))
-    ax.plot([0, 1], [0, 1], color=MUTED, lw=1, ls=":", label="идеальная калибровка")
+    ax.plot([0, 1], [0, 1], color=MUTED, lw=1, ls=":", label="Perfect calibration")
     for n, c in tables["calibration"].items():
         rel = [r for r in c["reliability"] if r["n"]]
         ax.plot([r["mean_p"] for r in rel], [r["share_optimal"] for r in rel], label=n, **_style(n))
-    ax.set_xlabel("p_escape по Jev (среднее в интервале)")
-    ax.set_ylabel("доля узлов, где ESCAPE оптимально по оракулу")
-    ax.set_title("Reliability-диаграмма (RQ4)")
+    ax.set_xlabel("Jev p_escape (mean within bin)")
+    ax.set_ylabel("Fraction of nodes where oracle chooses ESCAPE")
+    ax.set_title("Reliability diagram (RQ4)")
     ax.legend(loc="center left", bbox_to_anchor=(1.0, 0.5))
     return _save(fig, "reliability.png")
 

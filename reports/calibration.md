@@ -1,12 +1,12 @@
-# Калибровка каналов (решение D25)
+# Channel calibration (decision D25)
 
-Дата: 2026-09-20. Протокол зафиксирован в `configs/calibration.yaml` до прогона; скрипт `scripts/calibrate.py`; данные `runs/20260920T104933_calibration/calibration.json`. Коннектом v783, бэкенд `event`, полные триалы 500 мс, декодирование после триала. Ни одна величина не зависит от Jev, оракула или сравнения арбитров. `alpha` не задан (голод в кодировании не участвует).
+Date: 2026-09-20. Protocol fixed in `configs/calibration.yaml` before the run; script `scripts/calibrate.py`; data `runs/20260920T104933_calibration/calibration.json`. Connectome v783, `event` backend, full 500 ms trials, decoding after each trial. No quantity depends on Jev, the oracle, or arbiter comparisons. `alpha` is unset (hunger does not affect encoding).
 
-## 1. Насыщение MN9 и порог EAT
+## 1. MN9 saturation and EAT threshold
 
-20 сахарных GRN возбуждаются с заданной частотой; частота MN9 — по всему окну 500 мс, среднее по 20 триалам (dev-сиды 0–19).
+20 sugar GRNs stimulated at the specified rate; MN9 rate over the full 500 ms window, mean of 20 trials (dev seeds 0–19).
 
-| Вход на GRN, Гц | MN9, Гц (среднее) | SD |
+| GRN input, Hz | MN9, Hz (mean) | SD |
 |---|---|---|
 | 50 | 10.7 | 5.1 |
 | 100 | 60.7 | 7.9 |
@@ -16,16 +16,16 @@
 | 1600 | 139.9 | 7.9 |
 | 3200 | 149.6 | 4.1 |
 
-- «Насыщение» определено операционально как наибольшее среднее в этом ряду: **149.6 Гц**. Плато в ряду нет: между последними двумя точками (вход ×2) частота MN9 выросла на 6.9%. При более широком ряде значение было бы выше.
-- **`theta_eat` = 74.8 Гц** (половина). На скользящем окне 50 мс это **4 спайка MN9 в пределах 50 мс**, то есть фактический порог 80 Гц: число спайков в окне целое, и порог 74.8 Гц (3.74 спайка) округляется вверх.
+- “Saturation” is operationally the highest mean in this series: **149.6 Hz**. There is no plateau: MN9 firing increased 6.9% between the final two points (input doubled). A broader series would give a higher value.
+- **`theta_eat` = 74.8 Hz** (half). In a sliding 50 ms window this means **4 MN9 spikes within 50 ms**, effectively 80 Hz: spike counts are integers, so 74.8 Hz (3.74 spikes) rounds upward.
 
-## 2. Бисекция R_max
+## 2. R_max bisection
 
-Цель: P(отклик) = 0.5 при стимуле 0.5, остальные каналы молчат. 50 триалов на шаг, dev-сиды 0–49, одни и те же на каждом шаге (общие случайные числа). Результат — верхняя граница финальной скобки (наименьший проверенный `R_max` с p ≥ 0.5).
+Target: P(response) = 0.5 at stimulus 0.5, with other channels silent. 50 trials per step, dev seeds 0–49, identical at each step (common random numbers). Result: upper endpoint of the final bracket (lowest tested `R_max` with p ≥ 0.5).
 
-**Сахар → EAT.** `R_max` = **102.783 Гц** (скобка 102.539–102.783).
+**Sugar → EAT.** `R_max` = **102.783 Hz** (bracket 102.539–102.783).
 
-| шаг | R_max, Гц | вход при sugar 0.5, Гц | P(EAT) |
+| Step | R_max, Hz | Input at sugar 0.5, Hz | P(EAT) |
 |---|---|---|---|
 | 0 | 0.000 | 0.000 | 0.00 |
 | 1 | 2000.000 | 1000.000 | 1.00 |
@@ -43,9 +43,9 @@
 | 13 | 103.027 | 51.514 | 0.54 |
 | 14 | 102.783 | 51.392 | 0.50 |
 
-**Looming → ESCAPE** (вход во все 314 LPLC2+LC4 обеих сторон; ESCAPE = один спайк любого DNp01). `R_max` = **2.344 Гц** (скобка 2.148–2.344).
+**Looming → ESCAPE** (input to all 314 bilateral LPLC2+LC4; ESCAPE = one spike from either DNp01). `R_max` = **2.344 Hz** (bracket 2.148–2.344).
 
-| шаг | R_max, Гц | вход при looming 0.5, Гц | P(ESCAPE) |
+| Step | R_max, Hz | Input at looming 0.5, Hz | P(ESCAPE) |
 |---|---|---|---|
 | 0 | 0.000 | 0.000 | 0.00 |
 | 1 | 100.000 | 50.000 | 1.00 |
@@ -59,17 +59,17 @@
 | 9 | 1.953 | 0.977 | 0.28 |
 | 10 | 2.148 | 1.074 | 0.42 |
 
-- `R_max` looming-канала в 44 раз меньше сахарного. При looming = 0.5 каждый из 314 входных нейронов даёт в среднем 0.59 спайка за триал 500 мс.
-- Оценка P по 50 триалам немонотонна на соседних шагах сахарной бисекции (103.5 Гц → 0.66, 105.5 Гц → 0.62): шаг P равен 0.02, это шум конечной выборки.
-- `R_max` горького канала = `R_max` сахара (102.783 Гц) по решению D25; не калибровался и в симуляциях пока не использовался. Какой набор горьких GRN брать (65 по аннотациям или 20 по списку авторов) — не решено.
+- Looming `R_max` is 44 times smaller than sugar `R_max`. At looming = 0.5, each of the 314 input neurons emits an average of 0.59 spikes per 500 ms trial.
+- P estimated from 50 trials is nonmonotonic between neighboring sugar-bisection steps (103.5 Hz → 0.66, 105.5 Hz → 0.62): probability resolution is 0.02, reflecting finite-sample noise.
+- Bitter `R_max` equals sugar `R_max` (102.783 Hz) under D25; it was not calibrated or yet used in simulations. The bitter GRN set (65 from annotations or 20 from the authors' list) remains undecided.
 
-## 3. Проверка на независимых сидах
+## 3. Independent-seed check
 
-50 триалов на уровень, dev-сиды 500–549 (в бисекции не участвовали). Одиночный стимул, полный декодер.
+50 trials per level, dev seeds 500–549 (not used in bisection). Single stimulus, full decoder.
 
-**Сахар** (`R_max` = 102.8 Гц):
+**Sugar** (`R_max` = 102.8 Hz):
 
-| sugar | вход, Гц | P(EAT) | t_sim решения EAT, мс: p50 [min–max] | доли EAT / ESCAPE / IDLE |
+| sugar | Input, Hz | P(EAT) | EAT decision t_sim, ms: p50 [min–max] | EAT / ESCAPE / IDLE fractions |
 |---|---|---|---|---|
 | 0.0 | 0.00 | **0.00** | — | 0.00 / 0.00 / 1.00 |
 | 0.1 | 10.28 | **0.00** | — | 0.00 / 0.00 / 1.00 |
@@ -83,9 +83,9 @@
 | 0.9 | 92.50 | **1.00** | 70.8 [53.7–165.7] | 1.00 / 0.00 / 0.00 |
 | 1.0 | 102.78 | **1.00** | 61.1 [49.6–345.4] | 1.00 / 0.00 / 0.00 |
 
-**Looming** (`R_max` = 2.34 Гц):
+**Looming** (`R_max` = 2.34 Hz):
 
-| looming | вход, Гц | P(ESCAPE) | t_sim решения ESCAPE, мс: p50 [min–max] | доли EAT / ESCAPE / IDLE |
+| looming | Input, Hz | P(ESCAPE) | ESCAPE decision t_sim, ms: p50 [min–max] | EAT / ESCAPE / IDLE fractions |
 |---|---|---|---|---|
 | 0.0 | 0.00 | **0.00** | — | 0.00 / 0.00 / 1.00 |
 | 0.1 | 0.23 | **0.00** | — | 0.00 / 0.00 / 1.00 |

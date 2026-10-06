@@ -1,60 +1,60 @@
-# Разведка looming-канала (exploratory)
+# Looming-channel probe (exploratory)
 
-Дата: 2026-09-20. Решение D18: разведочный прогон, **не** ворота G3/G7 и не веха. Ничего не подгонялось: все параметры — те, что уже были в конфигах до прогона (`R_max` = 200 Гц, `T_sim` = 500 мс, параметры LIF из `model.py`). Коннектом v783, бэкенд `event`, без ранней остановки (каждый триал идёт все 500 мс). Всё здесь помечается **exploratory** (SPEC §8).
+Date: 2026-09-20. Decision D18: exploratory run, **not** G3/G7 gates or a milestone. Nothing was tuned: all parameters were already configured before the run (`R_max` = 200 Hz, `T_sim` = 500 ms, LIF parameters from `model.py`). Connectome v783, `event` backend, no early stopping (every trial runs the full 500 ms). Everything here is **exploratory** (SPEC §8).
 
-Воспроизведение: `uv run python scripts/probe_looming.py`. Сырые данные: `runs/20260920T005025_probe-looming/probe.json`; триалы конфликтного среза — `reports/probe_looming_trials.csv` (220 строк).
+Reproduction: `uv run python scripts/probe_looming.py`. Raw data: `runs/20260920T005025_probe-looming/probe.json`; conflict-slice trials: `reports/probe_looming_trials.csv` (220 rows).
 
-## 1. Прочитанные источники
+## 1. Sources read
 
-**Shiu et al., Nature 2024** (полный текст, открытый доступ; doi:10.1038/s41586-024-07763-9). Факты, относящиеся к проекту:
+**Shiu et al., Nature 2024** (full text, open access; doi:10.1038/s41586-024-07763-9). Project-relevant findings:
 
-- Статья — про питание (сахар, вода, горькое, Ir94e → MN9) и антеннальный груминг. **LPLC2, LC4, гигантское волокно и DNp01 в ней не упоминаются** (0 вхождений). Looming-контур авторами не моделировался и не валидировался.
-- Авторы выбрали питание, потому что этот контур целиком лежит в объёме FlyWire, «in contrast to other sensorimotor circuits that require descending neurons, which are incomplete in the Flywire volume». DNp01 — нисходящий нейрон.
-- `W_syn` = 0.275 мВ — «the single free parameter of the model». Способ выбора, дословно: «We chose W syn such that activation of sugar GRNs at 100 Hz resulted in roughly 80% of maximal MN9 firing». Устойчивость проверялась при `W_syn` ± 30%.
-- Базовая частота всех нейронов 0 Гц; следствие, дословно: «inhibitory connections to an inactive neuron have no effect». «Because of these assumptions, the absolute firing rates of the model are unlikely to be accurate. Rather, we prefer to interpret broad differences in firing rates between different conditions».
-- Знак нейрона: GABA и глутамат — тормозные; нейрон целиком либо возбуждающий, либо тормозный (по большинству пресинаптических сайтов, порог cleft score 50). Дофамин, октопамин, серотонин отнесены к возбуждающим.
-- Модель: 127 400 нейронов материализации v630; 30 симуляций по 1 000 мс на эксперимент; «approximately 5 min per 1,000 ms trial per central processing unit thread».
-- При активации сахарных GRN отвечают 45 нейронов (10 Гц) и 455 (200 Гц) из 127 400.
-- Контроль с перемешиванием весов (с сохранением глобального распределения весов): MN9 активировался в 100% симуляций на настоящем графе и в 1 из 100 на перемешанных (сахар 100 Гц).
-- Горькое: добавление активности горьких GRN к сахарным тормозит MN6 и MN9 (рис. 3b); торможение — на уровне пре-моторных нейронов.
-- Стороны: авторы стимулировали **левое** полушарие («Because GRN reconstructions on the left hemisphere are more complete … we performed unilateral left hemisphere activation for all simulations, except for Extended Data Fig. 1d») и считывали **контралатеральный** MN9, который отвечает сильнее ипсилатерального.
-- Не учтены: щелевые контакты, неспайкующие нейроны, внутреннее состояние, нейропептиды и нейромодуляция, морфология, динамика рецепторов. Итоговая точность по 164 проверенным предсказаниям — 91% (84% без скрининга split-GAL4).
+- The paper covers feeding (sugar, water, bitter, Ir94e → MN9) and antennal grooming. **LPLC2, LC4, giant fiber, and DNp01 are not mentioned** (0 occurrences). The authors did not model or validate the looming circuit.
+- They chose feeding because the entire circuit lies within the FlyWire volume, “in contrast to other sensorimotor circuits that require descending neurons, which are incomplete in the Flywire volume.” DNp01 is a descending neuron.
+- `W_syn` = 0.275 mV is “the single free parameter of the model.” Selection method, verbatim: “We chose W syn such that activation of sugar GRNs at 100 Hz resulted in roughly 80% of maximal MN9 firing.” Robustness was tested at `W_syn` ± 30%.
+- All neurons have baseline firing rate 0 Hz; consequence, verbatim: “inhibitory connections to an inactive neuron have no effect.” “Because of these assumptions, the absolute firing rates of the model are unlikely to be accurate. Rather, we prefer to interpret broad differences in firing rates between different conditions.”
+- Neuron sign: GABA and glutamate are inhibitory; each neuron is entirely excitatory or inhibitory, based on the majority of presynaptic sites at cleft-score threshold 50. Dopamine, octopamine, and serotonin are treated as excitatory.
+- Model: 127,400 neurons from v630; 30 simulations of 1,000 ms per experiment; “approximately 5 min per 1,000 ms trial per central processing unit thread.”
+- Sugar GRN activation recruits 45 neurons at 10 Hz and 455 at 200 Hz out of 127,400.
+- Weight-shuffle control (preserving the global weight distribution): MN9 activated in 100% of real-graph simulations and 1 of 100 shuffled simulations (sugar 100 Hz).
+- Bitter: adding bitter GRN activity to sugar inhibits MN6 and MN9 (Fig. 3b); inhibition occurs at the premotor-neuron level.
+- Sides: the authors stimulated the **left** hemisphere (“Because GRN reconstructions on the left hemisphere are more complete … we performed unilateral left hemisphere activation for all simulations, except for Extended Data Fig. 1d”) and read the **contralateral** MN9, which responds more strongly than the ipsilateral neuron.
+- Omitted: gap junctions, non-spiking neurons, internal state, neuropeptides and neuromodulation, morphology, receptor dynamics. Overall accuracy across 164 tested predictions: 91% (84% excluding split-GAL4 screening).
 
-**neuroai.science, «Are flies playing Beat Saber?»** (полный текст). Факты и утверждения автора, относящиеся к проекту:
+**neuroai.science, “Are flies playing Beat Saber?”** (full text). Project-relevant facts and author claims:
 
-- О модели Shiu: «only a few hundred neurons are actually activated in the simulation: they were not able to extend the simulation to meaningfully engage central, intrinsic neurons for non-stereotyped behaviors»; глобальная константа «was fit by trial and error».
-- Критерий «работающей» симуляции у автора: связь ощущения с моторным выходом «in a non-trivial and adaptive way». Рекуррентная сеть, возбуждаемая шумом и привязанная к кнопкам, даёт сложное на вид поведение без сенсомоторной петли («random button mashing»).
-- Гибкий обучаемый считыватель или backprop через коннектом делают коннектом «beside the point» (пример: коннектом C. elegans, управляющий телом мухи).
-- Цитата из Kording et al. (2026): «without pre-specified, independently verifiable metrics, even technically interesting results attract legitimate skepticism».
-- О зрении: реалистичная модель зрительной системы — гибридная, «with (mostly) graded inputs and spiking outputs»; у Shiu-подобной LIF-сети функциональной зрительной системы нет.
-- Чего не хватает коннектому: силы синапсов, задержек, собственной электрофизиологии нейронов.
+- On the Shiu model: “only a few hundred neurons are actually activated in the simulation: they were not able to extend the simulation to meaningfully engage central, intrinsic neurons for non-stereotyped behaviors”; the global constant “was fit by trial and error.”
+- The author's criterion for a functioning simulation is sensation connected to motor output “in a non-trivial and adaptive way.” A noise-driven recurrent network wired to buttons can produce apparently complex behavior without a sensorimotor loop (“random button mashing”).
+- A flexible trainable readout or backpropagation through a connectome makes the connectome “beside the point” (example: a C. elegans connectome controlling a fly body).
+- Quoting Kording et al. (2026): “without pre-specified, independently verifiable metrics, even technically interesting results attract legitimate skepticism.”
+- Vision: a realistic visual-system model is hybrid, “with (mostly) graded inputs and spiking outputs”; a Shiu-style LIF network has no functional visual system.
+- Missing from a connectome: synaptic strengths, delays, and intrinsic neuronal electrophysiology.
 
-## 2. Идентификаторы
+## 2. Identifiers
 
-Источник для LPLC2, LC4, DNp01 и набора горьких GRN «по аннотациям»: `flyconnectome/flywire_annotations` @ `8587524c17`, файл `supplemental_files/Supplemental_file1_neuron_annotations.tsv` (Schlegel et al. 2024), сверен по git blob SHA-1 `afea3e15a5…`, SHA-256 `9a4f8b2f84…`. По README файла `root_id` — «the ID of the neuron in the FlyWire 783 release»; `side` — сторона сомы (для сенсорных — сторона входа нерва). Из 139 248 строк таблицы 138 625 `root_id` есть в нашем `Completeness_783.csv`. Codex не использовался. Все наборы записаны в `data/circuits.yaml` с полем `provenance`.
+Source for LPLC2, LC4, DNp01, and the annotation-based bitter GRN set: `flyconnectome/flywire_annotations` @ `8587524c17`, file `supplemental_files/Supplemental_file1_neuron_annotations.tsv` (Schlegel et al. 2024), verified against Git blob SHA-1 `afea3e15a5…` and SHA-256 `9a4f8b2f84…`. Its README defines `root_id` as “the ID of the neuron in the FlyWire 783 release”; `side` is the soma side (nerve entry side for sensory neurons). Of 139,248 annotation rows, 138,625 root IDs occur in our `Completeness_783.csv`. Codex was not used. All sets are recorded in `data/circuits.yaml` with provenance.
 
-| Набор | Критерий отбора | Число ID | Стороны (по таблице аннотаций) | Есть в v783 | Медиатор (`top_nt`) |
+| Set | Selection criterion | IDs | Sides (annotation table) | Present in v783 | Transmitter (`top_nt`) |
 |---|---|---|---|---|---|
-| LPLC2 | `cell_type == 'LPLC2'` | 210 | лев. 108, прав. 102 | 210 | ацетилхолин: 210 |
-| LC4 | `cell_type == 'LC4'` | 104 | лев. 54, прав. 50 | 104 | ацетилхолин: 104 |
-| DNp01 | `cell_type == 'DNp01'` | 2 | лев. 1, прав. 1 | 2 | левый — ацетилхолин; правый — **глутамат** |
-| Горькие GRN (аннотации) | `cell_sub_class == 'bitter'` | 65 | лев. 32, прав. 33 | 65 | ацетилхолин 38, серотонин 27 |
-| Горькие GRN (авторы модели) | `figures.ipynb` @ `91bdd1e7dc`, `neu_bitter` (ID v630) | 21 | все 20 найденных — лев. | 20 (нет `720575940618600651`) | — |
+| LPLC2 | `cell_type == 'LPLC2'` | 210 | left 108, right 102 | 210 | acetylcholine: 210 |
+| LC4 | `cell_type == 'LC4'` | 104 | left 54, right 50 | 104 | acetylcholine: 104 |
+| DNp01 | `cell_type == 'DNp01'` | 2 | left 1, right 1 | 2 | left: acetylcholine; right: **glutamate** |
+| Bitter GRNs (annotations) | `cell_sub_class == 'bitter'` | 65 | left 32, right 33 | 65 | acetylcholine 38, serotonin 27 |
+| Bitter GRNs (model authors) | `figures.ipynb` @ `91bdd1e7dc`, `neu_bitter` (v630 IDs) | 21 | all 20 found: left | 20 (missing `720575940618600651`) | — |
 
-Дополнительные факты:
+Additional facts:
 
-- **DNp01.** Левый `720575940622838154`: 479 входящих рёбер (4 327 синапсов), 285 исходящих. Правый `720575940632499757`: 483 входящих (5 147 синапсов), 242 исходящих. В таблице аннотаций у правого `top_nt` = glutamate, но в файле связей авторов (`Connectivity_783.parquet`) у обоих DNp01 флаг `Excitatory` = 1.
-- **Прямые связи стимулируемых на считывание.** LPLC2+LC4 → DNp01: 293 рёбер от 293 из 314 нейронов, 1,885 синапсов, все возбуждающие. Сахарные GRN → MN9: 0 рёбер.
-- **Какой набор горьких GRN использовать — не решено**; в `circuits.yaml` записаны оба.
-- **MN9.** В таблице аннотаций нейрона с типом «MN9» нет. Наш ID `720575940660219265` там: `super_class` = motor, `cell_sub_class` = ingestion_motor_neuron, `cell_type` = CB0701, сторона — правая. В `figures.ipynb` авторов: `ids_mn9 = [720575940660219265, 720575940645521262] # left and right`; второй ID есть в v630 и **отсутствует в v783**.
-- **Стороны у авторов и в аннотациях противоположны.** 20 сахарных GRN проекта (в ноутбуке авторов — «right hemisphere») в таблице аннотаций имеют `side` = left. Список авторов `neu_sugar_left` (10 ID, 9 есть в v783) имеет в аннотациях `side` = right. MN9, названный у авторов «left», в аннотациях — right. В обеих системах обозначений MN9 проекта лежит на стороне, противоположной сахарным GRN проекта. В README репозитория аннотаций упоминаний об инверсии сторон не найдено.
-- В таблице аннотаций 129 GRN класса `sugar/water` (тип `LB3` у 122); все 20 сахарных GRN проекта — `sugar/water`, `LB3`.
+- **DNp01.** Left `720575940622838154`: 479 incoming edges (4,327 synapses), 285 outgoing. Right `720575940632499757`: 483 incoming (5,147 synapses), 242 outgoing. The annotation table labels the right neuron's `top_nt` as glutamate, but the authors' connectivity file (`Connectivity_783.parquet`) marks both DNp01 neurons `Excitatory` = 1.
+- **Direct connections from stimulated neurons to readouts.** LPLC2+LC4 → DNp01: 293 edges from 293 of 314 neurons, 1,885 synapses, all excitatory. Sugar GRNs → MN9: 0 edges.
+- **The bitter GRN set is not yet selected**; both are stored in `circuits.yaml`.
+- **MN9.** No neuron is labeled cell type MN9 in the annotations. Our ID `720575940660219265` is `super_class` motor, `cell_sub_class` ingestion_motor_neuron, `cell_type` CB0701, right side. The authors' `figures.ipynb` uses `ids_mn9 = [720575940660219265, 720575940645521262] # left and right`; the second ID exists in v630 but **not in v783**.
+- **Side labels in the authors' notebook and annotations are reversed.** The project's 20 sugar GRNs (“right hemisphere” in the notebook) have annotation `side` = left. The authors' `neu_sugar_left` list (10 IDs, 9 present in v783) is annotated right. MN9, called left by the authors, is annotated right. Under either convention, the project's MN9 is contralateral to its sugar GRNs. No explanation of reversed sides was found in the annotation repository README.
+- The annotation table contains 129 `sugar/water` GRNs (122 type `LB3`); all 20 project sugar GRNs are `sugar/water`, `LB3`.
 
-## 3. Дозовая кривая looming → DNp01
+## 3. Looming → DNp01 dose-response curve
 
-Вход: пуассоновский вход во все 314 нейронов LPLC2+LC4 обеих сторон с частотой `looming · 200 Гц` (SPEC §4.1), sugar = 0. 11 уровней × 10 повторов, сиды 5 000 000+. «DNp01 спайкнул» = хотя бы один спайк любого из двух DNp01 за 500 мс; `t_sim` — время первого такого спайка.
+Input: Poisson stimulation of all 314 bilateral LPLC2+LC4 at `looming · 200 Hz` (SPEC §4.1), sugar = 0. 11 levels × 10 repetitions, seeds 5,000,000+. “DNp01 spiked” means at least one spike from either DNp01 within 500 ms; `t_sim` is the first such spike time.
 
-| looming | вход, Гц (задано) | вход, Гц (факт) | P(спайк DNp01) | P по сторонам: лев. / прав. | t_sim первого спайка p50, мс | min–max, мс | частота DNp01, Гц: лев. / прав. | P(спайк MN9) | спайков в сети | активных нейронов | сек/триал |
+| looming | Input, Hz (requested) | Input, Hz (observed) | P(DNp01 spike) | P by side: left / right | First spike t_sim p50, ms | Min–max, ms | DNp01 rate, Hz: left / right | P(MN9 spike) | Network spikes | Active neurons | s/trial |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | 0.0 | 0 | 0.0 | 0.0 | 0.0 / 0.0 | — | — | 0.0 / 0.0 | 0.0 | 0 | 0 | 0.01 |
 | 0.1 | 20 | 19.9 | 1.0 | 1.0 / 1.0 | 11.8 | 8.5–13.8 | 57.6 / 85.8 | 0.0 | 5,883 | 535 | 0.867 |
@@ -68,60 +68,60 @@
 | 0.9 | 180 | 176.6 | 1.0 | 1.0 / 1.0 | 4.5 | 4.0–4.7 | 187.2 / 204.0 | 0.0 | 50,185 | 1,451 | 9.616 |
 | 1.0 | 200 | 196.4 | 1.0 | 1.0 / 1.0 | 4.2 | 4.1–4.6 | 193.4 / 212.0 | 0.0 | 55,264 | 1,554 | 9.638 |
 
-- Между уровнями 0 и 0.1 измерений нет (сетка 11 уровней, как задано).
-- Столбец «сек/триал» — wall-время на этой машине во время прогона (ночь, без контроля питания и нагрузки); разброс между соседними уровнями (1.8–9.6 с) не монотонен по числу спайков. Для сравнения: сахарный триал 500 мс в `reports/perf.md` — 0.174 с.
+- No measurements between levels 0 and 0.1 (11-level grid as specified).
+- The s/trial column is wall time on this machine during the run (overnight, without power/load controls); variation between neighboring levels (1.8–9.6 s) is not monotonic in spike count. For comparison, a 500 ms sugar trial in `reports/perf.md` takes 0.174 s.
 
-## 4. Пересечение путей
+## 4. Pathway overlap
 
-«Активный» нейрон — давший хотя бы один спайк хотя бы в одном из 10 триалов по 500 мс. Сиды 6 000 000+. Состав множеств на диск не сохранялся — только размеры и счётчики ниже.
+An active neuron emits at least one spike in at least one of 10 trials of 500 ms. Seeds 6,000,000+. Set membership was not saved to disk, only the sizes and counts below.
 
-**Уровень 1.0** (sugar-only: sugar = 1.0, looming = 0; looming-only: looming = 1.0, sugar = 0):
+**Level 1.0** (sugar-only: sugar = 1.0, looming = 0; looming-only: looming = 1.0, sugar = 0):
 
-| Величина | sugar-only | looming-only |
+| Quantity | sugar-only | looming-only |
 |---|---|---|
-| активных нейронов (спайк хотя бы в 1 из 10 триалов) | 424 | 1,745 |
-| активных в ≥ 5 из 10 триалов | 368 | 1,532 |
-| то же без самих стимулируемых нейронов | 404 | 1,431 |
-| содержит MN9 | да | нет |
-| содержит DNp01 | 0 из 2 | 2 из 2 |
+| Active neurons (spike in at least 1 of 10 trials) | 424 | 1,745 |
+| Active in ≥ 5 of 10 trials | 368 | 1,532 |
+| Active neurons excluding directly stimulated neurons | 404 | 1,431 |
+| Includes MN9 | yes | no |
+| Includes DNp01 | 0 of 2 | 2 of 2 |
 
-Пересечение множеств: **23** нейронов (по критерию «≥ 5 из 10» — 11); объединение — 2,146.
+Set intersection: **23** neurons (11 using the ≥ 5 of 10 criterion); union: 2,146.
 
-| Синапсы (знак = знак пресинаптического нейрона в файле связей) | |
+| Synapses (sign = presynaptic neuron sign in connectivity file) | |
 |---|---|
-| sugar-активные → DNp01 напрямую | 4 рёбер: возб. 0 (0 син.), торм. 4 (7 син.); источников 3, целей 2 |
-| sugar-активные → входы DNp01 (у DNp01 862 пресинаптических партнёров; из них sugar-активны 3) | 787 рёбер: возб. 188 (992 син.), торм. 599 (3,859 син.); источников 233, целей 296 |
-| looming-активные → MN9 напрямую | 29 рёбер: возб. 8 (10 син.), торм. 21 (1,246 син.); источников 29, целей 1 |
-| looming-активные → входы MN9 (у MN9 227 партнёров; из них looming-активны 29) | 5083 рёбер: возб. 1968 (18,747 син.), торм. 3115 (36,704 син.); источников 644, целей 220 |
-| для сравнения: sugar-активные → MN9 напрямую | 60 рёбер: возб. 31 (1,582 син.), торм. 29 (859 син.); источников 60, целей 1 |
-| для сравнения: looming-активные → DNp01 напрямую | 469 рёбер: возб. 385 (3,530 син.), торм. 84 (2,162 син.); источников 437, целей 2 |
+| sugar-active → DNp01 directly | 4 edges: excitatory 0 (0 synapses), inhibitory 4 (7); 3 sources, 2 targets |
+| sugar-active → DNp01 inputs (862 presynaptic partners of DNp01; 3 sugar-active) | 787 edges: excitatory 188 (992 synapses), inhibitory 599 (3,859); 233 sources, 296 targets |
+| looming-active → MN9 directly | 29 edges: excitatory 8 (10 synapses), inhibitory 21 (1,246); 29 sources, 1 target |
+| looming-active → MN9 inputs (227 partners of MN9; 29 looming-active) | 5083 edges: excitatory 1968 (18,747 synapses), inhibitory 3115 (36,704); 644 sources, 220 targets |
+| Reference: sugar-active → MN9 directly | 60 edges: excitatory 31 (1,582 synapses), inhibitory 29 (859); 60 sources, 1 target |
+| Reference: looming-active → DNp01 directly | 469 edges: excitatory 385 (3,530 synapses), inhibitory 84 (2,162); 437 sources, 2 targets |
 
-**Уровень 0.6** (sugar-only: sugar = 0.6, looming = 0; looming-only: looming = 0.6, sugar = 0):
+**Level 0.6** (sugar-only: sugar = 0.6, looming = 0; looming-only: looming = 0.6, sugar = 0):
 
-| Величина | sugar-only | looming-only |
+| Quantity | sugar-only | looming-only |
 |---|---|---|
-| активных нейронов (спайк хотя бы в 1 из 10 триалов) | 385 | 1,309 |
-| активных в ≥ 5 из 10 триалов | 349 | 1,125 |
-| то же без самих стимулируемых нейронов | 365 | 995 |
-| содержит MN9 | да | нет |
-| содержит DNp01 | 0 из 2 | 2 из 2 |
+| Active neurons (spike in at least 1 of 10 trials) | 385 | 1,309 |
+| Active in ≥ 5 of 10 trials | 349 | 1,125 |
+| Active neurons excluding directly stimulated neurons | 365 | 995 |
+| Includes MN9 | yes | no |
+| Includes DNp01 | 0 of 2 | 2 of 2 |
 
-Пересечение множеств: **12** нейронов (по критерию «≥ 5 из 10» — 8); объединение — 1,682.
+Set intersection: **12** neurons (8 using the ≥ 5 of 10 criterion); union: 1,682.
 
-| Синапсы (знак = знак пресинаптического нейрона в файле связей) | |
+| Synapses (sign = presynaptic neuron sign in connectivity file) | |
 |---|---|
-| sugar-активные → DNp01 напрямую | 4 рёбер: возб. 0 (0 син.), торм. 4 (7 син.); источников 3, целей 2 |
-| sugar-активные → входы DNp01 (у DNp01 862 пресинаптических партнёров; из них sugar-активны 3) | 645 рёбер: возб. 164 (899 син.), торм. 481 (3,145 син.); источников 207, целей 235 |
-| looming-активные → MN9 напрямую | 26 рёбер: возб. 8 (10 син.), торм. 18 (1,155 син.); источников 26, целей 1 |
-| looming-активные → входы MN9 (у MN9 227 партнёров; из них looming-активны 26) | 4239 рёбер: возб. 1740 (17,516 син.), торм. 2499 (30,198 син.); источников 511, целей 219 |
-| для сравнения: sugar-активные → MN9 напрямую | 61 рёбер: возб. 32 (1,583 син.), торм. 29 (859 син.); источников 61, целей 1 |
-| для сравнения: looming-активные → DNp01 напрямую | 449 рёбер: возб. 375 (3,458 син.), торм. 74 (1,957 син.); источников 419, целей 2 |
+| sugar-active → DNp01 directly | 4 edges: excitatory 0 (0 synapses), inhibitory 4 (7); 3 sources, 2 targets |
+| sugar-active → DNp01 inputs (862 presynaptic partners of DNp01; 3 sugar-active) | 645 edges: excitatory 164 (899 synapses), inhibitory 481 (3,145); 207 sources, 235 targets |
+| looming-active → MN9 directly | 26 edges: excitatory 8 (10 synapses), inhibitory 18 (1,155); 26 sources, 1 target |
+| looming-active → MN9 inputs (227 partners of MN9; 26 looming-active) | 4239 edges: excitatory 1740 (17,516 synapses), inhibitory 2499 (30,198); 511 sources, 219 targets |
+| Reference: sugar-active → MN9 directly | 61 edges: excitatory 32 (1,583 synapses), inhibitory 29 (859); 61 sources, 1 target |
+| Reference: looming-active → DNp01 directly | 449 edges: excitatory 375 (3,458 synapses), inhibitory 74 (1,957); 419 sources, 2 targets |
 
-## 5. Конфликтный срез: sugar = 0.6 × looming
+## 5. Conflict slice: sugar = 0.6 × looming
 
-20 повторов на уровень, сиды 7 000 000+, полные 500 мс. Данные по каждому триалу (`t_sim` первого спайка MN9, левого и правого DNp01, частоты, активность сети) — в `reports/probe_looming_trials.csv`. Сводка:
+20 repetitions per level, seeds 7,000,000+, full 500 ms. Per-trial data (first MN9, left/right DNp01 spike `t_sim`, rates, network activity) are in `reports/probe_looming_trials.csv`. Summary:
 
-| looming | MN9 спайкнул | t_sim первого спайка MN9, мс: p50 [min–max] | частота MN9, Гц (среднее) | DNp01 спайкнул | t_sim первого спайка DNp01, мс: p50 [min–max] | первым DNp01 | первым MN9 | никто | активных нейронов |
+| looming | MN9 spiked | First MN9 spike t_sim, ms: p50 [min–max] | MN9 rate, Hz (mean) | DNp01 spiked | First DNp01 spike t_sim, ms: p50 [min–max] | DNp01 first | MN9 first | Neither | Active neurons |
 |---|---|---|---|---|---|---|---|---|---|
 | 0.0 | 20/20 | 33.2 [29.8–50.7] | 69.5 | 0/20 | — | 0 | 20 | 0 | 342 |
 | 0.1 | 20/20 | 37.3 [31.8–48.9] | 63.2 | 20/20 | 12.4 [9.5–15.6] | 20 | 0 | 0 | 851 |
@@ -135,22 +135,22 @@
 | 0.9 | 0/20 | — | 0.0 | 20/20 | 4.5 [4.3–4.8] | 20 | 0 | 0 | 1,583 |
 | 1.0 | 0/20 | — | 0.0 | 20/20 | 4.3 [4.1–4.6] | 20 | 0 | 0 | 1,673 |
 
-Для сопоставления, те же величины без конфликта (разделы 3 и `reports/status.md` §1.2): при sugar = 0.6 и looming = 0 частота MN9 в этом прогоне 69.5 Гц; `t_sim` первого спайка DNp01 при looming-only — 11.8 мс (looming 0.1), 5.3 мс (0.5), 4.2 мс (1.0).
+For comparison, the same quantities without conflict (section 3 and `reports/status.md` §1.2): at sugar = 0.6 and looming = 0, MN9 fires at 69.5 Hz in this run; first DNp01 spike `t_sim` with looming-only is 11.8 ms (looming 0.1), 5.3 ms (0.5), 4.2 ms (1.0).
 
-## 6. Сводка измеренного (без выводов о дизайне)
+## 6. Measurement summary (without design conclusions)
 
-1. При кодировании looming по SPEC §4.1 с `R_max` = 200 Гц DNp01 спайкует в 10 из 10 триалов на всех ненулевых уровнях сетки, начиная с looming = 0.1; `t_sim` первого спайка убывает с 11.8 до 4.2 мс. На сетке из 11 уровней градаций вероятности между 0 и 1 нет.
-2. При looming-only MN9 не спайкует ни в одном из 110 триалов; при sugar-only DNp01 не спайкует ни в одном из 20 триалов (looming = 0 в конфликтном срезе).
-3. В конфликтном срезе DNp01 первым во всех 200 триалах с looming ≥ 0.1. `t_sim` первого спайка DNp01 при конфликте и без него отличается на десятые доли мс (12.4 против 11.8 мс при looming 0.1; 4.3 против 4.2 мс при 1.0).
-4. Частота MN9 при sugar = 0.6 падает с ростом looming: 69.5 → 63.2 → 51.3 → 8.6 → 2.8 → 0.5 Гц (looming 0 … 0.5) и 0.0 Гц при 0.9–1.0. Доля триалов со спайком MN9: 20/20 до looming 0.3, 17/20 при 0.4, 5/20 при 0.5, 0/20 при 0.9–1.0.
-5. От looming-активных нейронов к MN9 идут прямые связи: при уровне 1.0 — 21 тормозное ребро (1 246 синапсов) и 8 возбуждающих (10 синапсов). От sugar-активных к DNp01: 4 тормозных ребра (7 синапсов), возбуждающих нет.
-6. Множества активных нейронов пересекаются в 23 нейронах (уровень 1.0) и 12 (уровень 0.6).
-7. Активность сети при looming больше, чем при сахаре: до 1 554 активных нейронов и 55 тыс. спайков за триал против 379 нейронов и 8 тыс. спайков.
+1. With SPEC §4.1 looming encoding and `R_max` = 200 Hz, DNp01 spikes in 10 of 10 trials at every nonzero grid level starting at looming = 0.1; first-spike `t_sim` falls from 11.8 to 4.2 ms. The 11-level grid shows no intermediate probabilities between 0 and 1.
+2. With looming-only, MN9 never spikes in 110 trials; with sugar-only, DNp01 never spikes in 20 trials (looming = 0 in the conflict slice).
+3. DNp01 is first in all 200 conflict trials with looming ≥ 0.1. First DNp01 spike `t_sim` differs by tenths of a millisecond with versus without conflict (12.4 versus 11.8 ms at looming 0.1; 4.3 versus 4.2 ms at 1.0).
+4. MN9 rate at sugar = 0.6 falls as looming rises: 69.5 → 63.2 → 51.3 → 8.6 → 2.8 → 0.5 Hz (looming 0 … 0.5), then 0.0 Hz at 0.9–1.0. Trials with MN9 spikes: 20/20 through looming 0.3, 17/20 at 0.4, 5/20 at 0.5, 0/20 at 0.9–1.0.
+5. Direct connections from looming-active neurons to MN9 at level 1.0: 21 inhibitory edges (1,246 synapses), 8 excitatory edges (10). From sugar-active neurons to DNp01: 4 inhibitory edges (7 synapses), none excitatory.
+6. Active sets overlap in 23 neurons at level 1.0 and 12 at level 0.6.
+7. Looming recruits more network activity than sugar: up to 1,554 active neurons and 55,000 spikes per trial, versus 379 neurons and 8,000 spikes.
 
-## 7. Чего в этой разведке нет
+## 7. Not included in this probe
 
-- Уровней looming между 0 и 0.1; других значений `R_max`; входа только в LPLC2 или только в LC4; односторонней стимуляции.
-- Декодера по SPEC §4.1 (`theta_eat`, скользящее окно) — вместо `p_eat`/`p_escape` даны сырые «хотя бы один спайк» и время первого спайка.
-- Голода (`alpha` не задан), горького канала, перемешанных графов, абляций, модели независимой гонки (G7).
-- Сверки с Brian2 для looming-триалов (сверка бэкенда выполнялась на сахарном входе и на случайном графе).
-- Состава 23 общих нейронов.
+- Looming levels between 0 and 0.1; other `R_max` values; LPLC2-only or LC4-only input; unilateral stimulation.
+- The SPEC §4.1 decoder (`theta_eat`, sliding window); raw at-least-one-spike outcomes and first-spike times are reported instead of `p_eat`/`p_escape`.
+- Hunger (`alpha` unset), bitter input, shuffled graphs, ablations, independent race model (G7).
+- Brian2 cross-check for looming trials (backend checked on sugar input and a random graph).
+- Identities of the 23 shared neurons.

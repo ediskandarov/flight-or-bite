@@ -1,126 +1,128 @@
-# PREREG — предрегистрация
+# PREREG — preregistration
 
 Status: FROZEN
 
-> **Заморожено 2026-09-20 по слову автора спецификации** (решение D58, `docs/decisions.md`); текст принят автором целиком в редакции коммита `2209e6a` (правки D50–D57). После заморозки этот файл и перечисленные в разделе 11 файлы не меняются; любое отклонение от записанного сообщается в итоговом отчёте как отклонение. Тестовый сплит открывается только при строке статуса `FROZEN` в этом файле **и** совпадении всех хэшей из раздела 11 с файлами на диске (`src/flight_or_bite/prereg.py`, SPEC §8); каждый доступ к `test` пишется в `runs/test_access.log`.
-> Всё, что не описано здесь, в итоговом отчёте помечается **exploratory** (SPEC §8). Разведки `probe_looming`, `probe_jev`, `probe_interaction`, `probe_r5`, `grid_loss`, `env_sweep`, `calibration` и прогон ворот M3 — не подтверждающие; гипотезы H1–H5 проверяются на **свежих сидах**, которые до сих пор не использовались.
+> **English translation, 2026-10-06 (D65).** The author requested an English edition after all experiments were complete. This changes the language of the frozen document, not its scientific protocol. The original frozen text is preserved at commit `4a6f04850036e154f4f87e72e0509a8ff20a33cb` (`git show 4a6f048:PREREG.md`); the pre-translation project state is `02b66fc9d1797c3be77a4d9319a4143837bb8f5a`. Hypotheses, criteria, seeds, and all 14 hashes below are unchanged. The required G6 limitation is rendered in English. This post-freeze editorial deviation is disclosed in the final report.
 
-## 1. Что сравнивается
+> **Frozen on 2026-09-20 on the specification author's instruction** (decision D58, `docs/decisions.md`); the author accepted the full text at commit `2209e6a` (amendments D50–D57). After freezing, this file and the files listed in section 11 must remain unchanged; any departure must be reported as a deviation in the final report. The test split opens only when this file contains the `FROZEN` status line **and** every hash in section 11 matches its file on disk (`src/flight_or_bite/prereg.py`, SPEC §8); every access to `test` is logged in `runs/test_access.log`.
+> Anything not specified here is labeled **exploratory** in the final report (SPEC §8). The `probe_looming`, `probe_jev`, `probe_interaction`, `probe_r5`, `grid_loss`, `env_sweep`, and `calibration` probes and the M3 gate run are not confirmatory; hypotheses H1–H5 are tested on **fresh seeds** not previously used.
 
-Арбитры на задаче «еда против угрозы» (SPEC §2–§4, с отклонениями из `docs/decisions.md`):
+## 1. What is compared
 
-- **connectome** — LIF-симуляция коннектома FlyWire v783 (модель Shiu et al., параметры `configs/lif.yaml`), бэкенд `event`; кодирование заморожено (D36): частотное, `R_max` сахара 102.8 Гц, горечи 102.8 Гц, looming 2.34 Гц, `alpha` = 1.0; декодер: EAT — 4 спайка MN9 за 50 мс, ESCAPE — один спайк любого DNp01, побеждает первое событие, точная ничья → ESCAPE, иначе IDLE на 500 мс. Нейронные наборы — `data/circuits.yaml`. Сверка бэкенда с эталоном Brian2 на конфликтных триалах выполнена (10 триалов, sugar 0.6 + looming 0.8, замороженное кодирование, одинаковый вход): 26 502 из 26 502 спайков совпали, решения и время решения совпали в 10 из 10 (`reports/crosscheck_brian2.md`).
-- **jev** — `typesafe/jev-1.13` через OpenRouter Decisions (ответ не из этого семейства прерывает прогон); один вопрос Choice, одинаковый во всех режимах; четыре режима состояния — дизайн 2 × 2: **пакет правил** нет/да × наблюдение числами/уровнями. Фактор «правила» — это пакет: текст правил среды (в `instructions` перед вопросом) **вместе с** описаниями вариантов в `criteria`; по отдельности они не варьируются, и их вклады не разделяются. Шаблоны `configs/jev_prompts/`, версия v1, утверждена автором с правками, на `dev` не настраивалась; полные тексты — `reports/jev_templates.md`.
+Arbiters in a food-versus-threat task (SPEC §2–§4, with deviations recorded in `docs/decisions.md`):
+
+- **connectome** — LIF simulation of the FlyWire v783 connectome (Shiu et al. model, parameters in `configs/lif.yaml`), `event` backend; frozen encoding (D36): rate coding, sugar `R_max` 102.8 Hz, bitter 102.8 Hz, looming 2.34 Hz, `alpha` = 1.0; decoder: EAT — 4 MN9 spikes within 50 ms, ESCAPE — one spike from any DNp01; the first event wins, exact ties → ESCAPE, otherwise IDLE at 500 ms. Neuron sets: `data/circuits.yaml`. The backend was cross-checked against the Brian2 reference on conflict trials (10 trials, sugar 0.6 + looming 0.8, frozen encoding, identical input): 26,502 of 26,502 spikes matched, as did decisions and decision times in 10 of 10 trials (`reports/crosscheck_brian2.md`).
+- **jev** — `typesafe/jev-1.13` through OpenRouter Decisions (a response outside this family aborts the run); one Choice question, identical across modes; four state modes in a 2 × 2 design: **rules package** absent/present × numeric/bucketed observations. The rules factor is a package: environment rules (in `instructions`, before the question) **together with** option descriptions in `criteria`; these are not varied independently, so their contributions are not separated. Templates in `configs/jev_prompts/`, version v1, approved by the author with amendments and not tuned on `dev`; full text in `reports/jev_templates.md`.
 - **oracle**, **fixed_priority**, **random** — SPEC §4.4.
-- Среда — `configs/env.yaml` (SPEC §3 с `p_food` 0.3, `eat_gain` 8, `escape_cost` 1).
+- Environment: `configs/env.yaml` (SPEC §3 with `p_food` 0.3, `eat_gain` 8, `escape_cost` 1).
 
-Действие каждого арбитра — **нативное** (D27): коннектом — исход одной симуляции; Jev — поле `choice`; oracle и fixed_priority — argmax; random — равновероятный выбор.
+Each arbiter uses its **native action** (D27): connectome — the outcome of one simulation; Jev — the `choice` field; oracle and fixed_priority — argmax; random — uniform choice.
 
-## 2. Главная метрика (RQ2)
+## 2. Primary metric (RQ2)
 
-Среднее время жизни в триалах (цензура 500), **онлайн-режим**, 300 парных эпизодов на тестовых сидах 100000–100299, без дедлайна. **Основное сравнение — `connectome` против `jev_informed`**: парная разница средней жизни на одинаковых сидах с 95% бутстреп-ДИ; это единственное сравнение, по которому объявляется победитель. `oracle`, `fixed_priority` и `random` играют те же сиды и задают шкалу (`% от оракула`); их парные сравнения с двумя основными арбитрами сообщаются как описательные. Jev участвует онлайн только в **основном режиме состояния**. Правило выбора (задано автором до прогона): четыре режима играют онлайн одни и те же **50 dev-эпизодов (сиды 0–49)** с нативным действием; основной режим — с наибольшей средней жизнью; при равенстве — режим с меньшим числом вызовов. Результат выбора — в разделе 2a; он фиксируется этим файлом до доступа к `test`.
+Mean lifetime in trials (censored at 500), **online mode**, 300 paired episodes on test seeds 100000–100299, without a deadline. **The primary comparison is `connectome` versus `jev_informed`**: paired mean lifetime difference on identical seeds with a 95% bootstrap CI; this is the only comparison used to declare a winner. `oracle`, `fixed_priority`, and `random` play the same seeds and define the scale (`% of oracle`); their paired comparisons with the two main arbiters are reported descriptively. Jev participates online only in its **primary state mode**. Selection rule (specified by the author before the run): all four modes play the same **50 dev episodes (seeds 0–49)** online using native actions; select the mode with the highest mean lifetime, breaking ties by fewer calls. The selection result is in section 2a and is recorded in this file before access to `test`.
 
-### 2a. Основной режим Jev: `informed`
+### 2a. Primary Jev mode: `informed`
 
-Выбран по правилу на dev-сидах 0–49 (`reports/jev_mode_selection.md`): средняя жизнь `informed` 64.26, `informed_bucketed` 64.20, `naive` 25.98, `bucketed` 16.82 триала. Разница между `informed` и `informed_bucketed` статистически незначима (+0.06, ДИ включает ноль); правило применено как записано. В главной метрике на `test` Jev участвует только в режиме `informed`. Арбитры главного сравнения: `connectome`, `jev_informed`, `oracle`, `fixed_priority`, `random`. Ожидаемый расход Jev на `test`: ≈ 300 эпизодов × ~65 триалов ≈ 20 000 вызовов.
+Selected by the rule on dev seeds 0–49 (`reports/jev_mode_selection.md`): mean lifetime `informed` 64.26, `informed_bucketed` 64.20, `naive` 25.98, `bucketed` 16.82 trials. The difference between `informed` and `informed_bucketed` is not statistically significant (+0.06, CI includes zero); the rule was applied as written. For the primary metric on `test`, Jev participates only in `informed` mode. Main-run arbiters: `connectome`, `jev_informed`, `oracle`, `fixed_priority`, `random`. Expected Jev usage on `test`: approximately 300 episodes × ~65 trials ≈ 20,000 calls.
 
-- Парное сравнение на одинаковых сидах; бутстреп по эпизодам, 10 000 ресэмплов, 95% ДИ разницы; победа — только если ДИ не включает ноль.
-- `% от оракула = (L − L_random) / (L_oracle − L_random)`.
-- Вторичный анализ: то же при сэмплировании действия из `probs` (`sample_from_probs`, SPEC §7) — **100 парных эпизодов**, тестовые сиды 100000–100099. У коннектома, оракула и `fixed_priority` вероятности вырождены (один исход = вероятность 1), поэтому их результат совпадает с нативным; для Jev это отдельные онлайн-вызовы (≈ 6 500).
+- Paired comparison on identical seeds; bootstrap over episodes, 10,000 resamples, 95% CI for the difference; declare a winner only if the CI excludes zero.
+- `% of oracle = (L − L_random) / (L_oracle − L_random)`.
+- Secondary analysis: the same procedure with actions sampled from `probs` (`sample_from_probs`, SPEC §7) — **100 paired episodes**, test seeds 100000–100099. Connectome, oracle, and `fixed_priority` have degenerate probabilities (one outcome has probability 1), so their results match native actions; Jev requires separate online calls (approximately 6,500).
 
-### 2b. Политика сбоев Jev
+### 2b. Jev failure policy
 
-Решение Jev никогда не подменяется (ни IDLE, ни случайным действием, ни ответом из кэша). При HTTP 429 / 500 / 502 / 503 / 524 / 529 и при транспортной ошибке — до 5 повторов с паузами 2, 4, 8, 16, 30 с; решение, потребовавшее повтора, помечается `retried` и исключается из статистики латентности, но действие используется. Если повторы исчерпаны, а также при любом другом статусе (401, 402, 422, …), некорректном теле ответа или ответе не из семейства `typesafe/jev-1.13` — **прогон останавливается**; незавершённый эпизод отбрасывается целиком и после устранения причины переигрывается с начала на том же сиде; завершённые эпизоды сохраняются. Каждая остановка, отброшенный эпизод и число повторов сообщаются в отчёте. Все обмены, включая неудачные, пишутся в `runs/jev_raw/`. Дата прогона и точный id модели из ответов сообщаются; смена датированного снапшота внутри семейства посреди прогона сообщается, но прогон не останавливает.
+Never substitute a Jev decision with IDLE, a random action, or a cached response. HTTP 429 / 500 / 502 / 503 / 524 / 529 and transport errors receive up to 5 retries with delays of 2, 4, 8, 16, and 30 s; decisions requiring a retry are marked `retried` and excluded from latency statistics, but their actions are used. Exhausted retries, any other status (401, 402, 422, …), an invalid response body, or a response outside the `typesafe/jev-1.13` family **stop the run**; the incomplete episode is discarded in full and replayed from the beginning on the same seed after the cause is resolved; completed episodes are retained. Every stop, discarded episode, and retry count is reported. All exchanges, including failures, are saved in `runs/jev_raw/`. Report the run date and exact model ID returned; a dated snapshot change within the family during a run is reported but does not stop the run.
 
-## 3. Подтверждающие гипотезы о коннектоме (RQ1)
+## 3. Confirmatory connectome hypotheses (RQ1)
 
-Общее для H1–H4: коннектом v783, бэкенд `event`, полные триалы 500 мс, замороженное кодирование, looming ∈ {0.6, 0.8, 1.0}, **100 парных повторов на уровень**, свежие сиды триалов **9 000 000 + 1000·(номер гипотезы) + 100·(индекс уровня) + повтор**. Каждый канал берёт вход из собственного потока ГСЧ (сид, канал), поэтому условия на одном сиде спарены. Поправка Холма — **по трём уровням looming внутри каждой гипотезы**; уровень значимости 0.05. hunger = 0, bitter = 0, если не сказано иное.
+Common to H1–H4: v783 connectome, `event` backend, full 500 ms trials, frozen encoding, looming ∈ {0.6, 0.8, 1.0}, **100 paired repetitions per level**, fresh trial seeds **9,000,000 + 1000·(hypothesis number) + 100·(level index) + repetition**. Each channel draws input from its own RNG stream (seed, channel), pairing conditions on the same seed. Holm correction is applied **across the three looming levels within each hypothesis**; significance level 0.05. Unless stated otherwise, hunger = 0 and bitter = 0.
 
-| | Гипотеза | Исход | Сравнение | Тест | Подтверждена, если |
+| | Hypothesis | Outcome | Comparison | Test | Confirmed if |
 |---|---|---|---|---|---|
-| **H1** | Сахар 0.6 снижает вероятность спайка DNp01 | DNp01 дал ≥ 1 спайк: да/нет | sugar 0.6 + looming против looming-only | точный двусторонний тест Макнемара | наименьший p с поправкой Холма < 0.05 и на каждом уровне с дискордантными парами b > c (b — «в контроле да, в условии нет») |
-| **H2** | Подавление монотонно растёт с дозой сахара | то же | sugar ∈ {0, 0.3, 0.6, 1.0} на одних сидах | перестановочный тест тренда: статистика T = Σ по сидам Σ по дозам (ранг дозы · исход); нулевое распределение — 100 000 перестановок меток дозы внутри сида; односторонний (убывание) | наименьший p с поправкой Холма < 0.05 |
-| **H3** | Абляция M_loom (25 нейронов, `data/circuits.yaml`) снимает эффект | d = (контроль − условие) без абляции − (контроль − условие) при абляции в обоих плечах, по сидам | sugar 0.6, те же сиды в четырёх ячейках | точный двусторонний знаковый тест по ненулевым d | наименьший p с поправкой Холма < 0.05 и Σd > 0; дополнительно сообщается доля сохранённого эффекта с бутстреп-ДИ |
-| **H4** | Голод усиливает приоритет еды: hunger 1 против hunger 0 при sugar 0.6 снижает P(ESCAPE) | основной: декодер назвал ESCAPE: да/нет; **дополнительный: DNp01 дал ≥ 1 спайк: да/нет** (тот же тест, сообщается отдельно, в критерий не входит) | hunger = 1 против hunger = 0 (при `alpha` = 1 частота сахарных GRN удваивается) | точный двусторонний тест Макнемара | как в H1, по основному исходу |
+| **H1** | Sugar 0.6 reduces the probability of a DNp01 spike | DNp01 emitted ≥ 1 spike: yes/no | sugar 0.6 + looming versus looming-only | exact two-sided McNemar test | minimum Holm-adjusted p < 0.05 and b > c at every level with discordant pairs (b means control yes, condition no) |
+| **H2** | Suppression increases monotonically with sugar dose | same | sugar ∈ {0, 0.3, 0.6, 1.0} on the same seeds | permutation trend test: statistic T = Σ over seeds Σ over doses (dose rank · outcome); null distribution from 100,000 within-seed permutations of dose labels; one-sided (decreasing) | minimum Holm-adjusted p < 0.05 |
+| **H3** | Ablating M_loom (25 neurons, `data/circuits.yaml`) removes the effect | d = (control − condition) without ablation − (control − condition) with ablation in both arms, by seed | sugar 0.6, identical seeds in all four cells | exact two-sided sign test on nonzero d | minimum Holm-adjusted p < 0.05 and Σd > 0; also report the retained effect fraction with a bootstrap CI |
+| **H4** | Hunger strengthens food priority: hunger 1 versus hunger 0 at sugar 0.6 reduces P(ESCAPE) | primary: decoder chose ESCAPE: yes/no; **additional: DNp01 emitted ≥ 1 spike: yes/no** (same test, reported separately, excluded from the criterion) | hunger = 1 versus hunger = 0 (at `alpha` = 1, sugar GRN rates double) | exact two-sided McNemar test | as in H1, for the primary outcome |
 
-Абляция = нейрон не может дать спайк (ядро `event`, параметр `ablated`).
+Ablation means that a neuron cannot spike (`event` kernel, `ablated` parameter).
 
-## 4. Плановый анализ устойчивости H1
+## 4. Planned H1 robustness analysis
 
-H1 повторяется при одном изменённом параметре за раз; протокол и тест — как в H1 (парный точный Макнемара, **100 пар на уровень** looming ∈ {0.6, 0.8, 1.0}, Холм по уровням), сиды 9 001 000 + 10 000·(номер варианта) + 100·(индекс уровня) + повтор. Анализ **плановый, но не подтверждающий**: статус H1 определяется только основным прогоном; здесь сообщается, сохраняется ли знак эффекта (b > c) и значимость.
+Repeat H1 with one parameter changed at a time; protocol and test as in H1 (paired exact McNemar, **100 pairs per level** of looming ∈ {0.6, 0.8, 1.0}, Holm across levels), seeds 9,001,000 + 10,000·(variant number) + 100·(level index) + repetition. This analysis is **planned but not confirmatory**: H1 status is determined only by the primary run; here, report whether effect direction (b > c) and significance are retained.
 
-| № | Вариант | Что меняется |
+| No. | Variant | Change |
 |---|---|---|
-| 1 | `r_max_sugar × 1.5` | `R_max` сахара (и привязанной к нему горечи) 102.8 → 154.2 Гц |
-| 2 | `r_max_looming × 1.5` | `R_max` looming 2.34 → 3.52 Гц |
-| 3 | `w_syn × 1.5` | глобальная константа модели 0.275 → 0.4125 мВ |
-| 4 | `alpha` = 0.5 | при **hunger = 0.5** (при hunger = 0 `alpha` не действует); контроль и условие — оба при hunger 0.5 |
-| 5 | `alpha` = 1.5 | то же |
-| 6 | `theta_eat` = 3 спайка / 50 мс | только декодер; исход H1 («DNp01 дал спайк») от него не зависит, поэтому для этого варианта исход — «декодер назвал ESCAPE» |
-| 7 | `theta_eat` = 5 спайков / 50 мс | то же |
-| 8 | популяционный код looming | уровень = доля LPLC2/LC4 на 100 Гц, `f_max` = 0.025390625 (`reports/probe_r5.md`, часть D) |
+| 1 | `r_max_sugar × 1.5` | Sugar `R_max` (and bitter, tied to it) 102.8 → 154.2 Hz |
+| 2 | `r_max_looming × 1.5` | Looming `R_max` 2.34 → 3.52 Hz |
+| 3 | `w_syn × 1.5` | Global model constant 0.275 → 0.4125 mV |
+| 4 | `alpha` = 0.5 | At **hunger = 0.5** (`alpha` has no effect at hunger = 0); control and condition both use hunger 0.5 |
+| 5 | `alpha` = 1.5 | Same |
+| 6 | `theta_eat` = 3 spikes / 50 ms | Decoder only; the H1 outcome (DNp01 spiked) is independent of it, so this variant uses the outcome decoder chose ESCAPE |
+| 7 | `theta_eat` = 5 spikes / 50 ms | Same |
+| 8 | Population looming code | Level = fraction of LPLC2/LC4 stimulated at 100 Hz, `f_max` = 0.025390625 (`reports/probe_r5.md`, part D) |
 
-Варианты ослабления **×0.5** (`r_max_sugar × 0.5`, `w_syn × 0.5`) в анализ устойчивости H1 не входят и сообщаются как **«сеть молчит»**: в G6 при них сигнал не доходит до считываемых нейронов (MN9 не достигает критерия EAT; при `w_syn × 0.5` ни MN9, ни DNp01 не дают ни одного спайка), смены знака нет — эффекту не на чем проявиться.
+The **×0.5** weakening variants (`r_max_sugar × 0.5`, `w_syn × 0.5`) are excluded from the H1 robustness analysis and reported as **“the network is silent”**: in G6 their signals do not reach the readout neurons (MN9 does not meet the EAT criterion; with `w_syn × 0.5`, neither MN9 nor DNp01 emits any spikes). There is no sign reversal: the effect has no activity on which to manifest.
 
-## 5. Гипотеза о Jev (H5, RQ3)
+## 5. Jev hypothesis (H5, RQ3)
 
-**H5. Сдвиг кривой побега сахаром у Jev: знак и величина против оракула.**
-Срез: bitter = 0, hunger = 0.5 — общий для трёх арбитров (H1–H4 идут при hunger 0; здесь нужен ненулевой голод, чтобы `alpha` и ценность еды у оракула участвовали), looming = 0.0, 0.1, …, 1.0; sugar ∈ {0, 0.6}.
-Величина: Δ = среднее по 11 уровням looming от [p_escape(sugar 0.6) − p_escape(sugar 0)].
-- Jev (основной режим): `p_escape` — поле `probabilities["ESCAPE"]`, 20 повторов на точку (440 вызовов); ДИ для Δ_Jev — бутстреп по повторам, 10 000 ресэмплов.
-- Оракул: `p_escape` ∈ {0, 1} (детерминирован), Δ_oracle без ДИ. **Вычислено до заморозки: Δ_oracle = −0.0909 (−1/11), знак отрицательный.** При sugar = 0 оракул убегает начиная с looming 0.4 (точная граница 0.327), при sugar = 0.6 — начиная с 0.5 (граница 0.413); на остальных десяти уровнях сетки его решение о побеге от сахара не зависит.
-- Коннектом: `p_escape` — доля триалов с решением ESCAPE, 40 триалов на точку, свежие сиды 9 005 000+; ДИ бутстрепом по триалам.
-Подтверждающее утверждение: **Δ_Jev ≠ 0 (95% ДИ не включает ноль)**; сообщаются знак Δ_Jev, знак Δ_oracle и Δ_connectome и разности Δ_Jev − Δ_oracle, Δ_connectome − Δ_oracle с ДИ. Направленной формулировки нет: знак сообщается, но в критерий подтверждения не входит.
+**H5. Sugar shifts Jev's escape curve: direction and magnitude compared with the oracle.**
+Slice: bitter = 0, hunger = 0.5, shared by all three arbiters (H1–H4 use hunger 0; here nonzero hunger is needed for `alpha` and the oracle's food value to contribute), looming = 0.0, 0.1, …, 1.0; sugar ∈ {0, 0.6}.
+Quantity: Δ = mean across the 11 looming levels of [p_escape(sugar 0.6) − p_escape(sugar 0)].
+- Jev (primary mode): `p_escape` is the `probabilities["ESCAPE"]` field, 20 repetitions per point (440 calls); CI for Δ_Jev from bootstrap over repetitions, 10,000 resamples.
+- Oracle: `p_escape` ∈ {0, 1} (deterministic), Δ_oracle without a CI. **Computed before freezing: Δ_oracle = −0.0909 (−1/11), negative.** At sugar = 0, the oracle escapes starting at looming 0.4 (exact boundary 0.327); at sugar = 0.6, starting at 0.5 (boundary 0.413). At the other ten grid levels, sugar does not change its escape decision.
+- Connectome: `p_escape` is the fraction of trials choosing ESCAPE, 40 trials per point, fresh seeds 9,005,000+; CI from bootstrap over trials.
+Confirmatory claim: **Δ_Jev ≠ 0 (95% CI excludes zero)**; report the signs of Δ_Jev, Δ_oracle, and Δ_connectome, and differences Δ_Jev − Δ_oracle and Δ_connectome − Δ_oracle with CIs. The hypothesis is not directional: the sign is reported but is not part of the confirmation criterion.
 
-## 6. Ворота валидности (SPEC §5) — результат M3
+## 6. Validity gates (SPEC §5) — M3 result
 
-Протокол и пороги — `configs/gates.yaml`, зафиксирован коммитом `921ffaf` до прогона; результаты — `reports/gates.md`, `reports/gates/G*.json`. M3 принят автором 2026-09-20.
+Protocol and thresholds: `configs/gates.yaml`, fixed in commit `921ffaf` before the run; results: `reports/gates.md`, `reports/gates/G*.json`. The author accepted M3 on 2026-09-20.
 
-- **G1–G5 и G7 пройдены** (G1 ρ = 0.951; G2 снижение `p_eat` 100%; G3 ρ = 0.995; G4 — на перемешанных графах сигнал не доходит до выходных нейронов, все три нулевые метрики равны 0 на 20 графах из 20; G5 — три критерия из трёх; G7 — наименьший p с поправкой Холма 0.0015).
-- **G6 не пройдены (9 вариантов из 11).** По SPEC §5 в итоговом отчёте пишется дословно: **«выводы зависят от ручных параметров»**. Уточнение: оба упавших варианта — ослабление ×0.5 (`r_max_sugar × 0.5`, `w_syn × 0.5`); при них сеть молчит, смены знака нет. Остальные девять вариантов (`r_max_sugar × 1.5`, `r_max_looming` ×0.5 и ×1.5, `w_syn × 1.5`, `alpha` 0.5 и 1.5, критерии 3 и 5 спайков, популяционный код looming) сохраняют знак и монотонность.
-- Пороги ворот после просмотра результатов не менялись.
+- **G1–G5 and G7 passed** (G1 ρ = 0.951; G2 reduction in `p_eat` 100%; G3 ρ = 0.995; G4 — signals do not reach output neurons in shuffled graphs, all three null metrics equal 0 in 20 of 20 graphs; G5 — three of three criteria; G7 — minimum Holm-adjusted p 0.0015).
+- **G6 failed (9 of 11 variants passed).** Under SPEC §5, the final report must explicitly state: **“conclusions depend on manually chosen parameters.”** Both failed variants are ×0.5 weakening (`r_max_sugar × 0.5`, `w_syn × 0.5`); the network is silent, with no sign reversal. The other nine variants (`r_max_sugar × 1.5`, `r_max_looming` ×0.5 and ×1.5, `w_syn × 1.5`, `alpha` 0.5 and 1.5, thresholds of 3 and 5 spikes, population looming code) preserve direction and monotonicity.
+- Gate thresholds were not changed after viewing results.
 
-## 7. Психометрика и калибровка (RQ3, RQ4) — табличный режим
+## 7. Psychometrics and calibration (RQ3, RQ4) — table mode
 
-Только для RQ3/RQ4 (D27). В бакетных режимах запрашиваются только уникальные комбинации уровней (900 из 1 225 точек сетки B); остальные точки получают копии. Сетка B: 7 × 5 × 7 × 5 = 1 225 точек, узлы равномерно на [0, 1] (`configs/grid.yaml`). Коннектом: `N_rep` = 20. Jev: все четыре режима, `N_rep` = **10 в два прохода по 5** с разрывом **не менее 12 часов** между проходами; у каждой строки таблицы колонка `session` (1 или 2). С учётом D47 это (1 225 + 1 225 + 900 + 900) × 10 = 42 500 вызовов. Политика в узле — среднее по обоим проходам; расхождение проходов (дивергенция Дженсена—Шеннона между политиками сессий, по режимам) сообщается как мера стабильности сервиса во времени. Отклонение от D2 (`N_rep` = 20): при 20 повторах таблицы не помещаются в `--max-calls`.
-- RQ3: логистический фит срезов `p_escape(looming)` и `p_eat(bitter)`; порог и крутизна у коннектома, Jev, оракула; средняя дивергенция Дженсена—Шеннона по сетке.
-- RQ4: Brier score и reliability-таблица для `p_escape` Jev относительно «ESCAPE оптимально по оракулу».
+For RQ3/RQ4 only (D27). Bucketed modes query only unique level combinations (900 of the 1,225 points in grid B); other points receive copies. Grid B: 7 × 5 × 7 × 5 = 1,225 points, uniformly spaced on [0, 1] (`configs/grid.yaml`). Connectome: `N_rep` = 20. Jev: all four modes, `N_rep` = **10 in two passes of 5**, separated by **at least 12 hours**; each table row has a `session` column (1 or 2). Under D47 this requires (1,225 + 1,225 + 900 + 900) × 10 = 42,500 calls. The policy at a node is the mean across both passes; between-pass divergence (Jensen–Shannon divergence between session policies, by mode) is reported as a measure of service stability over time. Deviation from D2 (`N_rep` = 20): 20 repetitions would exceed `--max-calls`.
+- RQ3: logistic fits to `p_escape(looming)` and `p_eat(bitter)` slices; threshold and slope for connectome, Jev, and oracle; mean Jensen–Shannon divergence over the grid.
+- RQ4: Brier score and reliability table for Jev `p_escape` against the label “ESCAPE is optimal according to the oracle.”
 
-## 8. Время решения (RQ5; SPEC §6 в редакции D10–D15)
+## 8. Decision time (RQ5; SPEC §6 as amended by D10–D15)
 
-- Измеряется только клиентское `t_wall` (`perf_counter_ns`); у коннектома дополнительно `t_sim`. Сообщаются p50 / p95.
-- Латентность Jev сообщается **отдельно по каждому режиму состояния** (длина запроса различается в десятки раз: правила входят в `instructions`). Вызовы с повтором после сетевой ошибки (`retried` > 0) и копии ответов в бакетных таблицах (`cache_hit`) в статистику не входят.
-- Jev: последовательные вызовы, одна keep-alive-сессия, заголовок `X-OpenRouter-Cache: false`; первые 20 вызовов — прогрев, холодный первый вызов приводится отдельно; состояния равномерно по сетке B.
-- Коннектом: один процесс, граф в памяти (`t_load` отдельно), ранняя остановка на событии декодера; RTF = `t_sim` / `t_wall`.
-- Замеры, на которых принимаются решения, выполняет человек из своего терминала, от сети, под `caffeinate -i` (D5).
-- **Хронометрическая гипотеза H6.**
-  - **Основной тест (коннектом):** сахар задерживает первый спайк DNp01. Данные — пары H1 (sugar 0.6 + looming против looming-only, одни сиды), в которых DNp01 дал спайк **в обоих плечах**; величина — `t_sim` первого спайка DNp01. Парный двусторонний критерий Уилкоксона по разностям (условие − контроль), отдельно на каждом уровне looming, поправка Холма по трём уровням. Подтверждена, если наименьший p с поправкой Холма < 0.05 и медиана разностей на этом уровне положительна. Сообщаются число пар на уровень и медианы. Новых симуляций не требует.
-  - **Вторичный анализ (коннектом):** связь `t_sim` с трудностью конфликта d = 1 − |p_escape − p_eat| по точкам сетки B. IDLE-триалы исключаются (их `t_sim` = 500 мс — цензура, а не латентность); берутся только точки с p_eat + p_escape ≥ 0.5; Спирмен ρ между d и медианой `t_sim` в точке, 95% бутстреп-ДИ по точкам.
-  - **Jev (основной режим), эквивалентность:** `t_wall` не зависит от d, если 95% бутстреп-ДИ для ρ Спирмена между d и `t_wall` целиком лежит внутри **[−0.1, 0.1]**. Данные — некэшированные вызовы без повторов из таблицы основного режима. ДИ, выходящий за эти границы с любой стороны, означает, что эквивалентность не показана.
-- **Свип по дедлайну:** `deadline_ms` ∈ {1, 3, 10, 30, 100, 300, 1000, 3000}. Сообщается **доля решений, успевших к дедлайну** (латентность ≤ `deadline_ms`), по измеренным распределениям латентности решений главного онлайн-прогона, для каждого арбитра; два трека: `wall` (все по `t_wall`) и `native` (коннектом по `t_sim`, остальные по `t_wall`). Выживаемость при дедлайне не разыгрывается (отклонение от SPEC §6.3-D).
-- Рисунок «скорость против качества»: X — `t_wall` p50 (лог-шкала), Y — % от оракула; коннектом показан дважды (`t_wall` и `t_sim`).
+- Measure client-side `t_wall` only (`perf_counter_ns`); additionally measure `t_sim` for the connectome. Report p50 / p95.
+- Report Jev latency **separately for each state mode** (request lengths differ by tens of times because rules are included in `instructions`). Exclude calls retried after network errors (`retried` > 0) and copied responses in bucketed tables (`cache_hit`).
+- Jev: sequential calls, one keep-alive session, `X-OpenRouter-Cache: false` header; the first 20 calls are warm-up, with the first cold call reported separately; states uniformly sampled over grid B.
+- Connectome: one process, graph in memory (`t_load` reported separately), early stopping at the decoder event; RTF = `t_sim` / `t_wall`.
+- Measurements used to make decisions are run by the human author in their own terminal, on AC power, under `caffeinate -i` (D5).
+- **Chronometric hypothesis H6.**
+  - **Primary test (connectome):** sugar delays the first DNp01 spike. Data: H1 pairs (sugar 0.6 + looming versus looming-only, identical seeds) in which DNp01 spikes **in both arms**; quantity: `t_sim` of the first DNp01 spike. Paired two-sided Wilcoxon test on differences (condition − control), separately at each looming level, with Holm correction across three levels. Confirmed if the minimum Holm-adjusted p < 0.05 and the median difference at that level is positive. Report pair counts and medians per level. No new simulations required.
+  - **Secondary analysis (connectome):** association between `t_sim` and conflict difficulty d = 1 − |p_escape − p_eat| across grid B nodes. Exclude IDLE trials (their `t_sim` = 500 ms is censoring, not latency); include only nodes with p_eat + p_escape ≥ 0.5; Spearman ρ between d and median `t_sim` at each node, with a 95% bootstrap CI over nodes.
+  - **Jev (primary mode), equivalence:** `t_wall` is independent of d if the 95% bootstrap CI for Spearman ρ between d and `t_wall` lies entirely within **[−0.1, 0.1]**. Data: uncached, non-retried calls from the primary-mode table. A CI extending beyond either boundary means equivalence has not been demonstrated.
+- **Deadline sweep:** `deadline_ms` ∈ {1, 3, 10, 30, 100, 300, 1000, 3000}. Report the **fraction of decisions meeting the deadline** (latency ≤ `deadline_ms`) from measured decision-latency distributions in the main online run, per arbiter, in two tracks: `wall` (all use `t_wall`) and `native` (connectome uses `t_sim`, others use `t_wall`). Survival under deadlines is not simulated (deviation from SPEC §6.3-D).
+- “Speed versus quality” figure: X — `t_wall` p50 (log scale), Y — % of oracle; show the connectome twice (`t_wall` and `t_sim`).
 
-## 9. Вторичные анализы (заранее перечисленные)
+## 9. Secondary analyses (listed in advance)
 
-Бюджет вызовов Jev (лимит `--max-calls` = 100 000; израсходовано к моменту заморозки 9 343, включая смоук-прогон тестовой команды на 5 dev-эпизодах): главный прогон ≈ 20 000; вторичный с сэмплированием ≈ 6 500; таблицы 42 500; H5 440; замер латентности по четырём режимам ≈ 4 100 — всего ≈ 83 000.
+Jev call budget (`--max-calls` limit = 100,000; 9,343 used at freezing, including a smoke test of the test command on 5 dev episodes): main run ≈ 20,000; secondary sampled run ≈ 6,500; tables 42,500; H5 440; latency benchmark across four modes ≈ 4,100 — approximately 83,000 in total.
 
-Итоговая энергия; причины смерти (голод / хищник / токсин / не успел); цена решения; результаты при сэмплировании из `probs`; остальные три режима Jev в табличном режиме; сверка «50 живых эпизодов против таблицы» из SPEC §7 **снимается**: после D27 главная метрика сама считается онлайн, а потери табличного режима измерены отдельно (`reports/grid_loss.md`).
+Final energy; causes of death (starvation / predator / toxin / missed deadline); decision cost; outcomes when sampling from `probs`; the other three Jev modes in table mode. The “50 live episodes versus table” cross-check from SPEC §7 is **dropped**: after D27 the primary metric is already measured online, and table-mode losses have been measured separately (`reports/grid_loss.md`).
 
-## 10. Не выяснялось и не будет утверждаться
+## 10. Questions not investigated and claims not to be made
 
-- Какой нейрон случайного сенсорного набора 5 (`reports/probe_r5.md`, часть A) вызывает подавление DNp01.
-- Через какие цели действуют нейроны M_loom (стимулируемые LPLC2/LC4, другие партнёры DNp01 или прямые синапсы).
-- **cL20:** его абляция не снимает эффект (G5: сохраняется 34 пары из 34). Его цели на этом пути — LC4 и LPLC2 (345 из 361 синапса на looming-активных партнёров DNp01) — в модели являются clamped-источниками: каждый пуассоновский толчок вызывает спайк независимо от торможения (проверено: 17 916 спайков LPLC2/LC4 в 60 парных триалах, ни одной отличающейся пары с сахаром и без). Этот путь невидим по построению модели, и о нём ничего не утверждается. Механизм в модели несут остальные 24 нейрона M_loom: их абляция при целом cL20 снимает эффект полностью (b − c: 34 → 0).
-- Достаточно ли подмножества из этих 24 нейронов — не выяснялось.
-- Поведение на перемешанных графах при повторной калибровке (калибровка на них не повторялась).
-- Looming подаётся прямо в LPLC2/LC4 в обход сетчатки; зрительная обработка не моделируется. DNp01 — нисходящий нейрон, его аксон в объёме FlyWire неполон; моторный выход побега не моделируется.
-- Абсолютные частоты модели не интерпретируются (оговорка авторов модели); `theta_eat` — критерий пачки, выбранный исполнителем (E9).
+- Which neuron in random sensory set 5 (`reports/probe_r5.md`, part A) causes DNp01 suppression.
+- Through which targets M_loom neurons act (stimulated LPLC2/LC4, other DNp01 partners, or direct synapses).
+- **cL20:** ablating it does not remove the effect (G5: 34 of 34 pairs retained). Its targets on this path, LC4 and LPLC2 (345 of 361 synapses onto looming-active DNp01 partners), are clamped sources in the model: each Poisson input forces a spike regardless of inhibition (verified: 17,916 LPLC2/LC4 spikes in 60 paired trials, no differing sugar/no-sugar pairs). This path is invisible by construction, and no claims are made about it. The model's mechanism is carried by the other 24 M_loom neurons: ablating them while retaining cL20 removes the effect completely (b − c: 34 → 0).
+- Whether a subset of these 24 neurons is sufficient was not investigated.
+- Behavior of shuffled graphs after recalibration (they were not recalibrated).
+- Looming input is delivered directly to LPLC2/LC4, bypassing the retina; visual processing is not modeled. DNp01 is a descending neuron whose axon is incomplete in the FlyWire volume; the escape motor output is not modeled.
+- Absolute model firing rates are not interpreted (the original model authors' caveat); `theta_eat` is a burst criterion chosen by the implementer (E9).
 
-## 11. Хэши (SHA-256)
+## 11. Hashes (SHA-256)
 
-Коммит репозитория на момент пересчёта: `0124ea4d031f57981fd997396bbda55da39e4a4d`. `--unlock-test`, `fob confirm` и `fob confirm-h5` сверяют эту таблицу с файлами на диске. `configs/confirm.yaml` — протокол разделов 3, 4, 5 и основного теста H6 (сиды, уровни, число пар, тесты); `configs/timing.yaml` — протокол замера времени и набор дедлайнов раздела 8; `configs/grid.yaml` — сетка B и два прохода таблиц Jev раздела 7.
+Repository commit when hashes were recomputed: `0124ea4d031f57981fd997396bbda55da39e4a4d`. `--unlock-test`, `fob confirm`, and `fob confirm-h5` compare this table with files on disk. `configs/confirm.yaml` specifies sections 3, 4, 5 and the primary H6 test (seeds, levels, pair counts, tests); `configs/timing.yaml` specifies the timing protocol and deadline set in section 8; `configs/grid.yaml` specifies grid B and the two Jev table passes in section 7.
 
-| Файл | SHA-256 |
+| File | SHA-256 |
 |---|---|
 | `configs/calibration.yaml` | `944007ecbe8be17d27fc1bbe35b3ae850d83329605e44fc75d8a66af82087826` |
 | `configs/confirm.yaml` | `75d6e1c3de00aae581ae38983eb75c54673ea0134c6333958ea15bb2062c3281` |

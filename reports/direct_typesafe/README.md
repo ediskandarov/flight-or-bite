@@ -1,55 +1,55 @@
-# Прямой TypeSafe API: exploratory-проверка, 2026-10-06
+# Direct TypeSafe API: exploratory probe, 2026-10-06
 
-> Ниже — исторический результат первой короткой проверки (121 запрос).
-> Полный замер (ещё 4080 запросов) завершён: [сравнение с OpenRouter](../latency_typesafe/comparison.md).
-> Общая оценка расходов всех прямых тестов — $0.099440544; расчётный остаток $4.900559456.
-> Актуальный суммарный учёт — [spend.json](spend.json); баланс кабинета не проверен.
+> Historical results from the first short probe (121 requests).
+> The full benchmark (4,080 additional requests) is complete: [OpenRouter comparison](../latency_typesafe/comparison.md).
+> Total estimated direct-test spend: $0.099440544; estimated remaining balance: $4.900559456.
+> Current aggregate accounting: [spend.json](spend.json); the account balance has not been verified.
 
-Проверка проведена по запросу пользователя после основного эксперимента через OpenRouter.
-Endpoint: `https://api.typesafe.ai/v1/systemone`; запрошенная и фактически возвращённая
-модель: `jev-1.13.0`. Использован неизменённый шаблон `informed` v1.
+The user requested this probe after the main OpenRouter experiment.
+Endpoint: `https://api.typesafe.ai/v1/systemone`; requested and returned
+model: `jev-1.13.0`. Used the unchanged `informed` v1 template.
 
-Источники: [API](https://docs.typesafe.ai/api), [модели и тарифы](https://docs.typesafe.ai/models),
-проверены 2026-10-06. Тариф: $0.042 за миллион входных токенов, выход бесплатный.
+Sources: [API](https://docs.typesafe.ai/api), [models and pricing](https://docs.typesafe.ai/models),
+checked 2026-10-06. Price: $0.042 per million input tokens; output is free.
 
-## Результат
+## Result
 
-- Первый пробный вызов: 1 успешный запрос, 741 входной токен, 310.9 мс (холодное соединение).
-- Короткая серия: 20 прогревочных + 100 измеряемых запросов, все 120 успешны.
-- Состояния серии: первые 100 точек той же фиксированной последовательности сетки B,
-  что и в протокольном benchmark; прогрев — состояние (0.5, 0, 0.5, 0.5).
-- Одна keep-alive HTTP-сессия на запуск; без повторных попыток и клиентского кэша.
-- HTTP p50: **294.162 мс**; p95: **384.565 мс**. Холодный запрос серии: 316.666 мс.
-- Суммарно 121 запрос, **89 724 входных токена**. Пропусков usage нет.
+- Initial probe: 1 successful request, 741 input tokens, 310.9 ms (cold connection).
+- Short series: 20 warm-up + 100 timed requests, all 120 successful.
+- Series states: the first 100 points in the same fixed grid B sequence
+  used by the protocol benchmark; warm-up state (0.5, 0, 0.5, 0.5).
+- One keep-alive HTTP session per run; no retries or client-side cache.
+- HTTP p50: **294.162 ms**; p95: **384.565 ms**. Series cold request: 316.666 ms.
+- Total: 121 requests, **89,724 input tokens**. No missing usage records.
 
-## Расход
+## Spend
 
-Начальный баланс **$5.00** сообщён пользователем; это не ответ API о балансе.
-Расчётный расход: **$0.003768408**. Расчётный остаток: **$4.996231592**.
-Это оценка по опубликованному тарифу, а не проверенное списание; другие обращения
-к аккаунту, кредиты, округление и корректировки биллинга не учитываются.
+The **$5.00** opening balance was reported by the user, not returned by a balance API.
+Estimated spend: **$0.003768408**. Estimated remaining balance: **$4.996231592**.
+These are estimates from published pricing, not verified charges; other account activity,
+credits, rounding, and billing adjustments are excluded.
 
-Учёт: `opening_balance.json`, `spend.json`; каждый запуск хранит `calls.jsonl`
-и `summary.json`. Скрипт после запуска пересчитывает суммарный расход из сохранённых
-summary; при неизвестном usage не выводит расчётный остаток. Ключи и заголовки
-авторизации не сохраняются. Попытки входят также в общий лимит проекта: 73 403 / 100 000.
+Accounting: `opening_balance.json`, `spend.json`; each run retains `calls.jsonl`
+and `summary.json`. After each run the script recomputes aggregate spend from saved
+summaries; unknown usage suppresses the balance estimate. Keys and authorization
+headers are not saved. Attempts also count toward the project limit: 73,403 / 100,000 at this stage.
 
-## Ограничения сравнения
+## Comparison limitations
 
-Это дополнительная проверка из процесса агента, не замер по D5 и не часть
-замороженного основного сравнения. Старый benchmark OpenRouter informed дал
-p50 354.686 мс и p95 479.109 мс на 1000 состояниях. Прямой тест здесь содержит
-100 измеряемых состояний, выполнен в другое время и измеряет только HTTP-обмен,
-тогда как основной арбитр включает дополнительную локальную обработку.
-Тождество снапшотов `jev-1.13.0` и `typesafe/jev-1.13-20260917` не проверено.
-Кэширование на стороне провайдера не проверено. Поэтому разницу нельзя полностью
-приписать удалению OpenRouter из цепочки и считать контролируемой оценкой ускорения.
+This is an additional probe from the agent's process, not a D5 benchmark or part of
+the frozen primary comparison. The original OpenRouter informed benchmark measured
+p50 354.686 ms and p95 479.109 ms across 1,000 states. This direct probe has
+100 timed states, was run at a different time, and measures only the HTTP exchange,
+whereas the main arbiter includes additional local processing.
+Snapshot identity between `jev-1.13.0` and `typesafe/jev-1.13-20260917` is unverified.
+Provider-side caching was not checked. The difference therefore cannot be attributed
+entirely to removing OpenRouter or treated as a controlled acceleration estimate.
 
-Повторить короткую серию из терминала, из корня проекта:
+For reproducibility only (the probe is complete), the short-series terminal command from the repository root is:
 
 ```bash
 caffeinate -i .venv/bin/python scripts/jev_direct_probe.py --n 100 --warmup 20
 ```
 
-Повтор делает ещё 120 платных вызовов; новая серия сохраняется в отдельном каталоге.
-Основной клиент OpenRouter, PREREG и замороженные конфиги не менялись.
+Repeating it makes 120 additional paid calls; each new series is saved in a separate directory.
+The main OpenRouter client, preregistered protocol, and frozen configurations were unchanged by these probes.

@@ -1,14 +1,14 @@
-# Потери на табулировании известной политики (exploratory)
+# Loss from tabulating a known policy (exploratory)
 
-Дата: 2026-09-20. Вопрос: сколько выживаемости теряется **только из-за сетки и интерполяции**, если политику, известную точно, сначала записать в таблицу (SPEC §4.5), а потом играть из таблицы (табличный режим, SPEC §2)? Оракул и `fixed_priority` не являются объектами исследования, поэтому подбор сетки по ним не затрагивает правило «не подгоняй».
+Date: 2026-09-20. Question: how much survival is lost **solely to the grid and interpolation** when an exactly known policy is first tabulated (SPEC §4.5) and then played from that table (table mode, SPEC §2)? Oracle and `fixed_priority` are not the research subjects, so choosing a grid using them does not violate the no-tuning rule.
 
-Метод: политика вычисляется в узлах сетки (1 повтор — обе политики детерминированы), затем `TabularArbiter` играет 1000 эпизодов `dev`: вероятности — линейная интерполяция с перенормировкой, действие сэмплируется. Сравнение — парное, с прямой игрой той же политики на тех же сидах; бутстреп 10 000. Воспроизведение: `scripts/grid_loss.py`, `scripts/grid_loss_aligned.py`; данные: `runs/20260920T013107_grid-loss/`, `runs/20260920T013344_grid-loss-aligned/`.
+Method: evaluate the policy at grid nodes (1 repetition; both policies are deterministic), then use `TabularArbiter` for 1,000 `dev` episodes: linearly interpolate and renormalize probabilities, then sample the action. Paired comparison with direct execution of the same policy on identical seeds; 10,000 bootstrap resamples. Reproduction: `scripts/grid_loss.py`, `scripts/grid_loss_aligned.py`; data: `runs/20260920T013107_grid-loss/`, `runs/20260920T013344_grid-loss-aligned/`.
 
-Сетки A–D — равномерные узлы на [0, 1]. Сетки E–H («aligned») — узлы по структуре среды: sugar {0, 0.2, 0.4, 0.6, 0.8, 1}, bitter {0, 0.1, 0.3, 0.65, 1} (наблюдений в sugar ∈ (0, 0.2) и bitter ∈ (0.1, 0.3) среда не порождает), looming и hunger — равномерно. Формат: sugar × bitter × looming × hunger.
+Grids A–D use uniform nodes on [0, 1]. Grids E–H (“aligned”) follow environment structure: sugar {0, 0.2, 0.4, 0.6, 0.8, 1}, bitter {0, 0.1, 0.3, 0.65, 1} (the environment never generates sugar ∈ (0, 0.2) or bitter ∈ (0.1, 0.3)); looming and hunger remain uniform. Format: sugar × bitter × looming × hunger.
 
-## Оракул (прямая игра: 151.2 триала)
+## Oracle (direct: 151.2 trials)
 
-| Сетка | Точек | Жизнь из таблицы | Разница с прямой игрой [95% ДИ] | Сохранено |
+| Grid | Points | Table lifetime | Difference from direct [95% CI] | Retained |
 |---|---|---|---|---|
 | A 5x3x5x3 | 225 | 60.1 | -91.2 [-98.9, -83.8] | 39.7% |
 | B 7x5x7x5 | 1,225 | 111.1 | -40.1 [-47.0, -33.3] | 73.5% |
@@ -19,9 +19,9 @@
 | G aligned 6x5x21x9 | 5,670 | 142.5 | -8.7 [-12.8, -4.7] | 94.2% |
 | H aligned 6x5x41x17 | 20,910 | 144.6 | -6.6 [-10.5, -2.8] | 95.6% |
 
-## fixed_priority (прямая игра: 75.3 триала)
+## fixed_priority (direct: 75.3 trials)
 
-| Сетка | Точек | Жизнь из таблицы | Разница с прямой игрой [95% ДИ] | Сохранено |
+| Grid | Points | Table lifetime | Difference from direct [95% CI] | Retained |
 |---|---|---|---|---|
 | A 5x3x5x3 | 225 | 32.8 | -42.6 [-46.7, -38.7] | 43.5% |
 | B 7x5x7x5 | 1,225 | 40.8 | -34.5 [-38.2, -30.9] | 54.2% |
@@ -32,35 +32,35 @@
 | G aligned 6x5x21x9 | 5,670 | 62.3 | -13.0 [-15.6, -10.7] | 82.7% |
 | H aligned 6x5x41x17 | 20,910 | 68.2 | -7.2 [-9.2, -5.2] | 90.5% |
 
-## Что измерено
+## Measurements
 
-- Сетка спеки по умолчанию (A, 225 точек) сохраняет 40% выживаемости оракула и 43% — `fixed_priority`. Табулированный оракул на сетке A (60.1) живёт меньше, чем `fixed_priority` при прямой игре (75.3).
-- Все разницы значимы (ДИ не включает ноль), включая сетку на 20 910 точек.
-- Наибольший прирост даёт разрешение по looming: E → F (looming 5 → 11 узлов) поднимает оракула с 43% до 80%.
-- В узлах таблица воспроизводит политику точно (проверено тестами); потери возникают между узлами, где интерполяция one-hot вероятностей двух соседних узлов даёт смесь действий, а действие затем сэмплируется.
-- Обе проверенные политики детерминированы (вероятности 0 или 1). Для политик с плавными вероятностями (например, срез Jev в `reports/probe_jev.md`) величина потерь **не измерялась**.
+- The default specified grid (A, 225 points) retains 40% of oracle survival and 43% of `fixed_priority` survival. The tabulated oracle on grid A (60.1) survives less than direct `fixed_priority` (75.3).
+- All differences are significant (CI excludes zero), including the 20,910-point grid.
+- Looming resolution gives the largest improvement: E → F (5 → 11 looming nodes) raises oracle retention from 43% to 80%.
+- At nodes the table reproduces the policy exactly (verified by tests); loss occurs between nodes, where interpolating neighboring one-hot probabilities produces an action mixture that is then sampled.
+- Both tested policies are deterministic (probabilities 0 or 1). Loss for smoothly varying probabilities (e.g. the Jev slice in `reports/probe_jev.md`) **was not measured** in this initial comparison.
 
-## Зависимость потерь от резкости политики («мягкий оракул»)
+## Dependence on policy sharpness (“soft oracle”)
 
-Политика P(действие) ∝ exp(Q / τ), где Q — значения оракула (в триалах ожидаемой оставшейся жизни). τ → 0 даёт детерминированного оракула; с ростом τ вероятности сглаживаются. Вероятности в узлах точные (1 повтор). Данные: `runs/20260920T013823_grid-loss-smooth/`, скрипт `scripts/grid_loss_smooth.py`. Для ориентира: срез `p_escape` Jev (`naive`) в тех же точках looming 0.2 / 0.4 / 0.5 / 0.6 / 0.8 — 0.03 / 0.16 / 0.26 / 0.46 / 0.67.
+Policy P(action) ∝ exp(Q / τ), where Q is the oracle value in expected remaining trials. τ → 0 gives the deterministic oracle; larger τ smooths probabilities. Node probabilities are exact (1 repetition). Data: `runs/20260920T013823_grid-loss-smooth/`; script `scripts/grid_loss_smooth.py`. For reference, Jev (`naive`) `p_escape` at the same looming points 0.2 / 0.4 / 0.5 / 0.6 / 0.8 is 0.03 / 0.16 / 0.26 / 0.46 / 0.67.
 
-| τ | p_escape при looming 0.2 / 0.4 / 0.5 / 0.6 / 0.8 (sugar 0.6, bitter 0.05, hunger 0.5) | Прямая игра, триалов | Сетка A: жизнь (сохранено) | Сетка F | Сетка G |
+| τ | p_escape at looming 0.2 / 0.4 / 0.5 / 0.6 / 0.8 (sugar 0.6, bitter 0.05, hunger 0.5) | Direct lifetime, trials | Grid A: lifetime (retained) | Grid F | Grid G |
 |---|---|---|---|---|---|
 | 0.5 | 0.0 / 0.694 / 1.0 / 1.0 / 1.0 | 145.7 | 54.2 (37%) | 112.9 (77%) | 131.9 (91%) |
 | 2.0 | 0.008 / 0.46 / 0.996 / 1.0 / 1.0 | 115.4 | 44.5 (39%) | 83.9 (73%) | 100.1 (87%) |
 | 8.0 | 0.174 / 0.367 / 0.743 / 0.952 / 0.993 | 50.6 | 29.9 (59%) | 40.2 (79%) | 43.3 (86%) |
 | 32.0 | 0.291 / 0.342 / 0.443 / 0.59 / 0.725 | 22.6 | 20.7 (91%) | 21.4 (94%) | 21.4 (95%) |
 
-- На сетке спеки (A) резкая политика (τ = 0.5) сохраняет 37% выживаемости, плавная (τ = 32) — 91%. Потери табличного режима у резких и плавных арбитров различаются в разы.
-- Прямая игра, без таблиц: сглаживание одной и той же функции ценности снижает жизнь со 145.7 (τ = 0.5) до 22.6 триала (τ = 32); `random` на тех же сидах — 14.1. Действие по SPEC §4 сэмплируется из вероятностей.
+- On the specified grid (A), a sharp policy (τ = 0.5) retains 37% of survival; a smooth policy (τ = 32) retains 91%. Table-mode losses differ severalfold between sharp and smooth arbiters.
+- Direct execution, without tables: smoothing the same value function reduces lifetime from 145.7 (τ = 0.5) to 22.6 trials (τ = 32); `random` achieves 14.1 on the same seeds. Under SPEC §4, actions are sampled from probabilities.
 
-## Стоимость сеток для арбитров проекта (оценка по ранее измеренным временам)
+## Estimated grid costs for project arbiters (using earlier timings)
 
-| Сетка | Точек | Коннектом: симуляций при N_rep 20 | Jev: вызовов при 3 режимах × N_rep 10 | Jev, последовательно при 0.4 с |
+| Grid | Points | Connectome simulations at N_rep 20 | Jev calls at 3 modes × N_rep 10 | Jev sequentially at 0.4 s |
 |---|---|---|---|---|
-| A | 225 | 4 500 | 6 750 | 0.8 ч |
-| F | 1 650 | 33 000 | 49 500 | 5.5 ч |
-| G | 5 670 | 113 400 | 170 100 | 18.9 ч |
-| H | 20 910 | 418 200 | 627 300 | 69.7 ч |
+| A | 225 | 4 500 | 6 750 | 0.8 h |
+| F | 1 650 | 33 000 | 49 500 | 5.5 h |
+| G | 5 670 | 113 400 | 170 100 | 18.9 h |
+| H | 20 910 | 418 200 | 627 300 | 69.7 h |
 
-Время симуляции коннектома с looming-входом в `reports/probe_looming.md` — от 0.9 до 9.6 с на триал (без ранней остановки), против 0.174 с для сахарного триала.
+Connectome simulations with looming input in `reports/probe_looming.md` take 0.9–9.6 s per trial (without early stopping), versus 0.174 s for sugar-only trials.
