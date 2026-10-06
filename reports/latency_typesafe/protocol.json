@@ -1,0 +1,32 @@
+{
+  "provider": "typesafe-direct",
+  "model": "jev-1.13.0",
+  "timing": {
+    "n": 1000,
+    "warmup": 20,
+    "state_seed": 20260920,
+    "jev_modes": [
+      "naive",
+      "informed",
+      "bucketed",
+      "informed_bucketed"
+    ],
+    "max_error_share": 0.05,
+    "deadlines_ms": [
+      1,
+      3,
+      10,
+      30,
+      100,
+      300,
+      1000,
+      3000
+    ]
+  },
+  "prompts": {
+    "naive": "910c0642f29b36e6c0dec1c6610471b2456add7afe2ac01962f3caadf70781d8",
+    "informed": "6eb536568b51b7645cfccac878b8acc333336db5003857b7abd083a2262cebdb",
+    "bucketed": "66d4c17ab751e32a2ca695700f28ab23f1677bcbf743a5ebf216298688407f0e",
+    "informed_bucketed": "36166bffca8afe8eb092c997198147d34cf2b44461c4b2c1b70434085f4d2b74"
+  }
+}

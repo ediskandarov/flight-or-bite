@@ -21,7 +21,16 @@ connectome; paired difference +31.49 trials (95% CI [28.06, 34.91]). The
 Median wall time is 54.4 ms for the connectome and 354.7 ms for Jev informed
 (including network and OpenRouter). Only the secondary sampled run remains. Follow the author's
 [terminal run instructions](reports/run_instructions.md) (D59); do not repeat the completed
-confirmatory analyses. The call ledger is 73,282 / 100,000 as of this check.
+confirmatory analyses. Before the additional direct tests, the call ledger stood at 73,282 / 100,000.
+Additional direct TypeSafe benchmark (D64) is complete: all four modes, 1,000 timed
+calls plus 20 warm-up calls each, no errors. Original OpenRouter data are preserved.
+See the [provider comparison](reports/latency_typesafe/comparison.md): informed wall-time
+p50 / p95 is 304.8 / 408.8 ms direct, versus 354.7 / 479.1 ms through OpenRouter.
+This is an additional comparison between separate runs; provider snapshot identity is unverified.
+Estimated direct TypeSafe spend, including probes: $0.099440544 from the user-reported $5.00
+opening balance; [spend ledger](reports/direct_typesafe/spend.json). The combined project call
+ledger is now 77,483 / 100,000 (the 73,282 figure above is the primary-run subtotal).
+
 Current handoff: [docs/handoff.md](docs/handoff.md); approved protocol changes:
 [docs/decisions.md](docs/decisions.md).
 

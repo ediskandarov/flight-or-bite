@@ -1,0 +1,15 @@
+{
+  "runs": [
+    {
+      "run_dir": "runs/20261006T133722_latency-typesafe",
+      "provider": "typesafe-direct",
+      "throttle": {
+        "sleep_10ms_overshoot_ms_median": 2.52,
+        "sleep_10ms_overshoot_ms_max": 2.56,
+        "timer_throttled": false,
+        "power": "Now drawing from 'AC Power'"
+      },
+      "status": "completed"
+    }
+  ]
+}

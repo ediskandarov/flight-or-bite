@@ -5,11 +5,14 @@
     "reported_date": "2026-10-06",
     "timezone": "Asia/Tbilisi"
   },
-  "tracked_attempts": 121,
-  "known_input_tokens": 89724,
+  "tracked_attempts": 4201,
+  "known_input_tokens": 2367632,
   "calls_with_unknown_usage": 0,
-  "estimated_known_spend_usd": "0.003768408",
-  "estimated_balance_usd": "4.996231592",
+  "estimated_known_spend_usd": "0.099440544",
+  "estimated_balance_usd": "4.900559456",
   "actual_current_balance_verified": false,
+  "input_usd_per_million": "0.042",
+  "pricing_source": "https://docs.typesafe.ai/models",
+  "pricing_checked_date": "2026-10-06",
   "assumptions": "Public per-token prices; no other account usage, credits, taxes or billing adjustments"
 }
