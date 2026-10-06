@@ -57,3 +57,11 @@ what waits for the author. Committed together with the step.
 - Updated README and marked open_questions as a historical log. Frozen files, scientific parameters, hypotheses and existing results are unchanged.
 - Validation: 46 tests passed (runlog, online, bench, report, Jev client, policy table); ruff and git diff --check passed; prereg.check() passed after the fix. Tests used mock Jev and temporary outputs only.
 - Next: the author runs the three commands in reports/run_instructions.md from their terminal (D59), starting with the main online test run. Then validate outputs and build the final report from artifacts. Current API availability and balance have not been checked.
+
+## 2026-10-06 — main online test run complete and audited
+
+- Author ran the preregistered main command from their terminal, 11:02–12:44 Asia/Tbilisi, starting from clean commit d8ae502. Results: reports/online/test/episodes.jsonl (1,500 records) and decisions.jsonl (68,671 records). All five arbiters have exactly seeds 100000–100299, with no duplicate or missing episode keys. Decision counts, trial ordering and action totals match every episode; no orphan decision groups.
+- Jev: 16,917 decisions, all model typesafe/jev-1.13-20260917, no retries, no stops. Ledger 69,202 / 100,000; 30,798 calls remain. Frozen preregistration hashes still match.
+- Main preregistered comparison: Jev informed lifetime 55.39 vs connectome 23.90 trials; paired difference +31.49, bootstrap 95% CI [28.0598, 34.91]. Jev wins this specified comparison. Fixed priority averages 56.6633; its descriptive difference from Jev (+1.2733, CI [-3.3236, 5.8734]) is not significant. These are survival results in the specified environment, not a general intelligence ranking.
+- Rebuilt reports/final_report.md and figures from artifacts only. Report remains explicitly INTERIM: latency bench and the secondary sampled run are absent. No new API calls or simulations. README updated.
+- Next: author runs reports/run_instructions.md section 2 (latency bench) on AC power, then section 3 (100 sampled episodes). Preserve main results; do not rerun or tune parameters based on them. After both outputs arrive, audit and rebuild the complete report.
