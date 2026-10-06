@@ -23,33 +23,12 @@ from flight_or_bite.arbiters.jev_arbiter import load_prompt, prompt_hash
 from flight_or_bite.arbiters.jev_client import CallBudget, build_payload
 from flight_or_bite.timing.bench import load_cfg, states
 from flight_or_bite.timing.timers import summarize_ns
+from flight_or_bite.timing.typesafe_spend import update_spend
 from flight_or_bite.types import Observation
 
 ENDPOINT = "https://api.typesafe.ai/v1/systemone"
 MODEL = "jev-1.13.0"
 RATE_PER_MILLION = Decimal("0.042")
-
-
-def update_spend(root):
-    """Sum saved probe usage; never present a local estimate as a provider balance."""
-    opening_path = root / "opening_balance.json"
-    if not opening_path.is_file():
-        return
-    opening = json.loads(opening_path.read_text())
-    summaries = [json.loads(p.read_text()) for p in sorted(root.glob("*/summary.json"))]
-    cost = sum((Decimal(s["estimated_known_cost_usd"]) for s in summaries), Decimal(0))
-    unknown = sum(s["calls_with_unknown_usage"] for s in summaries)
-    ledger = {
-        "opening_balance": opening,
-        "tracked_attempts": sum(s["attempts"] for s in summaries),
-        "known_input_tokens": sum(s["known_input_tokens"] for s in summaries),
-        "calls_with_unknown_usage": unknown,
-        "estimated_known_spend_usd": str(cost),
-        "estimated_balance_usd": str(Decimal(opening["balance_usd"]) - cost) if not unknown else None,
-        "actual_current_balance_verified": False,
-        "assumptions": "Public per-token prices; no other account usage, credits, taxes or billing adjustments",
-    }
-    (root / "spend.json").write_text(json.dumps(ledger, indent=2) + "\n")
 
 
 def main():

@@ -138,3 +138,9 @@ Agent's judgement, open to reversal:
 | # | Decision | Effect |
 |---|---|---|
 | D63 | User explicitly requested testing Jev without OpenRouter and supplied TYPESAFE_API_KEY. User reported an opening TypeSafe balance of $5.00 and requested spend tracking. | Direct access is authorized for this separate exploratory check, superseding D11–D12 only for that scope. The frozen main experiment still uses OpenRouter. Per-call token usage and public-rate estimated cost are recorded separately in reports/direct_typesafe; all attempts also count toward the project-wide 100,000-call cap. No provider balance is inferred to be verified. |
+
+## 2026-10-06 — full direct latency benchmark with OpenRouter preserved
+
+| # | Decision | Effect |
+|---|---|---|
+| D64 | User requested rerunning Jev timing through the direct API while retaining OpenRouter results for comparison. | Four modes, 1000 timed + 20 warm-up calls per mode using the existing timing configuration, state sequence and JevArbiter timer. Separate reports/latency_typesafe output; reports/latency remains the original reference. D5/D59 terminal/AC requirements remain. This is an additional post-primary-results comparison, not a change to PREREG. TypeSafe spend includes probes plus full benchmark raw logs. |
