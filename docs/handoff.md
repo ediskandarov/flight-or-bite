@@ -99,3 +99,13 @@ what waits for the author. Committed together with the step.
 - Saved raw and per-decision data, protocol, metadata and comparison in reports/latency_typesafe. Updated README and marked initial direct-probe cost figures as historical. Main OpenRouter experiment and report inputs preserved.
 - Run metadata records source commit c373cb7 and git_dirty=true: the runner creates the untracked protocol.json before start_run, so its own output already makes the tree dirty. Current source files have no modifications.
 - Next: main-study secondary sampled run remains absent. Author runs reports/run_instructions.md section 3 (100 episodes per arbiter, 500 total), then audit and rebuild the complete main report. Additional direct benchmark is already complete and must not be needlessly repeated.
+
+## 2026-10-06 — secondary sampled run audited; final report complete
+
+- Author completed the secondary sampled test from clean commit 1724605, starting at 15:10 Asia/Tbilisi. reports/online/test_sampled contains 500 episodes (100 seeds × five arbiters) and 21,133 decisions. Seeds 100000–100099 are complete and unique; decision order, action totals and episode outcomes match, with no orphan records. Deterministic arbiters match the corresponding main-run episodes.
+- Jev: 3,097 decisions, model typesafe/jev-1.13-20260917 throughout; zero retries and stops. Mean lifetime 29.97 vs connectome 24.06; paired difference +5.91, 95% CI [0.63, 11.03025]. This is secondary analysis; the primary comparison remains +31.49 [28.0598, 34.91] from 300 paired episodes.
+- Rebuilt and reviewed the complete reports/final_report.md from saved artifacts. Removed the interim state, retained primary OpenRouter measurements and linked the separate direct TypeSafe supplement. Corrected report rendering: numeric retry count, explicit censored share, and no primary-winner declaration for secondary results. Added a regression test for the latter. Scoped the OpenRouter limitation to the main experiment.
+- Combined call ledger: 80,580 / 100,000; 19,420 remain. Direct TypeSafe spend unchanged at estimated $0.099440544, estimated balance $4.900559456; actual balance not queried. No new API calls or experiments during report assembly.
+- All planned runs are complete. README and run instructions now reflect completion. Original OpenRouter latency data and frozen preregistration remain unchanged. G6 limitation remains: выводы зависят от ручных параметров.
+- Validation: all 14 frozen hashes match; 4 report tests passed; ruff, report-link checks and git diff --check passed. reports/latency matches commit 7bd714c byte-for-byte.
+- Next / waits for author: nothing required for the planned experiment. Preserve completed results; any future experiment must be explicitly separate.

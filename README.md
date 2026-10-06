@@ -10,26 +10,32 @@ decision time:
 The full specification is in [SPEC.md](SPEC.md). A negative result is a valid result.
 Every hand-made assumption is recorded in [docs/ENGINEERED.md](docs/ENGINEERED.md).
 
-Status (verified 2026-10-06): **preregistration frozen; confirmatory analyses and policy tables complete**.
+Status (verified 2026-10-06): **all planned runs complete; final report available**.
 All 14 hashes in [PREREG.md](PREREG.md) match. The connectome table has 24,500 rows;
 each of the four Jev tables has 12,250 rows across two passes separated by at least 12 hours.
-The main online test run is complete: 300 paired episodes across five arbiters, with no
-Jev retries or stops. Mean lifetime is 55.39 trials for Jev informed and 23.90 for the
-connectome; paired difference +31.49 trials (95% CI [28.06, 34.91]). The
-[interim report](reports/final_report.md) now includes the completed latency benchmark:
-1,000 timed decisions per arbiter, no failures, AC power and timer checks passed.
-Median wall time is 54.4 ms for the connectome and 354.7 ms for Jev informed
-(including network and OpenRouter). Only the secondary sampled run remains. Follow the author's
-[terminal run instructions](reports/run_instructions.md) (D59); do not repeat the completed
-confirmatory analyses. Before the additional direct tests, the call ledger stood at 73,282 / 100,000.
-Additional direct TypeSafe benchmark (D64) is complete: all four modes, 1,000 timed
-calls plus 20 warm-up calls each, no errors. Original OpenRouter data are preserved.
+The [final report](reports/final_report.md) includes the main online test (300 paired
+episodes across five arbiters), latency benchmark, and secondary sampled test (100 paired
+episodes). Both online tests completed without Jev retries or stops.
+Main mean lifetime: Jev informed 55.39 vs connectome 23.90 trials; paired difference
++31.49 (95% CI [28.06, 34.91]). Secondary sampled lifetime: 29.97 vs 24.06;
+paired difference +5.91 (95% CI [0.63, 11.03]). The secondary analysis does not determine
+the winner of the main comparison. G6 failed: **выводы зависят от ручных параметров**.
+
+Protocol latency benchmark: 1,000 timed decisions per arbiter, no failures, AC power
+and timer checks passed. Median wall time is 54.4 ms for the connectome and 354.7 ms
+for Jev informed (including network and OpenRouter).
+Additional direct TypeSafe benchmark (D64): all four modes, 1,000 timed calls plus
+20 warm-up calls each, no errors. Original OpenRouter data are preserved.
 See the [provider comparison](reports/latency_typesafe/comparison.md): informed wall-time
 p50 / p95 is 304.8 / 408.8 ms direct, versus 354.7 / 479.1 ms through OpenRouter.
 This is an additional comparison between separate runs; provider snapshot identity is unverified.
 Estimated direct TypeSafe spend, including probes: $0.099440544 from the user-reported $5.00
-opening balance; [spend ledger](reports/direct_typesafe/spend.json). The combined project call
-ledger is now 77,483 / 100,000 (the 73,282 figure above is the primary-run subtotal).
+opening balance; [spend ledger](reports/direct_typesafe/spend.json). Actual provider balance
+has not been queried. The combined project call ledger is 80,580 / 100,000.
+
+No planned runs remain. The [terminal run instructions](reports/run_instructions.md) are
+retained for provenance; do not repeat the completed confirmatory analyses or test runs.
+To rebuild the report from saved artifacts without API calls: `uv run fob report`.
 
 Current handoff: [docs/handoff.md](docs/handoff.md); approved protocol changes:
 [docs/decisions.md](docs/decisions.md).

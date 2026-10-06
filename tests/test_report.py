@@ -21,3 +21,16 @@ def test_logistic_fit_recovers_threshold_and_slope():
 def test_a_step_policy_reports_the_midpoint_between_nodes():
     fit = logistic_fit(np.array([0.0, 0.25, 0.5, 0.75]), np.array([0.0, 0.0, 1.0, 1.0]))
     assert fit == {"threshold": 0.375, "slope": None, "degenerate": True}
+
+
+def test_secondary_comparison_does_not_declare_a_primary_winner():
+    from flight_or_bite.report.build import main_metric
+
+    summary = {"episodes": 100, "stops": [], "retried_decisions": {"jev_informed": 0},
+               "arbiters": {}, "paired_differences": {
+                   "jev_informed - connectome": {"mean_diff": 5.91, "ci95": [0.63, 11.03], "significant": True}}}
+    secondary = "\n".join(main_metric(summary, "Secondary", False))
+    primary = "\n".join(main_metric(summary, "Primary", True))
+    assert "вторичный анализ" in secondary and "победитель: `" not in secondary
+    assert "победитель: `jev_informed`" in primary
+    assert "решений с повтором после сетевой ошибки: 0." in secondary

@@ -39,13 +39,14 @@ def main_metric(s: dict | None, title: str, primary: bool) -> list[str]:
     out = [f"## {title}", ""]
     if not s:
         return out + [MISSING, ""]
+    retry_count = sum(s["retried_decisions"].values())
     out += [f"Парных эпизодов: **{s['episodes']}**; остановок по политике сбоев Jev (PREREG §2b): **{len(s['stops'])}**; "
-            f"решений с повтором после сетевой ошибки: {s['retried_decisions'] or 'нет'}.", "",
+            f"решений с повтором после сетевой ошибки: {retry_count}.", "",
             "| Арбитр | Жизнь, триалов: среднее [95% ДИ] | медиана | % от оракула [95% ДИ] | смерти: хищник / голод / "
             "токсин / дожил | EAT / ESCAPE / IDLE | средняя энергия | итоговая энергия |", "|---|---|---|---|---|---|---|---|"]  # fmt: skip
     for n, r in s["arbiters"].items():
         c, a = r["causes"], r["actions"]
-        alive = 1 - c["predator"] - c["starvation"] - c["toxin"] - c.get("missed_deadline", 0)
+        alive = c["censored"]
         out.append(f"| `{n}` | {r['lifetime_mean']:.1f} {_ci(r['lifetime_ci95'], '.1f')} | {r['lifetime_median']:.0f} | "
                    f"{r['percent_of_oracle']:.1%} {_ci([100 * x for x in r['percent_of_oracle_ci95']], '.0f')} | "
                    f"{c['predator']:.0%} / {c['starvation']:.0%} / {c['toxin']:.0%} / {alive:.0%} | "
@@ -59,6 +60,9 @@ def main_metric(s: dict | None, title: str, primary: bool) -> list[str]:
                    + (key.split(" - ")[0] if d["mean_diff"] > 0 else key.split(" - ")[1]) + "`"
                    if d["significant"] else "ДИ включает ноль — по правилу PREREG §2 победитель не объявляется")  # fmt: skip
         label = "Основное сравнение (единственное, по которому объявляется победитель)" if primary else "Сравнение"
+        if not primary:
+            verdict = ("ДИ не включает ноль" if d["significant"] else "ДИ включает ноль")
+            verdict += "; это вторичный анализ, победитель основного сравнения по нему не определяется"
         out += ["", f"**{label}: {key} = {d['mean_diff']:+.1f} триала, 95% ДИ {_ci(d['ci95'])}.** {verdict}."]
     out += ["", "Остальные парные разницы (описательные):", "", "| Сравнение | Разница | 95% ДИ | ДИ не включает ноль |",
             "|---|---|---|---|"]  # fmt: skip
@@ -316,10 +320,10 @@ def build(out_path: Path = OUT) -> Path:
     lines += ["## 9. Не выяснялось и не утверждается", "", "См. `PREREG.md` §10 — список действует без изменений.", "",
               "## 10. Ограничения и отклонения", "",
               f"- G6 не пройдены: «{G6_SENTENCE}» (раздел 6).",
-              "- Jev доступен только через alpha-эндпоинт OpenRouter Decisions; `t_wall` Jev включает этот переход (D12).",
+              "- В основном эксперименте Jev вызывался через alpha-эндпоинт OpenRouter Decisions; `t_wall` Jev включает этот переход (D12). Прямой TypeSafe API измерен отдельно (D63–D64).",
               "- Таблицы политик Jev и LIF-симуляции коннектома строил агент из своего процесса; их `t_wall` не является замером "
               "по протоколу (используется только в анализе H6 для Jev). Замеры раздела 8.1 и главный прогон выполнял автор (D5).",
-              "- Отклонения от SPEC перечислены в `docs/decisions.md` (D1–D62), ручные допущения — в `docs/ENGINEERED.md`.",
+              "- Отклонения от SPEC перечислены в `docs/decisions.md` (D1–D64), ручные допущения — в `docs/ENGINEERED.md`.",
               f"- Расход вызовов Jev: {ledger.get('calls', '?')} из {ledger.get('max_calls', '?')}.",
               f"- Обращений к тестовому сплиту (строк `runs/test_access.log`): {len(d['test_access'])}.", "",
               "Прочтения там, где PREREG молчит (зафиксированы коммитом до просмотра таблиц и тестовых результатов):", ""]  # fmt: skip
@@ -332,5 +336,9 @@ def build(out_path: Path = OUT) -> Path:
         "",
     ]
     lines += [f"- `reports/{name}`" for name in EXPLORATORY if (Path("reports") / name).is_file()]
+    if Path("reports/latency_typesafe/comparison.md").is_file():
+        lines += ["", "Дополнительный замер после основного эксперимента (D63–D64): "
+                  "[прямой TypeSafe API против OpenRouter](latency_typesafe/comparison.md). "
+                  "Основной отчёт использует исходные измерения OpenRouter; прямой замер хранится отдельно."]
     out_path.write_text("\n".join(lines) + "\n")
     return out_path
