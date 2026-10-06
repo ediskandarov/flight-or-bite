@@ -132,3 +132,9 @@ Agent's judgement, open to reversal:
 | D60 | The uncommitted work of the interrupted session was split into a formatting-only commit (`7fcdf8b`, ruff line-length 100 -> 120) and the substantive commits | The author was asked and did not object; the split keeps the substantive diff reviewable. No hashed file is touched by the formatter |
 | D61 | **H5 is computed by the agent** together with H1-H4 (`fob confirm-h5`, 440 Jev calls, budgeted in `PREREG.md` §9), although the author's list in D59 does not name it | H5 is preregistered and is not a latency measurement, so nothing about it needs the author's terminal |
 | D62 | `fob confirm` and `fob confirm-h5` refuse to run unless `PREREG.md` is frozen with matching hashes, and refuse to run a second time once their result file exists | "Confirmatory analyses are computed once" is enforced by code, not by memory |
+
+## 2026-10-06 — author requests a direct TypeSafe API test
+
+| # | Decision | Effect |
+|---|---|---|
+| D63 | User explicitly requested testing Jev without OpenRouter and supplied TYPESAFE_API_KEY. User reported an opening TypeSafe balance of $5.00 and requested spend tracking. | Direct access is authorized for this separate exploratory check, superseding D11–D12 only for that scope. The frozen main experiment still uses OpenRouter. Per-call token usage and public-rate estimated cost are recorded separately in reports/direct_typesafe; all attempts also count toward the project-wide 100,000-call cap. No provider balance is inferred to be verified. |

@@ -73,3 +73,11 @@ what waits for the author. Committed together with the step.
 - Wall latency p50 / p95: connectome 54.424 / 262.922 ms; Jev informed 354.686 / 479.109 ms. Ratio of medians 6.517. These are local runtime versus network-inclusive API latency, not intrinsic model speeds. Connectome t_sim p50 / p95: 187.4 / 500 ms (reported separately).
 - Ledger 73,282 / 100,000 after exactly 4,080 additional Jev calls; 26,718 remain. Rebuilt the intermediate report from saved artifacts only; only the secondary sampled run is missing.
 - Next: author runs reports/run_instructions.md section 3 (100 paired episodes with --sample-from-probs). Expected 500 episode records. Then audit, rebuild and review the complete final report. No main or latency rerun is needed.
+
+## 2026-10-06 — direct TypeSafe probe and cost accounting (D63)
+
+- User requested direct Jev access, added TYPESAFE_API_KEY locally, and reported $5.00 initial balance. Added scripts/jev_direct_probe.py using the official /v1/systemone endpoint and pinned jev-1.13.0. Existing OpenRouter client and frozen files are unchanged.
+- One smoke call, then 20 warm-up + 100 measured calls: all 121 succeeded, response model jev-1.13.0 throughout. Exploratory HTTP p50 / p95 294.162 / 384.565 ms. Agent-process preliminary timings; do not attribute the difference from the earlier OpenRouter benchmark solely to routing.
+- reports/direct_typesafe contains the sanitized raw requests/responses, summaries, opening balance, spend ledger and explanatory README. Total 89,724 input tokens; estimated cost $0.003768408; estimated balance $4.996231592. Actual provider balance not queried. Shared call ledger 73,403 / 100,000.
+- Validation: response choices and probability distributions checked for every successful call; spend arithmetic, aggregation and missing-usage handling checked offline; ruff passed. No key or authorization header is written. Frozen hashes verified before each run.
+- Main-project next step remains the 100-episode sampled run from reports/run_instructions.md section 3. Direct results are exploratory and kept outside the primary report data.

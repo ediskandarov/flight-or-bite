@@ -1,0 +1,29 @@
+{
+  "kind": "exploratory_direct_api_probe",
+  "endpoint": "https://api.typesafe.ai/v1/systemone",
+  "requested_model": "jev-1.13.0",
+  "mode": "informed",
+  "prompt_sha256": "6eb536568b51b7645cfccac878b8acc333336db5003857b7abd083a2262cebdb",
+  "requested_n": 1,
+  "requested_warmup": 0,
+  "attempts": 1,
+  "successful": 1,
+  "timed_successes": 1,
+  "cold_http_ms": 310.899125,
+  "http_p50_ms": 310.899125,
+  "http_p95_ms": 310.899125,
+  "error": null,
+  "known_input_tokens": 741,
+  "calls_with_unknown_usage": 0,
+  "estimated_known_cost_usd": "0.000031122",
+  "input_usd_per_million": "0.042",
+  "output_price_usd": "0",
+  "pricing_source": "https://docs.typesafe.ai/models",
+  "budget_calls_used": 73283,
+  "limitations": [
+    "Agent process: preliminary timing, not a D5 benchmark",
+    "HTTP round trip only; existing arbiter timing includes additional local work",
+    "No client response cache; provider-side caching is not verified",
+    "Cost is a public-rate estimate, not a balance inquiry or invoice"
+  ]
+}

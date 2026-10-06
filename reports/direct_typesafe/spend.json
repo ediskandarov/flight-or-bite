@@ -1,0 +1,15 @@
+{
+  "opening_balance": {
+    "balance_usd": "5.00",
+    "source": "Reported by the user before the first direct TypeSafe call",
+    "reported_date": "2026-10-06",
+    "timezone": "Asia/Tbilisi"
+  },
+  "tracked_attempts": 121,
+  "known_input_tokens": 89724,
+  "calls_with_unknown_usage": 0,
+  "estimated_known_spend_usd": "0.003768408",
+  "estimated_balance_usd": "4.996231592",
+  "actual_current_balance_verified": false,
+  "assumptions": "Public per-token prices; no other account usage, credits, taxes or billing adjustments"
+}
